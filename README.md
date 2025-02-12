@@ -66,6 +66,18 @@ RIGHT = The protogen's right (your left)
 
 <br><br>
 
+# Creating new faces
+1. Open the file `face-demo.html` in your browser
+2. Draw your new face
+3. Add it to the code
+    * `ToasterOS/Protogen_Faces.h`
+    * Add in your `FaceExpression` struct
+    * Give it a good variable name
+    * Increase the variable `NumSpecialFaces` by 1
+    * Add `&YourVariableName` to the `SpecialExpressions` array (see others for examples)
+
+<br><br>
+
 
 # Arduino Basics
 * [Docs](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino#a-typical-workflow)
