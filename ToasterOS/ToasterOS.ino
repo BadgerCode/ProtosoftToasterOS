@@ -14,7 +14,6 @@ CRGB LEDSTRIP_LEDS[LEDSTRIP_NUM_LEDS];
 
 // General IO
 int ButtonPin = 0;
-int TemperatureAnalogPin = 1;
 int DistanceAnalogPin = 0;
 
 int Brightness = 6;  // 0 - 15
@@ -278,12 +277,6 @@ int getDistance() {
   return 1023 - analogRead(DistanceAnalogPin);  // Higher value = further away
 }
 
-
-// /// Returns a two decimal number for the temperature in celcius
-// // float getTemperature() {
-// //   float voltage = analogRead(TemperatureAnalogPin) * 0.004882814;
-// //   return (voltage - 0.5) * 100;
-// // }
 
 // // bool isButtonDown() {
 // //   return digitalRead(ButtonPin) == 0;  // Invert it, so that it's 0 when off and 1 when on
