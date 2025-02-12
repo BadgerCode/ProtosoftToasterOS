@@ -2,6 +2,8 @@
 #include "LedControl.h"
 #include "Protogen_Faces.h"
 
+#define DEBUG_MODE 0
+
 
 // LED strips
 #define LEFT_LEDSTRIP_DATA_PIN 9
@@ -57,7 +59,9 @@ int PANEL_EYE2 = 6;
 
 void setup() {
   // Debug output on serial port; Used for Serial.println("blah blah");
-  // Serial.begin(9600);
+  if (DEBUG_MODE) {
+    Serial.begin(9600);
+  }
 
   // //pinMode(ButtonPin, INPUT);
   pinMode(PIN_LEFT_CS, OUTPUT);
@@ -168,7 +172,7 @@ void loop() {
   bool touchNearby = (distance < 500);
   if (touchNearby) {
     facialExpression = Face_Heart;
-    Face_OffsetY = 0; // TODO: temporary optimisation for expensive face re-rendering
+    Face_OffsetY = 0;  // TODO: temporary optimisation for expensive face re-rendering
   }
 
 
@@ -187,7 +191,7 @@ void loop() {
   }
 
 
-  if(!heartFaceRendered) {
+  if (!heartFaceRendered) {
     // TODO: Instead of re-rendering the entire face each loop, only re-render rows that have changed
     // Store one half of the face as a series of rows (numbers)
     // Track the previous and current face
@@ -211,11 +215,11 @@ void loop() {
     renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY, rowMappings);
   }
 
-  heartFaceRendered = touchNearby; // TODO: temporary optimisation for expensive face re-rendering
+  heartFaceRendered = touchNearby;  // TODO: temporary optimisation for expensive face re-rendering
 
   // LED strips
-  if(touchNearby) {
-    if(NextLEDStripUpdate <= curTime) {
+  if (touchNearby) {
+    if (NextLEDStripUpdate <= curTime) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
         LEDSTRIP_LEDS[i] = CHSV(ledStripHue, 255, 255);
         ledStripHue += 16;
@@ -223,19 +227,19 @@ void loop() {
 
       NextLEDStripUpdate = curTime + 40;
     }
-  }
-  else {
+  } else {
     fill_solid(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS, CRGB(0, 0, 255));
   }
   FastLED.show();
 
 
   // Debug print code
-  // Make sure to enable Serial.begin(9600); in setup
-  // if (curTime >= NextPrint) {
-  //   NextPrint = millis() + 20;
-  //   Serial.println(distance);
-  // }
+  if (DEBUG_MODE) {
+    if (curTime >= NextPrint) {
+      NextPrint = millis() + 20;
+      Serial.println(distance);
+    }
+  }
 }
 
 
