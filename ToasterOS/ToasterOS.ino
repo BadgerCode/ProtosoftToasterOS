@@ -63,7 +63,7 @@ void setup() {
     Serial.begin(9600);
   }
 
-  // //pinMode(ButtonPin, INPUT);
+  // pinMode(ButtonPin, INPUT);
   pinMode(PIN_LEFT_CS, OUTPUT);
   pinMode(PIN_RIGHT_CS, OUTPUT);
 
@@ -85,6 +85,7 @@ void setup() {
   FastLED.addLeds<NEOPIXEL, RIGHT_LEDSTRIP_DATA_PIN>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
 }
 
+
 // Face movement
 int Face_OffsetX = 0;  // OffsetX doesn't work, because the LEDs from one panel don't wrap to the next panel
 int Face_OffsetY = 0;
@@ -102,11 +103,6 @@ int Special_Face_Index = -1;
 int MinSpecialFaceWait = 10000;
 unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
-
-// Glitch mode
-int MinGlitchModeWait = 300000;
-unsigned long NextGlitchMode = millis() + random(15000) + MinGlitchModeWait;
-int GlitchModeDurationMs = 8000;
 
 // Debug
 unsigned long NextPrint = millis() + 100;
@@ -137,11 +133,6 @@ void loop() {
   if (curTime >= NextSpecialFace + SpecialFaceDurationMs) {
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
     Special_Face_Index = -1;
-  }
-
-  // Disable glitch mode
-  if (curTime >= NextGlitchMode + GlitchModeDurationMs) {
-    NextGlitchMode = millis() + random(15000) + MinGlitchModeWait;
   }
 
   // Offset the face to do a basic animation
@@ -176,21 +167,6 @@ void loop() {
   }
 
 
-  // Glitch mode
-  bool glitchModeActive = (curTime >= NextGlitchMode);
-  int rowMappings[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-
-  if (glitchModeActive) {
-    for (int i = 1; i < 8; i++) {
-      if (random(0, 3) == 0) {
-        int newValue = rowMappings[i - 1];
-        rowMappings[i - 1] = rowMappings[i];
-        rowMappings[i] = newValue;
-      }
-    }
-  }
-
-
   if (!heartFaceRendered) {
     // TODO: Instead of re-rendering the entire face each loop, only re-render rows that have changed
     // Store one half of the face as a series of rows (numbers)
@@ -199,20 +175,20 @@ void loop() {
     // Expression + Offset -> LED Rows -> Render different rows
 
     // Mouth
-    renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetX, Face_OffsetY, rowMappings);
-    renderLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetX, Face_OffsetY, rowMappings);
-    renderLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetX, Face_OffsetY, rowMappings);
-    renderLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetX, Face_OffsetY, rowMappings);
+    renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetX, Face_OffsetY);
+    renderLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetX, Face_OffsetY);
+    renderLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetX, Face_OffsetY);
+    renderLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetX, Face_OffsetY);
 
     // Nose
-    renderLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0, 0, rowMappings);
+    renderLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0, 0);
 
 
     // Eyes
     bool shouldBlink = (curTime >= NextBlink);
     EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    renderLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetX, Face_OffsetY, rowMappings);
-    renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY, rowMappings);
+    renderLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetX, Face_OffsetY);
+    renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY);
   }
 
   heartFaceRendered = touchNearby;  // TODO: temporary optimisation for expensive face re-rendering
@@ -244,15 +220,15 @@ void loop() {
 
 
 
-void renderLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetX, int offsetY, int rowMappings[]) {
-  renderPanel(LEFT_LEDs, panelIndex, data, isReversed, isReversed, offsetX, offsetY, rowMappings);
-  renderPanel(RIGHT_LEDs, panelIndex, data, isReversed, !isReversed, offsetX, offsetY * -1, rowMappings);
+void renderLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetX, int offsetY) {
+  renderPanel(LEFT_LEDs, panelIndex, data, isReversed, isReversed, offsetX, offsetY);
+  renderPanel(RIGHT_LEDs, panelIndex, data, isReversed, !isReversed, offsetX, offsetY * -1);
 }
 
 
-void renderPanel(LedControl faceLEDs, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetX, int offsetY, int rowMappings[]) {
+void renderPanel(LedControl faceLEDs, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetX, int offsetY) {
   for (int row = 0; row < 8; row++) {
-    int rowIndex = rowMappings[row] + offsetY;
+    int rowIndex = row + offsetY;
     if (rowIndex < 0 || rowIndex >= 8) {
       faceLEDs.setRow(panelIndex, row, 0);
       continue;
