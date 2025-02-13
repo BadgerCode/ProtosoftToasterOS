@@ -104,16 +104,21 @@ int MinSpecialFaceWait = 10000;
 unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
-// Debug
-unsigned long NextPrint = millis() + 100;
-
-
 // LED Strips
 uint8_t ledStripHue = 0;
 unsigned long NextLEDStripUpdate = millis();
 
-
+// Booping
+bool BeingBooped = false;
+unsigned long BoopHoldStarted = 0;
+int MinBoopHoldForTriggerMs = 300;
+unsigned long BoopLastDetected = 0;
+int MaxBoopRetainAfterStopMs = 2000;
 bool heartFaceRendered = false;
+
+
+// Debug
+unsigned long NextPrint = millis() + 100;
 
 
 void loop() {
@@ -158,10 +163,24 @@ void loop() {
     facialExpression = *(SpecialExpressions[Special_Face_Index]);
   }
 
+
+
   // Touch sensor
-  int distance = getDistance();
-  bool beingBooped = (distance < 500);
-  if (beingBooped) {
+  if (getDistance() < 500) {
+    if (!BeingBooped && BoopHoldStarted == 0) {
+      BoopHoldStarted = millis();
+    }
+
+    BoopLastDetected = millis();
+  } else {
+    BoopHoldStarted = 0;
+  }
+
+  BeingBooped = BoopLastDetected > 0                                           // Don't trigger on reboot
+                && (timeSince(BoopHoldStarted) >= MinBoopHoldForTriggerMs)     // Avoid accidental short detection
+                && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
+
+  if (BeingBooped) {
     facialExpression = Face_Heart;
     Face_OffsetY = 0;  // TODO: temporary optimisation for expensive face re-rendering
   }
@@ -193,10 +212,10 @@ void loop() {
     renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY);
   }
 
-  heartFaceRendered = beingBooped;  // TODO: temporary optimisation for expensive face re-rendering
+  heartFaceRendered = BeingBooped;  // TODO: temporary optimisation for expensive face re-rendering
 
   // LED strips
-  if (beingBooped) {
+  if (BeingBooped) {
     if (NextLEDStripUpdate <= curTime) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
         LEDSTRIP_LEDS[i] = CHSV(ledStripHue, 255, 255);
@@ -215,7 +234,7 @@ void loop() {
   if (DEBUG_MODE) {
     if (curTime >= NextPrint) {
       NextPrint = millis() + 20;
-      Serial.println(distance);
+      Serial.println(1);
     }
   }
 }
@@ -257,6 +276,10 @@ byte reverse(byte b) {
 
 int getDistance() {
   return 1023 - analogRead(DistanceAnalogPin);  // Higher value = further away
+}
+
+unsigned long timeSince(unsigned long previousTime) {
+  return millis() - previousTime;
 }
 
 
