@@ -160,8 +160,8 @@ void loop() {
 
   // Touch sensor
   int distance = getDistance();
-  bool touchNearby = (distance < 500);
-  if (touchNearby) {
+  bool beingBooped = (distance < 500);
+  if (beingBooped) {
     facialExpression = Face_Heart;
     Face_OffsetY = 0;  // TODO: temporary optimisation for expensive face re-rendering
   }
@@ -193,10 +193,10 @@ void loop() {
     renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY);
   }
 
-  heartFaceRendered = touchNearby;  // TODO: temporary optimisation for expensive face re-rendering
+  heartFaceRendered = beingBooped;  // TODO: temporary optimisation for expensive face re-rendering
 
   // LED strips
-  if (touchNearby) {
+  if (beingBooped) {
     if (NextLEDStripUpdate <= curTime) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
         LEDSTRIP_LEDS[i] = CHSV(ledStripHue, 255, 255);
