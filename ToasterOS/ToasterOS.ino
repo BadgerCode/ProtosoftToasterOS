@@ -168,11 +168,13 @@ void loop() {
 
 
   if (!heartFaceRendered) {
-    // TODO: Instead of re-rendering the entire face each loop, only re-render rows that have changed
-    // Store one half of the face as a series of rows (numbers)
-    // Track the previous and current face
-    // Render any rows that are different
-    // Expression + Offset -> LED Rows -> Render different rows
+    // TODO: Optimise rendering, so that it doesn't delay other parts of the head like the LED strips
+    // Option 1: Instead of re-rendering the entire face each loop, only re-render rows that have changed
+    //            Store one half of the face as a series of rows (numbers)
+    //            Track the previous and current face
+    //            Render any rows that are different
+    //            Expression + Offset -> LED Rows -> Render different rows
+    // Option 2: Break up rendering into smaller chunks, so other head functions can happen in-between without significant delays
 
     // Mouth
     renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetX, Face_OffsetY);
