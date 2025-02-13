@@ -3,6 +3,10 @@
 
 <head>
   <style>
+    body {
+      background: #1b161e;
+    }
+
     #face {
       display: flex;
       flex-direction: row;
@@ -76,7 +80,7 @@
     function drawPanelBox(x, y, numMatrices) {
       ctx.beginPath();
       ctx.rect(x - (dotSize / 2) - 1, y - (dotSize / 2) - 1, dotSize * 8 * numMatrices + 2, dotSize * 8 + 2);
-      ctx.strokeStyle = "#CCC";
+      ctx.strokeStyle = "#444";
       ctx.stroke();
     }
 
