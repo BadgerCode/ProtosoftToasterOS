@@ -87,16 +87,15 @@ void setup() {
 
 
 // Face movement
-int Face_OffsetX = 0;  // OffsetX doesn't work, because the LEDs from one panel don't wrap to the next panel
 int Face_OffsetY = 0;
 int Face_OffsetY_Dir = 1;
-int OffsetDelay = 170;
+int OffsetDelay = 200;
 unsigned long NextOffsetShift = millis() + OffsetDelay;
 
 // Blinking
 int MinBlinkWait = 2000;
 unsigned long NextBlink = millis() + random(100) + MinBlinkWait;
-int BlinkDurationMs = 100;
+int BlinkDurationMs = 200;
 
 // Expression faces
 int Special_Face_Index = -1;
@@ -124,10 +123,14 @@ unsigned long NextPrint = millis() + 100;
 void loop() {
   unsigned long curTime = millis();
 
-  // Check if it's time to stop blinking
-  if (curTime >= NextBlink + BlinkDurationMs) {
+  // Time to stop blinking
+  if (timeSince(NextBlink) >= BlinkDurationMs) {
     NextBlink = millis() + random(100) + MinBlinkWait;
   }
+
+  // Blink
+  bool shouldBlink = (curTime >= NextBlink);
+
 
   // Time for a special face?
   if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
@@ -139,30 +142,6 @@ void loop() {
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
     Special_Face_Index = -1;
   }
-
-  // Offset the face to do a basic animation
-  if (curTime >= NextOffsetShift) {
-    NextOffsetShift = curTime + OffsetDelay;
-
-    Face_OffsetY += Face_OffsetY_Dir;
-
-    if (Face_OffsetY >= 1) {
-      Face_OffsetY_Dir = -1;
-    } else if (Face_OffsetY <= -1) {
-      Face_OffsetY_Dir = 1;
-    }
-  }
-
-
-
-
-  // Determine expression
-  struct FaceExpression facialExpression = Face_Neutral;
-
-  if (Special_Face_Index != -1) {
-    facialExpression = *(SpecialExpressions[Special_Face_Index]);
-  }
-
 
 
   // Touch sensor
@@ -176,43 +155,53 @@ void loop() {
     BoopHoldStarted = 0;
   }
 
+  // Determine if we're being booped
   BeingBooped = BoopLastDetected > 0                                           // Don't trigger on reboot
                 && (timeSince(BoopHoldStarted) >= MinBoopHoldForTriggerMs)     // Avoid accidental short detection
                 && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
 
+
+  // Offset the face up & down to do a basic animation
+  if (curTime >= NextOffsetShift) {
+    NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 2 : OffsetDelay);
+
+    Face_OffsetY += Face_OffsetY_Dir;
+
+    // Check if it's time to reverse direction
+    if (abs(Face_OffsetY) >= 1) Face_OffsetY_Dir *= -1;
+  }
+
+
+  // Determine expression
+  struct FaceExpression facialExpression = Face_Neutral;
+
   if (BeingBooped) {
     facialExpression = Face_Heart;
-    Face_OffsetY = 0;  // TODO: temporary optimisation for expensive face re-rendering
+  } else if (Special_Face_Index != -1) {
+    facialExpression = *(SpecialExpressions[Special_Face_Index]);
   }
 
 
-  if (!heartFaceRendered) {
-    // TODO: Optimise rendering, so that it doesn't delay other parts of the head like the LED strips
-    // Option 1: Instead of re-rendering the entire face each loop, only re-render rows that have changed
-    //            Store one half of the face as a series of rows (numbers)
-    //            Track the previous and current face
-    //            Render any rows that are different
-    //            Expression + Offset -> LED Rows -> Render different rows
-    // Option 2: Break up rendering into smaller chunks, so other head functions can happen in-between without significant delays
+  // Render the face
 
-    // Mouth
-    renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetX, Face_OffsetY);
-    renderLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetX, Face_OffsetY);
-    renderLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetX, Face_OffsetY);
-    renderLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetX, Face_OffsetY);
+  // Rendering optimisations
+  // 1 - Break up rendering into smaller chunks, so other head functions can happen in-between without significant delays
 
-    // Nose
-    renderLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0, 0);
+  // Mouth
+  renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetY);
+  renderLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetY);
+  renderLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetY);
+  renderLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetY);
+
+  // Nose
+  renderLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
+
+  // Eyes
+  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+  renderLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetY);
+  renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetY);
 
 
-    // Eyes
-    bool shouldBlink = (curTime >= NextBlink);
-    EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    renderLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetX, Face_OffsetY);
-    renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetX, Face_OffsetY);
-  }
-
-  heartFaceRendered = BeingBooped;  // TODO: temporary optimisation for expensive face re-rendering
 
   // LED strips
   if (BeingBooped) {
@@ -223,49 +212,72 @@ void loop() {
       }
 
       NextLEDStripUpdate = curTime + 40;
+      FastLED.show();
     }
   } else {
     fill_solid(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS, CRGB(0, 0, 255));
+    FastLED.show();
   }
-  FastLED.show();
 
 
   // Debug print code
   if (DEBUG_MODE) {
     if (curTime >= NextPrint) {
       NextPrint = millis() + 20;
-      Serial.println(1);
+      Serial.println(millis() - curTime);
     }
   }
 }
 
 
 
-void renderLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetX, int offsetY) {
-  renderPanel(LEFT_LEDs, panelIndex, data, isReversed, isReversed, offsetX, offsetY);
-  renderPanel(RIGHT_LEDs, panelIndex, data, isReversed, !isReversed, offsetX, offsetY * -1);
+
+// Render functions
+void renderLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
+  renderPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
+  renderPanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
 }
 
 
-void renderPanel(LedControl faceLEDs, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetX, int offsetY) {
+
+void renderPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
   for (int row = 0; row < 8; row++) {
     int rowIndex = row + offsetY;
     if (rowIndex < 0 || rowIndex >= 8) {
-      faceLEDs.setRow(panelIndex, row, 0);
+      renderRowIfDifferent(isLeft, panelIndex, row, 0);
       continue;
     }
 
     byte rowData = 0;
     int rowDataIndex = isUpsideDown ? (7 - rowIndex) : rowIndex;
     if (isReversed) {
-      rowData = reverse(data[rowDataIndex] << offsetX);
+      rowData = reverse(data[rowDataIndex]);
     } else {
-      rowData = data[rowDataIndex] << offsetX;
+      rowData = data[rowDataIndex];
     }
 
-    faceLEDs.setRow(panelIndex, row, rowData);
+    renderRowIfDifferent(isLeft, panelIndex, row, rowData);
   }
 }
+
+// 2 sides, 7 panels, 8 rows per panel
+byte PreviousOutputs[2][7][8];
+void renderRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
+  // If the output hasn't changed, do nothing
+  byte previousOutput = PreviousOutputs[isLeft ? 0 : 1][panelIndex][row];
+  if (previousOutput == output) return;
+
+  // Update previous output to the new output
+  PreviousOutputs[isLeft ? 0 : 1][panelIndex][row] = output;
+
+  // Render it
+  LedControl faceLEDs = isLeft ? LEFT_LEDs : RIGHT_LEDs;
+  faceLEDs.setRow(panelIndex, row, output);
+}
+
+
+
+// utility functions
 
 byte reverse(byte b) {
   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
