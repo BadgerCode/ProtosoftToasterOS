@@ -118,7 +118,8 @@ bool heartFaceRendered = false;
 
 
 // Debug
-unsigned long NextPrint = millis() + 100;
+unsigned long NextPrint = millis() + 20;
+unsigned int maxDuration = 0;
 
 
 void loop() {
@@ -235,9 +236,14 @@ void loop() {
 
   // Debug print code
   if (DEBUG_MODE) {
+    unsigned int duration = millis() - curTime;
+    if (duration > maxDuration) maxDuration = duration;
+
     if (curTime >= NextPrint) {
       NextPrint = millis() + 20;
-      Serial.println(millis() - curTime);
+
+      Serial.println(maxDuration);
+      maxDuration = 0;
     }
   }
 }
