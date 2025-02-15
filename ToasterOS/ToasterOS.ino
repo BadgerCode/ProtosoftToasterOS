@@ -131,9 +131,6 @@ void loop() {
     NextBlink = millis() + random(100) + MinBlinkWait;
   }
 
-  // Blink
-  bool shouldBlink = (curTime >= NextBlink);
-
 
   // Time for a special face?
   if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
@@ -177,7 +174,7 @@ void loop() {
 
   // Determine expression
   struct FaceExpression facialExpression = Face_Neutral;
-  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+  bool shouldBlink = (curTime >= NextBlink);
 
   if (BeingBooped) {
     facialExpression = Face_Heart;
@@ -187,19 +184,7 @@ void loop() {
 
 
   // Render the face
-  // Mouth
-  updateLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetY);
-
-  // Nose
-  updateLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
-
-  // Eyes
-  updateLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetY);
-  updateLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetY);
-
+  loadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
   processRenderQueue();
 
 
@@ -262,6 +247,21 @@ void loop() {
 }
 
 
+void loadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
+  // Mouth
+  updateLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, offsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, offsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, offsetY);
+
+  // Nose
+  updateLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
+
+  // Eyes
+  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+  updateLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, offsetY);
+  updateLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, offsetY);
+}
 
 
 // Render functions
@@ -293,16 +293,16 @@ void updatePanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool
 }
 
 // 2 sides, 7 panels, 8 rows per panel
-byte PreviousOutputs[2][7][8];
-bool RequiresRendering[2][7][8];
+byte FaceLEDRowValues[2][7][8];
+bool FaceLEDRowRequiresRendering[2][7][8];
 void updateRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
   // If the output hasn't changed, do nothing
-  byte previousOutput = PreviousOutputs[isLeft ? 0 : 1][panelIndex][row];
+  byte previousOutput = FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row];
   if (previousOutput == output) return;
 
   // Update previous output to the new output
-  PreviousOutputs[isLeft ? 0 : 1][panelIndex][row] = output;
-  RequiresRendering[isLeft ? 0 : 1][panelIndex][row] = true;
+  FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row] = output;
+  FaceLEDRowRequiresRendering[isLeft ? 0 : 1][panelIndex][row] = true;
 
   // Rendering is handled by the render queue- processRenderQueue()
 }
@@ -340,24 +340,24 @@ void processRenderQueue() {
     for (int panel = firstPanel; panel <= lastPanel; panel++) {
       for (int row = 0; row < 8; row++) {
         // Render left
-        bool shouldRenderLeft = RequiresRendering[0][panel][row];
+        bool shouldRenderLeft = FaceLEDRowRequiresRendering[0][panel][row];
 
         if (shouldRenderLeft) {
-          byte output = PreviousOutputs[0][panel][row];
+          byte output = FaceLEDRowValues[0][panel][row];
           LEFT_LEDs.setRow(panel, row, output);
 
-          RequiresRendering[0][panel][row] = false;
+          FaceLEDRowRequiresRendering[0][panel][row] = false;
           anyPanelsRendered = true;
         }
 
         // Render right
-        bool shouldRenderRight = RequiresRendering[1][panel][row];
+        bool shouldRenderRight = FaceLEDRowRequiresRendering[1][panel][row];
 
         if (shouldRenderRight) {
-          byte output = PreviousOutputs[1][panel][row];
+          byte output = FaceLEDRowValues[1][panel][row];
           RIGHT_LEDs.setRow(panel, row, output);
 
-          RequiresRendering[1][panel][row] = false;
+          FaceLEDRowRequiresRendering[1][panel][row] = false;
           anyPanelsRendered = true;
         }
       }
