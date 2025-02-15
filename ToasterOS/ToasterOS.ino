@@ -104,7 +104,7 @@ unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
 // LED Strips
-uint8_t ledStripHue = 0;
+uint8_t ledStripHueOffset = 0;
 unsigned long NextLEDStripUpdate = millis();
 
 // Booping
@@ -163,7 +163,7 @@ void loop() {
 
   // Offset the face up & down to do a basic animation
   if (curTime >= NextOffsetShift) {
-    NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 2 : OffsetDelay);
+    NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 1.5 : OffsetDelay);
 
     Face_OffsetY += Face_OffsetY_Dir;
 
@@ -207,11 +207,11 @@ void loop() {
   if (BeingBooped) {
     if (NextLEDStripUpdate <= curTime) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(ledStripHue, 255, 255);
-        ledStripHue += 16;
+        LEDSTRIP_LEDS[i] = CHSV(ledStripHueOffset + (i * 10), 255, 255);
       }
 
-      NextLEDStripUpdate = curTime + 40;
+      ledStripHueOffset = (ledStripHueOffset + 10) % 255;
+      NextLEDStripUpdate = curTime + 30;
       FastLED.show();
     }
   } else {
