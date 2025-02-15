@@ -104,6 +104,7 @@ unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
 // LED Strips
+bool hueShiftForward = true;
 uint8_t ledStripHueOffset = 0;
 unsigned long NextLEDStripUpdate = millis();
 
@@ -204,18 +205,30 @@ void loop() {
 
 
   // LED strips
-  if (BeingBooped) {
-    if (NextLEDStripUpdate <= curTime) {
+  if (NextLEDStripUpdate <= curTime) {
+    if (BeingBooped) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
         LEDSTRIP_LEDS[i] = CHSV(ledStripHueOffset + (i * 10), 255, 255);
       }
 
       ledStripHueOffset = (ledStripHueOffset + 10) % 255;
-      NextLEDStripUpdate = curTime + 30;
-      FastLED.show();
+    } else {
+      ledStripHueOffset = ledStripHueOffset + (hueShiftForward ? 1 : -1);
+
+      if (ledStripHueOffset < 148) {
+        ledStripHueOffset = 148;
+        hueShiftForward = true;
+      } else if (ledStripHueOffset > 160) {
+        ledStripHueOffset = 160;
+        hueShiftForward = false;
+      }
+
+      for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
+        LEDSTRIP_LEDS[i] = CHSV(ledStripHueOffset, 255, 255);
+      }
     }
-  } else {
-    fill_solid(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS, CRGB(0, 0, 255));
+
+    NextLEDStripUpdate = curTime + 30;
     FastLED.show();
   }
 
