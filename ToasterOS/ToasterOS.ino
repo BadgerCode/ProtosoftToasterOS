@@ -105,7 +105,7 @@ int SpecialFaceDurationMs = 5000;
 
 // LED Strips
 bool HueShiftForward = true;
-uint8_t LEDStripHueOffset = 0;
+uint8_t LEDStripAnimationOffset = 0;
 unsigned long NextLEDStripUpdate = millis();
 
 // Booping
@@ -207,24 +207,28 @@ void loop() {
   // LED strips
   if (NextLEDStripUpdate <= curTime) {
     if (BeingBooped) {
+      // RGB scrolling
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(LEDStripHueOffset + (i * 10), 255, 255);
+        LEDSTRIP_LEDS[i] = CHSV(LEDStripAnimationOffset + (i * 5), 255, 255);
       }
 
-      LEDStripHueOffset = (LEDStripHueOffset + 10) % 255;
+      LEDStripAnimationOffset = (LEDStripAnimationOffset + 2) % 255;
     } else {
-      LEDStripHueOffset = LEDStripHueOffset + (HueShiftForward ? 1 : -1);
+      // Pulsating blue
+      int minShift = 170;
+      int maxShift = 250;
+      LEDStripAnimationOffset = LEDStripAnimationOffset + (HueShiftForward ? 2 : -2);
 
-      if (LEDStripHueOffset < 148) {
-        LEDStripHueOffset = 148;
+      if (LEDStripAnimationOffset < minShift) {
+        LEDStripAnimationOffset = minShift;
         HueShiftForward = true;
-      } else if (LEDStripHueOffset > 160) {
-        LEDStripHueOffset = 160;
+      } else if (LEDStripAnimationOffset > maxShift) {
+        LEDStripAnimationOffset = maxShift;
         HueShiftForward = false;
       }
 
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(LEDStripHueOffset, 255, 255);
+        LEDSTRIP_LEDS[i] = CHSV(160, 255, LEDStripAnimationOffset);
       }
     }
 
