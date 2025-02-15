@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include "LedControl.h"
 #include "Protogen_Faces.h"
+#include "FaceRender.h"
 
 #define DEBUG_MODE 0
 
@@ -13,7 +14,6 @@
 CRGB LEDSTRIP_LEDS[LEDSTRIP_NUM_LEDS];
 
 
-
 // General IO
 int ButtonPin = 0;
 int DistanceAnalogPin = 0;
@@ -22,14 +22,12 @@ int Brightness = 6;  // 0 - 15
 
 
 
-
 // Left face
 int PIN_LEFT_DIN = 3;
 int PIN_LEFT_CS = 4;
 int PIN_LEFT_CLK = 5;
-int LEFT_NUM_PANELS = 7;
 
-LedControl LEFT_LEDs = LedControl(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, LEFT_NUM_PANELS);
+LedControl LEFT_LEDs = LedControl(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, FACE_PANEL_COUNT);
 
 
 
@@ -37,20 +35,12 @@ LedControl LEFT_LEDs = LedControl(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, LEFT_
 int PIN_RIGHT_DIN = 6;
 int PIN_RIGHT_CS = 7;
 int PIN_RIGHT_CLK = 8;
-int RIGHT_NUM_PANELS = 7;
 
-LedControl RIGHT_LEDs = LedControl(PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS, RIGHT_NUM_PANELS);
-
+LedControl RIGHT_LEDs = LedControl(PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS, FACE_PANEL_COUNT);
 
 
-// Panel indexes (left and right have the same indexes)
-int PANEL_MOUTH1 = 3;
-int PANEL_MOUTH2 = 2;
-int PANEL_MOUTH3 = 1;
-int PANEL_MOUTH4 = 0;
-int PANEL_NOSE = 4;
-int PANEL_EYE1 = 5;
-int PANEL_EYE2 = 6;
+
+
 
 
 
@@ -67,13 +57,13 @@ void setup() {
   pinMode(PIN_LEFT_CS, OUTPUT);
   pinMode(PIN_RIGHT_CS, OUTPUT);
 
-  for (int address = 0; address < LEFT_NUM_PANELS; address++) {
+  for (int address = 0; address < FACE_PANEL_COUNT; address++) {
     LEFT_LEDs.shutdown(address, false);           // Disable power saving
     LEFT_LEDs.setIntensity(address, Brightness);  // Set brightness 0-15
     LEFT_LEDs.clearDisplay(address);              // Turn all LEDs off
   }
 
-  for (int address = 0; address < RIGHT_NUM_PANELS; address++) {
+  for (int address = 0; address < FACE_PANEL_COUNT; address++) {
     RIGHT_LEDs.shutdown(address, false);           // Disable power saving
     RIGHT_LEDs.setIntensity(address, Brightness);  // Set brightness 0-15
     RIGHT_LEDs.clearDisplay(address);              // Turn all LEDs off
@@ -184,8 +174,8 @@ void loop() {
 
 
   // Render the face
-  loadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
-  processRenderQueue();
+  FaceRender::LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+  FaceRender::ProcessRenderQueue(LEFT_LEDs, RIGHT_LEDs);
 
 
 
@@ -247,139 +237,16 @@ void loop() {
 }
 
 
-void loadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-  // Mouth
-  updateLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, offsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, offsetY);
-  updateLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, offsetY);
-
-  // Nose
-  updateLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
-
-  // Eyes
-  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-  updateLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, offsetY);
-  updateLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, offsetY);
-}
-
-
-// Render functions
-void updateLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
-  updatePanel(true, panelIndex, data, isReversed, isReversed, offsetY);
-  updatePanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
-}
 
 
 
-void updatePanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
-  for (int row = 0; row < 8; row++) {
-    int rowIndex = row + offsetY;
-    if (rowIndex < 0 || rowIndex >= 8) {
-      updateRowIfDifferent(isLeft, panelIndex, row, 0);
-      continue;
-    }
-
-    byte rowData = 0;
-    int rowDataIndex = isUpsideDown ? (7 - rowIndex) : rowIndex;
-    if (isReversed) {
-      rowData = reverse(data[rowDataIndex]);
-    } else {
-      rowData = data[rowDataIndex];
-    }
-
-    updateRowIfDifferent(isLeft, panelIndex, row, rowData);
-  }
-}
-
-// 2 sides, 7 panels, 8 rows per panel
-byte FaceLEDRowValues[2][7][8];
-bool FaceLEDRowRequiresRendering[2][7][8];
-void updateRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
-  // If the output hasn't changed, do nothing
-  byte previousOutput = FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row];
-  if (previousOutput == output) return;
-
-  // Update previous output to the new output
-  FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row] = output;
-  FaceLEDRowRequiresRendering[isLeft ? 0 : 1][panelIndex][row] = true;
-
-  // Rendering is handled by the render queue- processRenderQueue()
-}
 
 
-unsigned int nextRenderSection = 0;  // 0 = eyes, 1 = nose, 2 = mouth
-void processRenderQueue() {
-  int sectionsRendered = 0;
-  int sectionsChecked = 0;
-
-
-  // Render 1 section a time (eyes, nose, mouth) and avoid infinite loops
-  while (sectionsRendered < 1 && sectionsChecked < 3) {
-    // Determine the panels, based on the section
-    int firstPanel = -1;
-    int lastPanel = -1;
-
-    if (nextRenderSection == 0) {  // eyes
-      firstPanel = PANEL_EYE1;
-      lastPanel = PANEL_EYE2;
-    } else if (nextRenderSection == 1) {  // nose
-      firstPanel = PANEL_NOSE;
-      lastPanel = PANEL_NOSE;
-    } else if (nextRenderSection == 2) {  // mouth
-      firstPanel = PANEL_MOUTH4;
-      lastPanel = PANEL_MOUTH1;
-    } else {  // something's gone wrong
-      nextRenderSection = 0;
-      break;
-    }
-
-
-    // Check if there's anything to render
-    bool anyPanelsRendered = false;
-    for (int panel = firstPanel; panel <= lastPanel; panel++) {
-      for (int row = 0; row < 8; row++) {
-        // Render left
-        bool shouldRenderLeft = FaceLEDRowRequiresRendering[0][panel][row];
-
-        if (shouldRenderLeft) {
-          byte output = FaceLEDRowValues[0][panel][row];
-          LEFT_LEDs.setRow(panel, row, output);
-
-          FaceLEDRowRequiresRendering[0][panel][row] = false;
-          anyPanelsRendered = true;
-        }
-
-        // Render right
-        bool shouldRenderRight = FaceLEDRowRequiresRendering[1][panel][row];
-
-        if (shouldRenderRight) {
-          byte output = FaceLEDRowValues[1][panel][row];
-          RIGHT_LEDs.setRow(panel, row, output);
-
-          FaceLEDRowRequiresRendering[1][panel][row] = false;
-          anyPanelsRendered = true;
-        }
-      }
-    }
-
-    sectionsChecked++;
-    if (anyPanelsRendered) sectionsRendered++;
-
-    nextRenderSection++;
-    if (nextRenderSection > 2) nextRenderSection = 0;
-  }
-}
 
 
 // utility functions
 
-byte reverse(byte b) {
-  b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-  b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-  b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-  return b;
-}
+
 
 int getDistance() {
   return 1023 - analogRead(DistanceAnalogPin);  // Higher value = further away
