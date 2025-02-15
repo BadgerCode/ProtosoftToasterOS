@@ -21,6 +21,18 @@
     #output {
       flex: 1;
       width: 100%;
+      background-color: #1e1e1e;
+      color: white;
+      border: 1px solid black;
+    }
+
+    #loadButton {
+      font-size: 32px;
+      background: #14161a;
+      color: white;
+      cursor: pointer;
+      border: 1px solid #353a46;
+      padding: 10px 20px;
     }
   </style>
 </head>
@@ -41,6 +53,7 @@
     const dotSize = 20;
     let clickableLights = {};
 
+    let faceVariableName = "Face_Name";
     let nosePatterns = [];
     let eyePatterns = [];
     let mouthPatterns = [];
@@ -48,7 +61,7 @@
 
     function updateOutput() {
       let output = document.getElementById("output");
-      output.value = `struct FaceExpression Face_Name = {
+      output.value = `struct FaceExpression ${faceVariableName} = {
   .Nose = {
     { ${patternToMatrixString(nosePatterns[0])} }  //
   },
@@ -148,8 +161,12 @@
       }
     });
 
+    // Load face from output
     loadButton.addEventListener('click', () => {
-      let lines = document.getElementById("output").value.split("\n");
+      let lines = document.getElementById("output").value.trim().split("\n");
+
+      faceVariableName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
+
       let pattern = /\s+\{\s(.*)\s\},?\s+\/\//;
 
       nosePatterns = [
