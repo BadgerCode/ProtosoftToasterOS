@@ -75,6 +75,10 @@
           <button id="switchLoadedFace">Switch</button>
         </div>
 
+        <div>
+          <button id="toggleBlink">Enable Blink</button>
+        </div>
+
         <textarea id="output"></textarea>
 
         <button id="loadButton">Load</button>
@@ -86,6 +90,7 @@
     const ctx = canvas.getContext("2d");
     const dotSize = 20;
     let clickableLights = {};
+    let showBlink = false;
 
     // Current loaded expression
     let faceVariableName = "Face_Name";
@@ -159,14 +164,14 @@
       }
     }
 
-    function drawFace(nosePatterns, eyePatterns, mouthPatterns) {
+    function drawFace() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       drawGrid(40, 200, nosePatterns[0]);
       drawPanelBox(40, 200, 1);
 
-      drawGrid(500, 40, eyePatterns[0]);
-      drawGrid(500 + (dotSize * 8), 40, eyePatterns[1]);
+      drawGrid(500, 40, showBlink ? eyeBlinkPatterns[0] : eyePatterns[0]);
+      drawGrid(500 + (dotSize * 8), 40, showBlink ? eyeBlinkPatterns[1] : eyePatterns[1]);
       drawPanelBox(500, 40, 2);
 
       drawGrid(140, 400, mouthPatterns[0]);
@@ -238,7 +243,7 @@
         parseMatrixPattern(lines[16].replace(pattern, "$1")),
       ];
 
-      drawFace(nosePatterns, eyePatterns, mouthPatterns);
+      drawFace();
 
       expressions[faceVariableName] = {
         nosePatterns: nosePatterns,
@@ -260,8 +265,16 @@
       eyeBlinkPatterns = expression.eyeBlinkPatterns;
       mouthPatterns = expression.mouthPatterns;
 
-      drawFace(nosePatterns, eyePatterns, mouthPatterns);
+      drawFace();
     });
+
+
+    document.getElementById("toggleBlink").addEventListener("click", (e) => {
+      showBlink = !showBlink;
+      drawFace();
+
+      document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
+    })
 
 
     function resetFace() {
