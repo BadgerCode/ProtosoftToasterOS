@@ -2,7 +2,7 @@
 #include "LedControl.h"
 #include "Protogen_Faces.h"
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 
 // LED strips
@@ -390,6 +390,6 @@ unsigned long timeSince(unsigned long previousTime) {
 }
 
 
-// // bool isButtonDown() {
-// //   return digitalRead(ButtonPin) == 0;  // Invert it, so that it's 0 when off and 1 when on
-// // }
+// bool isButtonDown() {
+//   return digitalRead(ButtonPin) == 0;  // Invert it, so that it's 0 when off and 1 when on
+// }
