@@ -5,6 +5,8 @@
   <style>
     body {
       background: #1b161e;
+      color: white;
+      font-family: Inter, SF Pro, Segoe UI, Roboto, Oxygen, Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     }
 
     #face {
@@ -26,13 +28,38 @@
       border: 1px solid black;
     }
 
-    #loadButton {
-      font-size: 32px;
+    select {
+      background: #14161a;
+      color: white;
+      border: 1px solid #353a46;
+    }
+
+    button {
       background: #14161a;
       color: white;
       cursor: pointer;
       border: 1px solid #353a46;
+      padding: 5px 15px;
+    }
+
+    button:hover {
+      background: #1f2229;
+    }
+
+    #loadButton {
+      font-size: 32px;
       padding: 10px 20px;
+    }
+
+    #faceSwitcher {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    #loadedFacesSelect {
+      width: 250px;
     }
   </style>
 </head>
@@ -42,7 +69,14 @@
     <div id="face">
       <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;"></canvas>
       <div id="outputArea">
+        <div id="faceSwitcher">
+          <div>Loaded faces:</div>
+          <select id="loadedFacesSelect"></select>
+          <button id="switchLoadedFace">Switch</button>
+        </div>
+
         <textarea id="output"></textarea>
+
         <button id="loadButton">Load</button>
       </div>
     </div>
@@ -53,10 +87,16 @@
     const dotSize = 20;
     let clickableLights = {};
 
+    // Current loaded expression
     let faceVariableName = "Face_Name";
     let nosePatterns = [];
     let eyePatterns = [];
+    let eyeBlinkPatterns = [];
     let mouthPatterns = [];
+
+
+    // Saved expressions
+    let expressions = {};
 
 
     function updateOutput() {
@@ -70,8 +110,8 @@
     { ${patternToMatrixString(eyePatterns[1])} }   //
   },
   .Eye_Blink = {
-    { ${patternToMatrixString(eyePatterns[0])} },  //
-    { ${patternToMatrixString(eyePatterns[1])} }   //
+    { ${patternToMatrixString(eyeBlinkPatterns[0])} },  //
+    { ${patternToMatrixString(eyeBlinkPatterns[1])} }   //
   },
   .Mouth = {
     { ${patternToMatrixString(mouthPatterns[0])} },  //
@@ -80,6 +120,11 @@
     { ${patternToMatrixString(mouthPatterns[3])} }  //
   }
 };`;
+    }
+
+    function updateFaceSwitcher() {
+      document.getElementById("loadedFacesSelect").innerHTML = Object.keys(expressions).map(name => `<option>${name}</option>\n`);
+      document.getElementById("loadedFacesSelect").value = faceVariableName;
     }
 
 
@@ -163,8 +208,11 @@
 
     // Load face from output
     loadButton.addEventListener('click', () => {
-      let lines = document.getElementById("output").value.trim().split("\n");
+      parseWholeFace(document.getElementById("output").value);
+    });
 
+    function parseWholeFace(input) {
+      let lines = input.trim().split("\n");
       faceVariableName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
 
       let pattern = /\s+\{\s(.*)\s\},?\s+\/\//;
@@ -178,6 +226,11 @@
         parseMatrixPattern(lines[6].replace(pattern, "$1")),
       ];
 
+      eyeBlinkPatterns = [
+        parseMatrixPattern(lines[9].replace(pattern, "$1")),
+        parseMatrixPattern(lines[10].replace(pattern, "$1")),
+      ];
+
       mouthPatterns = [
         parseMatrixPattern(lines[13].replace(pattern, "$1")),
         parseMatrixPattern(lines[14].replace(pattern, "$1")),
@@ -186,26 +239,51 @@
       ];
 
       drawFace(nosePatterns, eyePatterns, mouthPatterns);
-    });
 
-    function resetFace() {
-      nosePatterns = [
-        parseMatrixPattern("B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000"),
-      ];
+      expressions[faceVariableName] = {
+        nosePatterns: nosePatterns,
+        eyePatterns: eyePatterns,
+        eyeBlinkPatterns: eyeBlinkPatterns,
+        mouthPatterns: mouthPatterns
+      };
 
-      eyePatterns = [
-        parseMatrixPattern("B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000"),
-        parseMatrixPattern("B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000"),
-      ];
+      updateFaceSwitcher();
+    }
 
-      mouthPatterns = [
-        parseMatrixPattern("B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000"),
-        parseMatrixPattern("B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000"),
-        parseMatrixPattern("B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000"),
-        parseMatrixPattern("B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000"),
-      ];
+    document.getElementById("switchLoadedFace").addEventListener("click", (e) => {
+      let facename = document.getElementById("loadedFacesSelect").value;
+      let expression = expressions[facename];
+
+      faceVariableName = facename;
+      nosePatterns = expression.nosePatterns;
+      eyePatterns = expression.eyePatterns;
+      eyeBlinkPatterns = expression.eyeBlinkPatterns;
+      mouthPatterns = expression.mouthPatterns;
 
       drawFace(nosePatterns, eyePatterns, mouthPatterns);
+    });
+
+
+    function resetFace() {
+      parseWholeFace(`struct FaceExpression Face_Neutral = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
+  },
+  .Eye_Blink = {
+    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
+  },
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};`);
     }
 
     resetFace();
