@@ -11,7 +11,7 @@
 
 class FaceRender {
 private:
-  const int Brightness = 6; // 0 - 15
+  const int Brightness = 8; // 0 - 15
 
   // Face LED state
   // 2 sides, 7 panels, 8 rows per panel
