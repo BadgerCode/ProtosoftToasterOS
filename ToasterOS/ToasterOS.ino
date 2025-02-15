@@ -3,79 +3,61 @@
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
 
-#define DEBUG_MODE 0
+// PIN DEFINITIONS
+// PINS: Input
+#define PIN_BUTTON 0
+#define PIN_ANALOG_DISTANCE 0
+
+// PINS: LED FACE PANELS
+#define PIN_LEFT_DIN 3
+#define PIN_LEFT_CS 4
+#define PIN_LEFT_CLK 5
+#define PIN_RIGHT_DIN 6
+#define PIN_RIGHT_CS 7
+#define PIN_RIGHT_CLK 8
+
+// PINS: LED STRIPS
+#define PIN_LEFT_LEDSTRIP_DATA 9
+#define PIN_RIGHT_LEDSTRIP_DATA 10
 
 
-// LED strips
-#define LEFT_LEDSTRIP_DATA_PIN 9
-#define RIGHT_LEDSTRIP_DATA_PIN 10
+// Additional defines
+#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
 #define LEDSTRIP_NUM_LEDS 15
 
+
+
+
+
+// Face LEDs
+// If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
+FaceRender* ProtoFaceRenderer = new FaceRender(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS);
+
+// LED Strips
 CRGB LEDSTRIP_LEDS[LEDSTRIP_NUM_LEDS];
 
 
-// General IO
-int ButtonPin = 0;
-int DistanceAnalogPin = 0;
-
-int Brightness = 6;  // 0 - 15
-
-
-
-// Left face
-int PIN_LEFT_DIN = 3;
-int PIN_LEFT_CS = 4;
-int PIN_LEFT_CLK = 5;
-
-LedControl LEFT_LEDs = LedControl(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, FACE_PANEL_COUNT);
-
-
-
-// Right face
-int PIN_RIGHT_DIN = 6;
-int PIN_RIGHT_CS = 7;
-int PIN_RIGHT_CLK = 8;
-
-LedControl RIGHT_LEDs = LedControl(PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS, FACE_PANEL_COUNT);
-
-
-
-
-
-
-
-
-
-
 void setup() {
-  // Debug output on serial port; Used for Serial.println("blah blah");
   if (DEBUG_MODE) {
+    // Debug output on serial port; Used for Serial.println("blah blah");
     Serial.begin(9600);
   }
 
-  // pinMode(ButtonPin, INPUT);
+  // pinMode(PIN_BUTTON, INPUT);
   pinMode(PIN_LEFT_CS, OUTPUT);
   pinMode(PIN_RIGHT_CS, OUTPUT);
 
-  for (int address = 0; address < FACE_PANEL_COUNT; address++) {
-    LEFT_LEDs.shutdown(address, false);           // Disable power saving
-    LEFT_LEDs.setIntensity(address, Brightness);  // Set brightness 0-15
-    LEFT_LEDs.clearDisplay(address);              // Turn all LEDs off
-  }
-
-  for (int address = 0; address < FACE_PANEL_COUNT; address++) {
-    RIGHT_LEDs.shutdown(address, false);           // Disable power saving
-    RIGHT_LEDs.setIntensity(address, Brightness);  // Set brightness 0-15
-    RIGHT_LEDs.clearDisplay(address);              // Turn all LEDs off
-  }
-
+  // LED Face
+  ProtoFaceRenderer->Initialise();
 
   // LED strips
-  FastLED.addLeds<NEOPIXEL, LEFT_LEDSTRIP_DATA_PIN>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
-  FastLED.addLeds<NEOPIXEL, RIGHT_LEDSTRIP_DATA_PIN>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
+  FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
+  FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
 }
 
 
+
+// PROTOGEN STATE
 // Face movement
 int Face_OffsetY = 0;
 int Face_OffsetY_Dir = 1;
@@ -121,7 +103,6 @@ void loop() {
     NextBlink = millis() + random(100) + MinBlinkWait;
   }
 
-
   // Time for a special face?
   if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
     Special_Face_Index = random(0, NumSpecialFaces);
@@ -136,22 +117,18 @@ void loop() {
 
   // Touch sensor
   if (getDistance() < 500) {
-    if (!BeingBooped && BoopHoldStarted == 0) {
-      BoopHoldStarted = millis();
-    }
-
+    if (!BeingBooped && BoopHoldStarted == 0) BoopHoldStarted = millis();
     BoopLastDetected = millis();
   } else {
     BoopHoldStarted = 0;
   }
 
-  // Determine if we're being booped
   BeingBooped = BoopLastDetected > 0                                           // Don't trigger on reboot
                 && (timeSince(BoopHoldStarted) >= MinBoopHoldForTriggerMs)     // Avoid accidental short detection
                 && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
 
 
-  // Offset the face up & down to do a basic animation
+  // Make the face bounce up and down
   if (curTime >= NextOffsetShift) {
     NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 1.5 : OffsetDelay);
 
@@ -174,8 +151,8 @@ void loop() {
 
 
   // Render the face
-  FaceRender::LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
-  FaceRender::ProcessRenderQueue(LEFT_LEDs, RIGHT_LEDs);
+  ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+  ProtoFaceRenderer->ProcessRenderQueue();
 
 
 
@@ -213,8 +190,7 @@ void loop() {
 
 
   // Debug print code
-  if (DEBUG_MODE) {
-
+  if (DEBUG_MODE == 1) {
     // Count FPS
     FPSCOUNT_Iterations++;
     if (timeSince(FPSCOUNT_CountingStarted) >= 1000) {
@@ -222,34 +198,23 @@ void loop() {
       FPSCOUNT_Iterations = 0;
       FPSCOUNT_CountingStarted = millis();
     }
-
+  } else if (DEBUG_MODE == 2) {
     // Display max frame duration
-    // unsigned int duration = millis() - curTime;
-    // if (duration > FrameDuration_MaxDuration) FrameDuration_MaxDuration = duration;
+    unsigned int duration = millis() - curTime;
+    if (duration > FrameDuration_MaxDuration) FrameDuration_MaxDuration = duration;
 
-    // if (curTime >= FrameDuration_NextPrint) {
-    //   FrameDuration_NextPrint = millis() + 10;
+    if (curTime >= FrameDuration_NextPrint) {
+      FrameDuration_NextPrint = millis() + 10;
 
-    //   Serial.println(FrameDuration_MaxDuration);
-    //   FrameDuration_MaxDuration = 0;
-    // }
+      Serial.println(FrameDuration_MaxDuration);
+      FrameDuration_MaxDuration = 0;
+    }
   }
 }
 
-
-
-
-
-
-
-
-
 // utility functions
-
-
-
 int getDistance() {
-  return 1023 - analogRead(DistanceAnalogPin);  // Higher value = further away
+  return 1023 - analogRead(PIN_ANALOG_DISTANCE);  // Higher value = further away
 }
 
 unsigned long timeSince(unsigned long previousTime) {
@@ -258,5 +223,5 @@ unsigned long timeSince(unsigned long previousTime) {
 
 
 // bool isButtonDown() {
-//   return digitalRead(ButtonPin) == 0;  // Invert it, so that it's 0 when off and 1 when on
+//   return digitalRead(PIN_BUTTON) == 0;  // Invert it, so that it's 0 when off and 1 when on
 // }

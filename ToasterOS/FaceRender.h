@@ -9,20 +9,45 @@
 #define FACE_PANEL_EYE2 6
 
 
-
 class FaceRender {
-public:
+private:
+  const int Brightness = 6; // 0 - 15
+
   // Face LED state
   // 2 sides, 7 panels, 8 rows per panel
-  inline static byte FaceLEDRowValues[2][7][8];
-  inline static bool FaceLEDRowRequiresRendering[2][7][8];
+  byte FaceLEDRowValues[2][7][8];
+  bool FaceLEDRowRequiresRendering[2][7][8];
 
   // Render queue
   // 0 = eyes, 1 = nose, 2 = mouth
-  inline static unsigned int NextRenderSection = 0;
+  unsigned int NextRenderSection = 0;
+
+  // LED interface
+  LedControl* LEFT_LEDs;
+  LedControl* RIGHT_LEDs;
+
+public:
+  FaceRender(int pinLeftDIN, int pinLeftCLK, int pinLeftCS, int pinRightDIN, int pinRightCLK, int pinRightCS) {
+    LEFT_LEDs = new LedControl(pinLeftDIN, pinLeftCLK, pinLeftCS, FACE_PANEL_COUNT);
+    RIGHT_LEDs = new LedControl(pinRightDIN, pinRightCLK, pinRightCS, FACE_PANEL_COUNT);
+  }
+
+  void Initialise() {
+    for (int address = 0; address < FACE_PANEL_COUNT; address++) {
+      LEFT_LEDs->shutdown(address, false);           // Disable power saving
+      LEFT_LEDs->setIntensity(address, Brightness);  // Set brightness 0-15
+      LEFT_LEDs->clearDisplay(address);              // Turn all LEDs off
+    }
+
+    for (int address = 0; address < FACE_PANEL_COUNT; address++) {
+      RIGHT_LEDs->shutdown(address, false);           // Disable power saving
+      RIGHT_LEDs->setIntensity(address, Brightness);  // Set brightness 0-15
+      RIGHT_LEDs->clearDisplay(address);              // Turn all LEDs off
+    }
+  }
 
 
-  static void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
+  void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
     // Mouth
     FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
     FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, (facialExpression).Mouth[1], false, offsetY);
@@ -39,16 +64,16 @@ public:
   }
 
 
-
+private:
   // Update face LED state
-  static void SetLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
+  void SetLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
     SetPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
     SetPanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
   }
 
 
 
-  static void SetPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
+  void SetPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
     for (int row = 0; row < 8; row++) {
       int rowIndex = row + offsetY;
       if (rowIndex < 0 || rowIndex >= 8) {
@@ -69,7 +94,7 @@ public:
   }
 
 
-  static void SetRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
+  void SetRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
     // If the output hasn't changed, do nothing
     byte previousOutput = FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row];
     if (previousOutput == output) return;
@@ -81,16 +106,16 @@ public:
     // Rendering is handled by the render queue- processRenderQueue()
   }
 
-  static byte Reverse(byte b) {
+  byte Reverse(byte b) {
     b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
     b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
     b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
     return b;
   }
 
-
+public:
   // Render face
-  static void ProcessRenderQueue(LedControl leftFaceLEDs, LedControl rightFaceLEDs) {
+  void ProcessRenderQueue() {
     int sectionsRendered = 0;
     int sectionsChecked = 0;
 
@@ -125,7 +150,7 @@ public:
 
           if (shouldRenderLeft) {
             byte output = FaceLEDRowValues[0][panel][row];
-            leftFaceLEDs.setRow(panel, row, output);
+            LEFT_LEDs->setRow(panel, row, output);
 
             FaceLEDRowRequiresRendering[0][panel][row] = false;
             anyPanelsRendered = true;
@@ -136,7 +161,7 @@ public:
 
           if (shouldRenderRight) {
             byte output = FaceLEDRowValues[1][panel][row];
-            rightFaceLEDs.setRow(panel, row, output);
+            RIGHT_LEDs->setRow(panel, row, output);
 
             FaceLEDRowRequiresRendering[1][panel][row] = false;
             anyPanelsRendered = true;
