@@ -93,7 +93,7 @@ struct FaceExpression Face_OWO = {
 };
 
 
-struct FaceExpression Face_Neutral_Flat = {
+struct FaceExpression Face_Smirk = {
   .Nose = {
     { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
   },
@@ -160,7 +160,7 @@ const int NumSpecialFaces = 5;
 struct FaceExpression* SpecialExpressions[NumSpecialFaces] = {
   &Face_Happy_Closed_eyes,
   &Face_OWO,
-  &Face_Neutral_Flat,
+  &Face_Smirk,
   &Face_Cute,
   &Face_Blep
 };
