@@ -2,7 +2,7 @@
 #include "LedControl.h"
 #include "Protogen_Faces.h"
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 
 // LED strips
@@ -104,8 +104,8 @@ unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
 // LED Strips
-bool hueShiftForward = true;
-uint8_t ledStripHueOffset = 0;
+bool HueShiftForward = true;
+uint8_t LEDStripHueOffset = 0;
 unsigned long NextLEDStripUpdate = millis();
 
 // Booping
@@ -114,12 +114,13 @@ unsigned long BoopHoldStarted = 0;
 int MinBoopHoldForTriggerMs = 300;
 unsigned long BoopLastDetected = 0;
 int MaxBoopRetainAfterStopMs = 2000;
-bool heartFaceRendered = false;
 
 
 // Debug
-unsigned long NextPrint = millis() + 20;
-unsigned int maxDuration = 0;
+unsigned long FrameDuration_NextPrint = millis() + 20;
+unsigned int FrameDuration_MaxDuration = 0;
+unsigned long FPSCOUNT_CountingStarted = 0;
+unsigned int FPSCOUNT_Iterations = 0;
 
 
 void loop() {
@@ -176,6 +177,7 @@ void loop() {
 
   // Determine expression
   struct FaceExpression facialExpression = Face_Neutral;
+  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
 
   if (BeingBooped) {
     facialExpression = Face_Heart;
@@ -185,23 +187,20 @@ void loop() {
 
 
   // Render the face
-
-  // Rendering optimisations
-  // 1 - Break up rendering into smaller chunks, so other head functions can happen in-between without significant delays
-
   // Mouth
-  renderLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetY);
-  renderLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetY);
-  renderLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetY);
-  renderLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH1, (facialExpression).Mouth[0], false, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH2, (facialExpression).Mouth[1], false, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH3, (facialExpression).Mouth[2], false, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_MOUTH4, (facialExpression).Mouth[3], false, Face_OffsetY);
 
   // Nose
-  renderLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
+  updateLeftAndRightPanel(PANEL_NOSE, (facialExpression).Nose[0], true, 0);
 
   // Eyes
-  EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-  renderLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetY);
-  renderLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_EYE1, (*eyes)[0], true, Face_OffsetY);
+  updateLeftAndRightPanel(PANEL_EYE2, (*eyes)[1], true, Face_OffsetY);
+
+  processRenderQueue();
 
 
 
@@ -209,42 +208,52 @@ void loop() {
   if (NextLEDStripUpdate <= curTime) {
     if (BeingBooped) {
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(ledStripHueOffset + (i * 10), 255, 255);
+        LEDSTRIP_LEDS[i] = CHSV(LEDStripHueOffset + (i * 10), 255, 255);
       }
 
-      ledStripHueOffset = (ledStripHueOffset + 10) % 255;
+      LEDStripHueOffset = (LEDStripHueOffset + 10) % 255;
     } else {
-      ledStripHueOffset = ledStripHueOffset + (hueShiftForward ? 1 : -1);
+      LEDStripHueOffset = LEDStripHueOffset + (HueShiftForward ? 1 : -1);
 
-      if (ledStripHueOffset < 148) {
-        ledStripHueOffset = 148;
-        hueShiftForward = true;
-      } else if (ledStripHueOffset > 160) {
-        ledStripHueOffset = 160;
-        hueShiftForward = false;
+      if (LEDStripHueOffset < 148) {
+        LEDStripHueOffset = 148;
+        HueShiftForward = true;
+      } else if (LEDStripHueOffset > 160) {
+        LEDStripHueOffset = 160;
+        HueShiftForward = false;
       }
 
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(ledStripHueOffset, 255, 255);
+        LEDSTRIP_LEDS[i] = CHSV(LEDStripHueOffset, 255, 255);
       }
     }
 
-    NextLEDStripUpdate = curTime + 30;
+    NextLEDStripUpdate = curTime + 15;
     FastLED.show();
   }
 
 
   // Debug print code
   if (DEBUG_MODE) {
-    unsigned int duration = millis() - curTime;
-    if (duration > maxDuration) maxDuration = duration;
 
-    if (curTime >= NextPrint) {
-      NextPrint = millis() + 20;
-
-      Serial.println(maxDuration);
-      maxDuration = 0;
+    // Count FPS
+    FPSCOUNT_Iterations++;
+    if (timeSince(FPSCOUNT_CountingStarted) >= 1000) {
+      Serial.println(FPSCOUNT_Iterations);
+      FPSCOUNT_Iterations = 0;
+      FPSCOUNT_CountingStarted = millis();
     }
+
+    // Display max frame duration
+    // unsigned int duration = millis() - curTime;
+    // if (duration > FrameDuration_MaxDuration) FrameDuration_MaxDuration = duration;
+
+    // if (curTime >= FrameDuration_NextPrint) {
+    //   FrameDuration_NextPrint = millis() + 10;
+
+    //   Serial.println(FrameDuration_MaxDuration);
+    //   FrameDuration_MaxDuration = 0;
+    // }
   }
 }
 
@@ -252,18 +261,18 @@ void loop() {
 
 
 // Render functions
-void renderLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
-  renderPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
-  renderPanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
+void updateLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
+  updatePanel(true, panelIndex, data, isReversed, isReversed, offsetY);
+  updatePanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
 }
 
 
 
-void renderPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
+void updatePanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
   for (int row = 0; row < 8; row++) {
     int rowIndex = row + offsetY;
     if (rowIndex < 0 || rowIndex >= 8) {
-      renderRowIfDifferent(isLeft, panelIndex, row, 0);
+      updateRowIfDifferent(isLeft, panelIndex, row, 0);
       continue;
     }
 
@@ -275,25 +284,88 @@ void renderPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool
       rowData = data[rowDataIndex];
     }
 
-    renderRowIfDifferent(isLeft, panelIndex, row, rowData);
+    updateRowIfDifferent(isLeft, panelIndex, row, rowData);
   }
 }
 
 // 2 sides, 7 panels, 8 rows per panel
 byte PreviousOutputs[2][7][8];
-void renderRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
+bool RequiresRendering[2][7][8];
+void updateRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
   // If the output hasn't changed, do nothing
   byte previousOutput = PreviousOutputs[isLeft ? 0 : 1][panelIndex][row];
   if (previousOutput == output) return;
 
   // Update previous output to the new output
   PreviousOutputs[isLeft ? 0 : 1][panelIndex][row] = output;
+  RequiresRendering[isLeft ? 0 : 1][panelIndex][row] = true;
 
-  // Render it
-  LedControl faceLEDs = isLeft ? LEFT_LEDs : RIGHT_LEDs;
-  faceLEDs.setRow(panelIndex, row, output);
+  // Rendering is handled by the render queue- processRenderQueue()
 }
 
+
+unsigned int nextRenderSection = 0;  // 0 = eyes, 1 = nose, 2 = mouth
+void processRenderQueue() {
+  int sectionsRendered = 0;
+  int sectionsChecked = 0;
+
+
+  // Render 1 section a time (eyes, nose, mouth) and avoid infinite loops
+  while (sectionsRendered < 1 && sectionsChecked < 3) {
+    // Determine the panels, based on the section
+    int firstPanel = -1;
+    int lastPanel = -1;
+
+    if (nextRenderSection == 0) {  // eyes
+      firstPanel = PANEL_EYE1;
+      lastPanel = PANEL_EYE2;
+    } else if (nextRenderSection == 1) {  // nose
+      firstPanel = PANEL_NOSE;
+      lastPanel = PANEL_NOSE;
+    } else if (nextRenderSection == 2) {  // mouth
+      firstPanel = PANEL_MOUTH4;
+      lastPanel = PANEL_MOUTH1;
+    } else {  // something's gone wrong
+      nextRenderSection = 0;
+      break;
+    }
+
+
+    // Check if there's anything to render
+    bool anyPanelsRendered = false;
+    for (int panel = firstPanel; panel <= lastPanel; panel++) {
+      for (int row = 0; row < 8; row++) {
+        // Render left
+        bool shouldRenderLeft = RequiresRendering[0][panel][row];
+
+        if (shouldRenderLeft) {
+          byte output = PreviousOutputs[0][panel][row];
+          LEFT_LEDs.setRow(panel, row, output);
+
+          RequiresRendering[0][panel][row] = false;
+          anyPanelsRendered = true;
+        }
+
+        // Render right
+        bool shouldRenderRight = RequiresRendering[1][panel][row];
+
+        if (shouldRenderRight) {
+          byte output = PreviousOutputs[1][panel][row];
+          RIGHT_LEDs.setRow(panel, row, output);
+
+          RequiresRendering[1][panel][row] = false;
+          anyPanelsRendered = true;
+        }
+      }
+    }
+
+    sectionsChecked++;
+    if (anyPanelsRendered) sectionsRendered++;
+
+    nextRenderSection++;
+    if (nextRenderSection > 2) nextRenderSection = 0;
+  }
+}
 
 
 // utility functions
