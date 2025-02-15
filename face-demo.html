@@ -104,6 +104,40 @@
     let expressions = {};
 
 
+    // FACE SWITCHER
+    function updateFaceSwitcher() {
+      document.getElementById("loadedFacesSelect").innerHTML = Object.keys(expressions).map(name => `<option>${name}</option>\n`);
+      document.getElementById("loadedFacesSelect").value = faceVariableName;
+    }
+
+    // Click
+    document.getElementById("switchLoadedFace").addEventListener("click", (e) => {
+      let facename = document.getElementById("loadedFacesSelect").value;
+      let expression = expressions[facename];
+
+      faceVariableName = facename;
+      nosePatterns = expression.nosePatterns;
+      eyePatterns = expression.eyePatterns;
+      eyeBlinkPatterns = expression.eyeBlinkPatterns;
+      mouthPatterns = expression.mouthPatterns;
+
+      drawFace();
+    });
+
+
+    // TOGGLE BLINK
+    document.getElementById("toggleBlink").addEventListener("click", (e) => {
+      showBlink = !showBlink;
+      drawFace();
+
+      document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
+    })
+
+
+
+
+
+    // CODE OUTPUT
     function updateOutput() {
       let output = document.getElementById("output");
       output.value = `struct FaceExpression ${faceVariableName} = {
@@ -127,95 +161,43 @@
 };`;
     }
 
-    function updateFaceSwitcher() {
-      document.getElementById("loadedFacesSelect").innerHTML = Object.keys(expressions).map(name => `<option>${name}</option>\n`);
-      document.getElementById("loadedFacesSelect").value = faceVariableName;
-    }
-
-
-    function drawDot(x, y, size) {
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
-      ctx.fillStyle = "#0099FF";
-      ctx.fill();
-    }
-
-    function drawPanelBox(x, y, numMatrices) {
-      ctx.beginPath();
-      ctx.rect(x - (dotSize / 2) - 1, y - (dotSize / 2) - 1, dotSize * 8 * numMatrices + 2, dotSize * 8 + 2);
-      ctx.strokeStyle = "#444";
-      ctx.stroke();
-    }
-
-    function drawGrid(startX, startY, pattern) {
-      for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-          let x = startX + (j * dotSize);
-          let y = startY + (i * dotSize);
-
-          if (pattern[i][j])
-            drawDot(x, y, dotSize);
-
-          let clickX = x / dotSize;
-          let clickY = y / dotSize;
-          clickableLights[`${clickX},${clickY}`] = { pattern: pattern, row: i, column: j };
-        }
-
-      }
-    }
-
-    function drawFace() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawGrid(40, 200, nosePatterns[0]);
-      drawPanelBox(40, 200, 1);
-
-      drawGrid(500, 40, showBlink ? eyeBlinkPatterns[0] : eyePatterns[0]);
-      drawGrid(500 + (dotSize * 8), 40, showBlink ? eyeBlinkPatterns[1] : eyePatterns[1]);
-      drawPanelBox(500, 40, 2);
-
-      drawGrid(140, 400, mouthPatterns[0]);
-      drawGrid(140 + (dotSize * 8), 400, mouthPatterns[1]);
-      drawGrid(140 + (dotSize * 8) * 2, 400, mouthPatterns[2]);
-      drawGrid(140 + (dotSize * 8) * 3, 400, mouthPatterns[3]);
-      drawPanelBox(140, 400, 4);
-
-      updateOutput();
-    }
-
-    function parseMatrixPattern(patternString) {
-      return patternString.split(",")
-        .map(row =>
-          row.trim().replace("B", "")
-            .split("")
-            .map(bit => parseInt(bit))
-        );
-    }
-
     function patternToMatrixString(pattern) {
       return pattern.map(row => `B${row.join("")}`).join(", ");
     }
 
-    canvas.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect()
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
 
-      let dotX = Math.floor((x + dotSize / 2) / dotSize);
-      let dotY = Math.floor((y + dotSize / 2) / dotSize);
 
-      let dot = clickableLights[`${dotX},${dotY}`];
-      if (dot) {
-        dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
-        drawFace(nosePatterns, eyePatterns, mouthPatterns);
-      }
-    });
 
-    // Load face from output
+    // CODE INPUT
+    // Default face
+    function loadDefaultFace() {
+      parseWholeFace(`struct FaceExpression Face_Neutral = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
+  },
+  .Eye_Blink = {
+    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
+  },
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};`);
+    }
+
+    // Click load
     loadButton.addEventListener('click', () => {
       parseWholeFace(document.getElementById("output").value);
     });
 
+    // Load a face
     function parseWholeFace(input) {
       let lines = input.trim().split("\n");
       faceVariableName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
@@ -255,51 +237,91 @@
       updateFaceSwitcher();
     }
 
-    document.getElementById("switchLoadedFace").addEventListener("click", (e) => {
-      let facename = document.getElementById("loadedFacesSelect").value;
-      let expression = expressions[facename];
+    function parseMatrixPattern(patternString) {
+      return patternString.split(",")
+        .map(row =>
+          row.trim().replace("B", "")
+            .split("")
+            .map(bit => parseInt(bit))
+        );
+    }
 
-      faceVariableName = facename;
-      nosePatterns = expression.nosePatterns;
-      eyePatterns = expression.eyePatterns;
-      eyeBlinkPatterns = expression.eyeBlinkPatterns;
-      mouthPatterns = expression.mouthPatterns;
 
-      drawFace();
+
+
+    // FACE RENDERING
+    function drawFace() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid(40, 200, nosePatterns[0]);
+      drawPanelBox(40, 200, 1);
+
+      drawGrid(500, 40, showBlink ? eyeBlinkPatterns[0] : eyePatterns[0]);
+      drawGrid(500 + (dotSize * 8), 40, showBlink ? eyeBlinkPatterns[1] : eyePatterns[1]);
+      drawPanelBox(500, 40, 2);
+
+      drawGrid(140, 400, mouthPatterns[0]);
+      drawGrid(140 + (dotSize * 8), 400, mouthPatterns[1]);
+      drawGrid(140 + (dotSize * 8) * 2, 400, mouthPatterns[2]);
+      drawGrid(140 + (dotSize * 8) * 3, 400, mouthPatterns[3]);
+      drawPanelBox(140, 400, 4);
+
+      updateOutput();
+    }
+
+    function drawDot(x, y, size) {
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
+      ctx.fillStyle = "#0099FF";
+      ctx.fill();
+    }
+
+    function drawPanelBox(x, y, numMatrices) {
+      ctx.beginPath();
+      ctx.rect(x - (dotSize / 2) - 1, y - (dotSize / 2) - 1, dotSize * 8 * numMatrices + 2, dotSize * 8 + 2);
+      ctx.strokeStyle = "#444";
+      ctx.stroke();
+    }
+
+    function drawGrid(startX, startY, pattern) {
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          let x = startX + (j * dotSize);
+          let y = startY + (i * dotSize);
+
+          if (pattern[i][j])
+            drawDot(x, y, dotSize);
+
+          let clickX = x / dotSize;
+          let clickY = y / dotSize;
+          clickableLights[`${clickX},${clickY}`] = { pattern: pattern, row: i, column: j };
+        }
+
+      }
+    }
+
+
+    // CANVAS INTERACTION
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect()
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      let dotX = Math.floor((x + dotSize / 2) / dotSize);
+      let dotY = Math.floor((y + dotSize / 2) / dotSize);
+
+      let dot = clickableLights[`${dotX},${dotY}`];
+      if (dot) {
+        dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
+        drawFace(nosePatterns, eyePatterns, mouthPatterns);
+      }
     });
 
 
-    document.getElementById("toggleBlink").addEventListener("click", (e) => {
-      showBlink = !showBlink;
-      drawFace();
-
-      document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
-    })
 
 
-    function resetFace() {
-      parseWholeFace(`struct FaceExpression Face_Neutral = {
-  .Nose = {
-    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
-  },
-  .Eye = {
-    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
-    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
-  },
-  .Eye_Blink = {
-    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
-  },
-  .Mouth = {
-    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
-    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
-  }
-};`);
-    }
 
-    resetFace();
+    loadDefaultFace();
 
   </script>
 </body>
