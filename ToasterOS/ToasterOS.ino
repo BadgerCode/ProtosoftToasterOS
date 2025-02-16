@@ -86,9 +86,12 @@ unsigned long BoopHoldStarted = 0;
 int MinBoopHoldForTriggerMs = 300;
 unsigned long BoopLastDetected = 0;
 int MaxBoopRetainAfterStopMs = 2000;
+unsigned long LastBoop = 0;
+int ConsecutiveBoops = 0;
 
 
 // Debug
+unsigned long DEBUG_LastOutputTime = 0;
 unsigned long FrameDuration_NextPrint = millis() + 20;
 unsigned int FrameDuration_MaxDuration = 0;
 unsigned long FPSCOUNT_CountingStarted = 0;
@@ -117,15 +120,29 @@ void loop() {
 
   // Touch sensor
   if (getDistance() < 500) {
-    if (!BeingBooped && BoopHoldStarted == 0) BoopHoldStarted = millis();
+    // If there's not an active boop
+    // And we're not still within the grace window for a boop
+    if (BoopHoldStarted == 0 && !BeingBooped) BoopHoldStarted = millis();
+
     BoopLastDetected = millis();
   } else {
     BoopHoldStarted = 0;
   }
 
+  bool wasBeingBooped = BeingBooped;
   BeingBooped = BoopLastDetected > 0                                           // Don't trigger on reboot
                 && (timeSince(BoopHoldStarted) >= MinBoopHoldForTriggerMs)     // Avoid accidental short detection
                 && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
+
+
+  // Consecutive boop detection
+  if (!wasBeingBooped && BeingBooped) LastBoop = millis();
+
+  if (timeSince(LastBoop) > 10000) ConsecutiveBoops = 0;
+
+  // If we're coming out of a boop
+  if (wasBeingBooped && !BeingBooped)
+    ConsecutiveBoops++;
 
 
   // Make the face bounce up and down
@@ -193,18 +210,22 @@ void loop() {
   if (DEBUG_MODE == 1) {
     // Count FPS
     FPSCOUNT_Iterations++;
-    if (timeSince(FPSCOUNT_CountingStarted) >= 1000) {
+
+    // Output
+    if (timeSince(DEBUG_LastOutputTime) >= 1000) {
+      DEBUG_LastOutputTime = millis();
+
       Serial.println(FPSCOUNT_Iterations);
       FPSCOUNT_Iterations = 0;
-      FPSCOUNT_CountingStarted = millis();
     }
   } else if (DEBUG_MODE == 2) {
     // Display max frame duration
     unsigned int duration = millis() - curTime;
     if (duration > FrameDuration_MaxDuration) FrameDuration_MaxDuration = duration;
 
-    if (curTime >= FrameDuration_NextPrint) {
-      FrameDuration_NextPrint = millis() + 10;
+    // Output
+    if (timeSince(DEBUG_LastOutputTime) >= 10) {
+      DEBUG_LastOutputTime = millis();
 
       Serial.println(FrameDuration_MaxDuration);
       FrameDuration_MaxDuration = 0;
