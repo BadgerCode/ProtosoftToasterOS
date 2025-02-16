@@ -11,7 +11,7 @@
 
 class FaceRender {
 private:
-  const int Brightness = 8; // 0 - 15
+  const int Brightness = 8;  // 0 - 15
 
   // Face LED state
   // 2 sides, 7 panels, 8 rows per panel
@@ -47,6 +47,23 @@ public:
   }
 
 
+  void Clear() {
+    byte emptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    // Mouth
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, emptyPanel, false, 0);
+
+    // Nose
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, emptyPanel, false, 0);
+
+    // Eyes
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, emptyPanel, false, 0);
+  }
+
+
   void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
     // Mouth
     FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
@@ -64,7 +81,6 @@ public:
   }
 
 
-private:
   // Update face LED state
   void SetLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
     SetPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
@@ -113,7 +129,7 @@ private:
     return b;
   }
 
-public:
+
   // Render face
   void ProcessRenderQueue() {
     int sectionsRendered = 0;

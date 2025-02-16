@@ -2,6 +2,7 @@
 #include "LedControl.h"
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
+#include "Game.h"
 
 // PIN DEFINITIONS
 // PINS: Input
@@ -24,6 +25,7 @@
 // Additional defines
 #define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
 #define LEDSTRIP_NUM_LEDS 15
+#define BOOPS_FOR_GAME 2  // TODO: SET TO 7
 
 
 
@@ -90,6 +92,10 @@ unsigned long LastBoop = 0;
 int ConsecutiveBoops = 0;
 
 
+// Game
+bool EnableGame = false;
+
+
 // Debug
 unsigned long DEBUG_LastOutputTime = 0;
 unsigned long FrameDuration_NextPrint = millis() + 20;
@@ -119,7 +125,8 @@ void loop() {
 
 
   // Touch sensor
-  if (getDistance() < 500) {
+  bool boopSensorTouched = getDistance() < 500;
+  if (boopSensorTouched) {
     // If there's not an active boop
     // And we're not still within the grace window for a boop
     if (BoopHoldStarted == 0 && !BeingBooped) BoopHoldStarted = millis();
@@ -144,38 +151,43 @@ void loop() {
   if (wasBeingBooped && !BeingBooped)
     ConsecutiveBoops++;
 
+  if (ConsecutiveBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
-  // Make the face bounce up and down
-  if (curTime >= NextOffsetShift) {
-    NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 1.5 : OffsetDelay);
 
-    Face_OffsetY += Face_OffsetY_Dir;
+  if (EnableGame) {
+    EnableGame = GameLoop(ProtoFaceRenderer, boopSensorTouched);
+  } else {
+    // Make the face bounce up and down
+    if (curTime >= NextOffsetShift) {
+      NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 1.5 : OffsetDelay);
 
-    // Check if it's time to reverse direction
-    if (abs(Face_OffsetY) >= 1) Face_OffsetY_Dir *= -1;
+      Face_OffsetY += Face_OffsetY_Dir;
+
+      // Check if it's time to reverse direction
+      if (abs(Face_OffsetY) >= 1) Face_OffsetY_Dir *= -1;
+    }
+
+
+    // Determine expression
+    struct FaceExpression facialExpression = Face_Neutral;
+    bool shouldBlink = (curTime >= NextBlink);
+
+    if (BeingBooped) {
+      facialExpression = Face_Heart;
+    } else if (Special_Face_Index != -1) {
+      facialExpression = *(SpecialExpressions[Special_Face_Index]);
+    }
+
+
+    // Render the face
+    ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+    ProtoFaceRenderer->ProcessRenderQueue();
   }
-
-
-  // Determine expression
-  struct FaceExpression facialExpression = Face_Neutral;
-  bool shouldBlink = (curTime >= NextBlink);
-
-  if (BeingBooped) {
-    facialExpression = Face_Heart;
-  } else if (Special_Face_Index != -1) {
-    facialExpression = *(SpecialExpressions[Special_Face_Index]);
-  }
-
-
-  // Render the face
-  ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
-  ProtoFaceRenderer->ProcessRenderQueue();
-
 
 
   // LED strips
   if (NextLEDStripUpdate <= curTime) {
-    if (BeingBooped) {
+    if (BeingBooped && !EnableGame) {
       // RGB scrolling
       for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
         LEDSTRIP_LEDS[i] = CHSV(LEDStripAnimationOffset + (i * 5), 255, 255);
