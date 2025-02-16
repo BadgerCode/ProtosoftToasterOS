@@ -1,3 +1,9 @@
+struct GameObstacle {
+  int x;
+  int height;
+  int width;
+};
+
 
 // TODO: Put this somewhere else
 unsigned long timeSince(unsigned long previousTime) {
@@ -8,16 +14,37 @@ unsigned long timeSince(unsigned long previousTime) {
 bool GAME_Initalised = false;
 unsigned long GAME_TouchStarted = 0;
 
+const int GAME_NumObstacles = 5;
+struct GameObstacle GAME_Obstacles[GAME_NumObstacles];
+
 int GAME_ObstacleX = -2;  // bottom left corner
 unsigned long GAME_LastScroll = 0;
+int GAME_ScrollDelay = 100;
+
+
+unsigned long GAME_JumpStarted = 0;
+int GAME_JumpDuration = 800;
+int GAME_JumpDelay = 100;
+
+
+int GAME_HP = 3;  // 4 max
+int GAME_SCORE = 0;
 
 
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
+void renderScore(FaceRender* faceRenderer, int hp, int score);
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height);
 
 
 void GameInit(FaceRender* faceRenderer) {
   faceRenderer->Clear();
+
+
+  for (int i = 0; i < GAME_NumObstacles; i++) {
+    GAME_Obstacles[i].x = -2 - (i * 12);
+    GAME_Obstacles[i].height = (i % 2) == 0 ? 2 : 3;
+    GAME_Obstacles[i].width = 2;
+  }
 }
 
 bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
@@ -30,13 +57,23 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
 
 
   // Scroll game to the side
-  if (timeSince(GAME_LastScroll) > 100) {
+  if (timeSince(GAME_LastScroll) > GAME_ScrollDelay) {
     GAME_LastScroll = millis();
 
     GAME_ObstacleX++;
-    if (GAME_ObstacleX > 33) GAME_ObstacleX = -2;
+    if (GAME_ObstacleX > (GAME_NumObstacles * 12 + 50)) GAME_ObstacleX = -2;
   }
 
+
+  // Jump detection
+  bool isJumping = GAME_JumpStarted != 0 && timeSince(GAME_JumpStarted) < GAME_JumpDuration;
+  if (!isJumping && timeSince(GAME_JumpStarted) > (GAME_JumpDuration + GAME_JumpDelay) && boopSensorTouched) {
+    GAME_JumpStarted = millis();
+    isJumping = true;
+  }
+
+
+  // Generate output
   bool output[32][8] = {};
 
   // Floor
@@ -44,14 +81,18 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
 
   // Character
   int charX = 27;
-  int charY = boopSensorTouched ? 5 : 1;
+  int charY = isJumping ? 5 : 1;
   drawRect(output, charX, charY, 3, 3);
 
-  // Obstacle 1
-  drawRect(output, GAME_ObstacleX, 1, 2, 2);
+  // Obstacle
+  for (int i = 0; i < GAME_NumObstacles; i++) {
+    struct GameObstacle obstacle = GAME_Obstacles[i];
+    drawRect(output, obstacle.x + GAME_ObstacleX, 1, obstacle.width, obstacle.height);
+  }
 
 
   renderOutput(faceRenderer, output);
+  renderScore(faceRenderer, GAME_HP, GAME_SCORE);
   faceRenderer->ProcessRenderQueue();  // For some reason, this tanks FPS compared to the normal face???
 
   return true;
@@ -109,4 +150,34 @@ void renderOutput(FaceRender* faceRenderer, bool output[][8]) {
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH2, panel2, false, 0);
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH3, panel3, false, 0);
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH4, panel4, false, 0);
+}
+
+void renderScore(FaceRender* faceRenderer, int hp, int score) {
+  byte panel1[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+  byte panel2[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+  if (hp > 0) {
+    panel1[0] |= B10100000;
+    panel1[1] |= B11100000;
+    panel1[2] |= B01000000;
+  }
+  if (hp > 1) {
+    panel1[0] |= B00001010;
+    panel1[1] |= B00001110;
+    panel1[2] |= B00000100;
+  }
+  if (hp > 2) {
+    panel2[0] |= B10100000;
+    panel2[1] |= B11100000;
+    panel2[2] |= B01000000;
+  }
+  if (hp > 3) {
+    panel2[0] |= B00001010;
+    panel2[1] |= B00001110;
+    panel2[2] |= B00000100;
+  }
+
+  // From front to back
+  faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE1, panel1, true, 0);
+  faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE2, panel2, true, 0);
 }
