@@ -1,4 +1,5 @@
 struct Rect {
+  // x,y = bottom-left corner
   int x;
   int y;
   int height;
@@ -7,6 +8,9 @@ struct Rect {
 
 
 bool GAME_Initalised = false;
+bool GAME_GameOver = false;
+unsigned long GAME_Started = 0;  // Game state
+unsigned long GAME_Ended = 0;    // Game state
 unsigned long GAME_TouchStarted = 0;
 
 const int GAME_NumObstacles = 5;
@@ -26,7 +30,7 @@ int GAME_HP = 4;                           // Game state; 4 max
 unsigned long GAME_PlayerLastTookHit = 0;  // Game state
 int GAME_SCORE = 0;                        // Game state
 
-
+void Gameover(FaceRender* faceRenderer);
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
 void renderScore(FaceRender* faceRenderer, int hp, int score);
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height);
@@ -36,6 +40,9 @@ bool areRectsColliding(Rect rect1, Rect rect2);
 void GameInit(FaceRender* faceRenderer) {
   faceRenderer->Clear();
 
+  GAME_Started = millis();
+  GAME_Ended = 0;
+  GAME_GameOver = false;
   GAME_OffsetX = 0;
   GAME_HP = 4;
   GAME_PlayerLastTookHit = 0;
@@ -59,85 +66,106 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
   // Quit by holding the boop for 10 seconds
   if (!boopSensorTouched) GAME_TouchStarted = 0;
   else if (GAME_TouchStarted == 0) GAME_TouchStarted = millis();
-  else if (millis() - GAME_TouchStarted > 10000) {
+  else if (timeSince(GAME_TouchStarted) > 10000) {
     GAME_Initalised = false;
     return false;
   }
 
+  // Show gameover screen
+  if (GAME_GameOver) {
+    Gameover(faceRenderer);
+  } else {
+    // Player
+    struct Rect player = { 27, 1, 3, 3 };
 
-  // Scroll game to the side
-  if (timeSince(GAME_LastScroll) > GAME_ScrollDelay) {
-    GAME_LastScroll = millis();
-
-    for (int i = 0; i < GAME_NumObstacles; i++) {
-      GAME_Obstacles[i].x++;
-    }
-
-    GAME_OffsetX++;
-    if (GAME_OffsetX >= (GAME_NumObstacles * 12 + 50)) {
-      GAME_OffsetX = 0;
+    // Scroll game to the side
+    if (timeSince(GAME_LastScroll) > GAME_ScrollDelay) {
+      GAME_LastScroll = millis();
 
       for (int i = 0; i < GAME_NumObstacles; i++) {
-        GAME_Obstacles[i].x = -2 - (i * 12);
+        GAME_Obstacles[i].x++;
+      }
+
+      GAME_OffsetX++;
+      if (GAME_OffsetX >= (GAME_NumObstacles * 12 + 50)) {
+        GAME_OffsetX = 0;
+
+        for (int i = 0; i < GAME_NumObstacles; i++) {
+          GAME_Obstacles[i].x = -2 - (i * 12);
+        }
       }
     }
-  }
 
-  // Jump detection
-  bool isJumping = GAME_JumpStarted != 0 && timeSince(GAME_JumpStarted) < GAME_JumpDuration;
-  if (!isJumping && timeSince(GAME_JumpStarted) > (GAME_JumpDuration + GAME_JumpDelay) && boopSensorTouched) {
-    GAME_JumpStarted = millis();
-    isJumping = true;
-  }
-
-
-  // Player
-  struct Rect player = { 27, (isJumping ? 5 : 1), 3, 3 };
-
-
-  // hit detection
-  bool playerHasBeenHit = false;
-  for (int i = 0; i < GAME_NumObstacles; i++) {
-    struct Rect obstacle = GAME_Obstacles[i];
-    if (areRectsColliding(player, obstacle)) playerHasBeenHit = true;
-  }
-
-  if (playerHasBeenHit && timeSince(GAME_PlayerLastTookHit) > 1000) {
-    GAME_HP--;
-    GAME_PlayerLastTookHit = millis();
-
-    if (GAME_HP <= 0) {
-      GAME_Initalised = false;
-      return true;
+    // Jump detection
+    bool isJumping = GAME_JumpStarted != 0 && timeSince(GAME_JumpStarted) < GAME_JumpDuration;
+    if (!isJumping && timeSince(GAME_JumpStarted) > (GAME_JumpDuration + GAME_JumpDelay) && boopSensorTouched) {
+      GAME_JumpStarted = millis();
+      isJumping = true;
     }
+
+    if (isJumping) player.y = 5;
+
+
+    // hit detection
+    bool playerHasBeenHit = false;
+    for (int i = 0; i < GAME_NumObstacles; i++) {
+      struct Rect obstacle = GAME_Obstacles[i];
+      if (areRectsColliding(player, obstacle)) playerHasBeenHit = true;
+    }
+
+
+    // Game over detection
+    if (playerHasBeenHit && timeSince(GAME_PlayerLastTookHit) > 1000) {
+      GAME_HP--;
+      GAME_PlayerLastTookHit = millis();
+
+      if (GAME_HP <= 0) {
+        GAME_GameOver = true;
+        GAME_Ended = millis();
+      }
+    }
+
+
+    // Generate output
+    bool output[32][8] = {};
+
+    // Floor
+    drawRect(output, 0, 0, 32, 1);
+
+    // Character
+    drawRect(output, player.x, player.y, player.width, player.height);
+
+    // Obstacle
+    for (int i = 0; i < GAME_NumObstacles; i++) {
+      struct Rect obstacle = GAME_Obstacles[i];
+      drawRect(output, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    }
+
+
+    renderOutput(faceRenderer, output);
+    renderScore(faceRenderer, GAME_HP, GAME_SCORE);
   }
 
-
-  // Generate output
-  bool output[32][8] = {};
-
-  // Floor
-  drawRect(output, 0, 0, 32, 1);
-
-  // Character
-  drawRect(output, player.x, player.y, player.width, player.height);
-
-  // Obstacle
-  for (int i = 0; i < GAME_NumObstacles; i++) {
-    struct Rect obstacle = GAME_Obstacles[i];
-    drawRect(output, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-  }
-
-
-  renderOutput(faceRenderer, output);
-  renderScore(faceRenderer, GAME_HP, GAME_SCORE);
   faceRenderer->ProcessRenderQueue();
-
   return true;
 }
 
 
-// x,y = bottom-left corner
+void Gameover(FaceRender* faceRenderer) {
+  // Restart the game by holding the boop sensor for 5 seconds
+  if (GAME_TouchStarted != 0 && timeSince(GAME_TouchStarted) > 5000) {
+    GAME_Initalised = false;
+    return;
+  }
+
+  unsigned long score = (GAME_Ended - GAME_Started) / 1000;
+}
+
+
+bool areRectsColliding(Rect rect1, Rect rect2) {
+  return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
+}
+
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height) {
   for (int x = rectX; x < (rectX + width); x++) {
     if (x < 0 || x > 31) continue;
@@ -147,30 +175,6 @@ void drawRect(bool output[][8], int rectX, int rectY, int width, int height) {
       output[x][y] = true;
     }
   }
-}
-
-bool areRectsColliding(Rect rect1, Rect rect2) {
-  // if (rect2.x > 29 || (rect2.x + rect2.width) < 27)
-  // if (rect2.x < 32)
-  // return false;
-
-  // rect 1: 0,0 size: 2x2
-  // rect 2: 1,0 size: 2x2
-
-  int minX = rect2.x;                 // 1
-  int maxX = rect2.x + rect2.width;   // 3
-  int minY = rect2.y;                 // 0
-  int maxY = rect2.y + rect2.height;  // 2
-
-  // If rect 1 is to the left or to the right of rect 2
-  if (rect1.x + rect1.width < minX || rect1.x > maxX)  // 0 + 2 < 1 || 0 > 3
-    return false;
-
-  // If rect 1 is below or above rect 2
-  if (rect1.y + rect1.height < minY || rect1.y > maxY)  // 0 + 2 < 0 || 0 > 2
-    return false;
-
-  return true;
 }
 
 void renderOutput(FaceRender* faceRenderer, bool output[][8]) {
