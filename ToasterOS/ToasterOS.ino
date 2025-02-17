@@ -1,5 +1,6 @@
 #include <FastLED.h>
 #include "LedControl.h"
+#include "Utils.h"
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
 #include "Game.h"
@@ -93,7 +94,7 @@ int ConsecutiveBoops = 0;
 
 
 // Game
-bool EnableGame = true;
+bool EnableGame = true; // TODO: Set to false by default
 
 
 // Debug

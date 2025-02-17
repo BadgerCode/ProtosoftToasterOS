@@ -6,13 +6,6 @@ struct Rect {
 };
 
 
-
-// TODO: Put this somewhere else
-unsigned long timeSince(unsigned long previousTime) {
-  return millis() - previousTime;
-}
-
-
 bool GAME_Initalised = false;
 unsigned long GAME_TouchStarted = 0;
 
