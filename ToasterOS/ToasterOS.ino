@@ -23,7 +23,7 @@
 
 
 // Additional defines
-#define DEBUG_MODE 1  // 0 = off, 1 = FPS log, 2 = max frame duration log
+#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
 #define LEDSTRIP_NUM_LEDS 15
 #define BOOPS_FOR_GAME 2  // TODO: SET TO 7
 
