@@ -148,8 +148,13 @@ void loop() {
   if (timeSince(LastBoop) > 10000) ConsecutiveBoops = 0;
 
   // If we're coming out of a boop
-  if (wasBeingBooped && !BeingBooped)
+  if (wasBeingBooped && !BeingBooped) {
     ConsecutiveBoops++;
+
+    // Force change to a special face
+    Special_Face_Index = random(0, NumSpecialFaces);
+    NextSpecialFace = millis();
+  }
 
   if (ConsecutiveBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
