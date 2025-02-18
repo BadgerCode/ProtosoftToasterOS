@@ -28,9 +28,11 @@ int GAME_JumpDelay = 100;
 
 int GAME_HP = 4;                           // Game state; 4 max
 unsigned long GAME_PlayerLastTookHit = 0;  // Game state
+int GAME_InvulnerabilityDuration = 1000;   //
 int GAME_SCORE = 0;                        // Game state
 
-void Gameover(FaceRender* faceRenderer);
+// TODO: Use a class instead (I hate the need for forward declaration)
+void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer);
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
 void renderScore(FaceRender* faceRenderer, int hp, int score);
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height);
@@ -60,7 +62,7 @@ void GameInit(FaceRender* faceRenderer) {
   GAME_Initalised = true;
 }
 
-bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
+bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool boopSensorTouched) {
   if (!GAME_Initalised) GameInit(faceRenderer);
 
   // Quit by holding the boop for 10 seconds
@@ -73,7 +75,7 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
 
   // Show gameover screen
   if (GAME_GameOver) {
-    Gameover(faceRenderer);
+    Gameover(faceRenderer, ledStripRenderer);
   } else {
     // Player
     struct Rect player = { 27, 1, 3, 3 };
@@ -107,21 +109,24 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
 
 
     // hit detection
-    bool playerHasBeenHit = false;
-    for (int i = 0; i < GAME_NumObstacles; i++) {
-      struct Rect obstacle = GAME_Obstacles[i];
-      if (areRectsColliding(player, obstacle)) playerHasBeenHit = true;
-    }
+    bool playerIsInvulnerable = GAME_PlayerLastTookHit != 0 && timeSince(GAME_PlayerLastTookHit) < GAME_InvulnerabilityDuration;
+    if (!playerIsInvulnerable) {
+      bool obstacleCollision = false;
+      for (int i = 0; i < GAME_NumObstacles; i++) {
+        struct Rect obstacle = GAME_Obstacles[i];
+        if (areRectsColliding(player, obstacle)) obstacleCollision = true;
+      }
 
 
-    // Game over detection
-    if (playerHasBeenHit && timeSince(GAME_PlayerLastTookHit) > 1000) {
-      GAME_HP--;
-      GAME_PlayerLastTookHit = millis();
+      // Game over detection
+      if (obstacleCollision) {
+        GAME_HP--;
+        GAME_PlayerLastTookHit = millis();
 
-      if (GAME_HP <= 0) {
-        GAME_GameOver = true;
-        GAME_Ended = millis();
+        if (GAME_HP <= 0) {
+          GAME_GameOver = true;
+          GAME_Ended = millis();
+        }
       }
     }
 
@@ -144,21 +149,36 @@ bool GameLoop(FaceRender* faceRenderer, bool boopSensorTouched) {
 
     renderOutput(faceRenderer, output);
     renderScore(faceRenderer, GAME_HP, GAME_SCORE);
+
+
+    // Side lights
+    if (playerIsInvulnerable) {
+      ledStripRenderer->SetAllLEDs(CHSV(7, 242, 255));
+    } else if (isJumping) {
+      ledStripRenderer->SetAllLEDs(CHSV(135, 242, 255));
+    } else {
+      ledStripRenderer->SetAllLEDs(CHSV(163, 242, 255));
+    }
   }
 
   faceRenderer->ProcessRenderQueue();
+  ledStripRenderer->Render();
   return true;
 }
 
 
-void Gameover(FaceRender* faceRenderer) {
+void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer) {
   // Restart the game by holding the boop sensor for 5 seconds
   if (GAME_TouchStarted != 0 && timeSince(GAME_TouchStarted) > 5000) {
     GAME_Initalised = false;
     return;
   }
 
+
   unsigned long score = (GAME_Ended - GAME_Started) / 1000;
+
+  // Side lights
+  ledStripRenderer->SetAllLEDs(CHSV(0, 242, 255));
 }
 
 

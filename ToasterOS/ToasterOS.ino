@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
+#include "LEDStripRender.h"
 #include "Game.h"
 
 // PIN DEFINITIONS
@@ -24,11 +25,8 @@
 
 
 // Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
-#define LEDSTRIP_NUM_LEDS 15
+#define DEBUG_MODE 0      // 0 = off, 1 = FPS log, 2 = max frame duration log
 #define BOOPS_FOR_GAME 2  // TODO: SET TO 7
-
-
 
 
 
@@ -37,7 +35,7 @@
 FaceRender* ProtoFaceRenderer = new FaceRender(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS);
 
 // LED Strips
-CRGB LEDSTRIP_LEDS[LEDSTRIP_NUM_LEDS];
+LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 
 void setup() {
@@ -54,8 +52,8 @@ void setup() {
   ProtoFaceRenderer->Initialise();
 
   // LED strips
-  FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
-  FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDSTRIP_LEDS, LEDSTRIP_NUM_LEDS);
+  FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
+  FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
 }
 
 
@@ -94,7 +92,7 @@ int ConsecutiveBoops = 0;
 
 
 // Game
-bool EnableGame = true; // TODO: Set to false by default
+bool EnableGame = true;  // TODO: Set to false by default
 
 
 // Debug
@@ -161,7 +159,7 @@ void loop() {
 
 
   if (EnableGame) {
-    EnableGame = GameLoop(ProtoFaceRenderer, boopSensorTouched);
+    EnableGame = GameLoop(ProtoFaceRenderer, LEDStripRenderer, boopSensorTouched);
   } else {
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
@@ -188,39 +186,37 @@ void loop() {
     // Render the face
     ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
     ProtoFaceRenderer->ProcessRenderQueue();
-  }
 
 
-  // LED strips
-  if (NextLEDStripUpdate <= curTime) {
-    if (BeingBooped && !EnableGame) {
-      // RGB scrolling
-      for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(LEDStripAnimationOffset + (i * 5), 255, 255);
+    // LED strips
+    if (NextLEDStripUpdate <= curTime) {
+      if (BeingBooped && !EnableGame) {
+        // RGB scrolling
+        for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
+          LEDStripRenderer->SetLED(i, CHSV(LEDStripAnimationOffset + (i * 5), 255, 255));
+        }
+
+        LEDStripAnimationOffset = (LEDStripAnimationOffset + 2) % 255;
+      } else {
+        // Pulsating blue
+        int minShift = 170;
+        int maxShift = 250;
+        LEDStripAnimationOffset = LEDStripAnimationOffset + (HueShiftForward ? 2 : -2);
+
+        if (LEDStripAnimationOffset < minShift) {
+          LEDStripAnimationOffset = minShift;
+          HueShiftForward = true;
+        } else if (LEDStripAnimationOffset > maxShift) {
+          LEDStripAnimationOffset = maxShift;
+          HueShiftForward = false;
+        }
+
+        LEDStripRenderer->SetAllLEDs(CHSV(160, 255, LEDStripAnimationOffset));
       }
 
-      LEDStripAnimationOffset = (LEDStripAnimationOffset + 2) % 255;
-    } else {
-      // Pulsating blue
-      int minShift = 170;
-      int maxShift = 250;
-      LEDStripAnimationOffset = LEDStripAnimationOffset + (HueShiftForward ? 2 : -2);
-
-      if (LEDStripAnimationOffset < minShift) {
-        LEDStripAnimationOffset = minShift;
-        HueShiftForward = true;
-      } else if (LEDStripAnimationOffset > maxShift) {
-        LEDStripAnimationOffset = maxShift;
-        HueShiftForward = false;
-      }
-
-      for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-        LEDSTRIP_LEDS[i] = CHSV(160, 255, LEDStripAnimationOffset);
-      }
+      NextLEDStripUpdate = curTime + 15;
+      LEDStripRenderer->Render();
     }
-
-    NextLEDStripUpdate = curTime + 15;
-    FastLED.show();
   }
 
 
