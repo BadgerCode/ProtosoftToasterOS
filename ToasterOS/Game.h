@@ -87,13 +87,14 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
     }
 
     // Jump detection
-    bool isJumping = GAME_JumpStarted != 0 && timeSince(GAME_JumpStarted) < GAME_JumpDuration;
-    if (!isJumping && timeSince(GAME_JumpStarted) > (GAME_JumpDuration + GAME_JumpDelay) && boopSensorTouched) {
+    unsigned long timeSinceJump = timeSince(GAME_JumpStarted);
+    bool isJumping = GAME_JumpStarted != 0 && timeSinceJump < GAME_JumpDuration;
+    if (!isJumping && timeSinceJump > (GAME_JumpDuration + GAME_JumpDelay) && boopSensorTouched) {
       GAME_JumpStarted = millis();
       isJumping = true;
     }
 
-    if (isJumping) player.y = 5;
+    if (isJumping) player.y = (timeSinceJump < 100 || timeSinceJump > (GAME_JumpDuration - 100)) ? 3 : 5;
 
 
     // hit detection
