@@ -10,10 +10,11 @@ struct Rect {
 bool GAME_Initalised = false;
 bool GAME_GameOver = false;
 unsigned long GAME_Started = 0;  // Game state
+int GAME_RoundNumber = 0;        // Game state
 unsigned long GAME_Ended = 0;    // Game state
 unsigned long GAME_TouchStarted = 0;
 
-const int GAME_NumObstacles = 20;
+const int GAME_NumObstacles = 12;
 struct Rect GAME_Obstacles[GAME_NumObstacles];
 
 unsigned long GAME_LastScroll = 0;  // Game state
@@ -27,7 +28,7 @@ int GAME_JumpDelay = 100;
 
 int GAME_HP = 4;                           // Game state; 4 max
 unsigned long GAME_PlayerLastTookHit = 0;  // Game state
-int GAME_InvulnerabilityDuration = 1000;   //
+int GAME_InvulnerabilityDuration = 3000;   //
 
 // TODO: Use a class instead (I hate the need for forward declaration)
 void ResetObstacles();
@@ -42,6 +43,7 @@ void GameInit(FaceRender* faceRenderer) {
   faceRenderer->Clear();
 
   GAME_Started = millis();
+  GAME_RoundNumber = 0;
   GAME_Ended = 0;
   GAME_GameOver = false;
   GAME_HP = 4;
@@ -278,16 +280,42 @@ void renderHUD(FaceRender* faceRenderer, int hp) {
 
 
 void ResetObstacles() {
-  // TODO: Concept of difficulty over time
+  GAME_RoundNumber++;
+
+  int minHeight = 2;
+  int maxHeight = 2;
+  int minWidth = 2;
+  int maxWidth = 3;
+  int minDistance = 12;
+
+  if (GAME_RoundNumber >= 2) {
+    maxHeight = 3;
+  }
+  if (GAME_RoundNumber >= 3) {
+    minDistance = 11;
+  }
+  if (GAME_RoundNumber >= 4) {
+    minWidth = 3;
+    maxWidth = 4;
+  }
+  if (GAME_RoundNumber >= 5) {
+    minDistance = 10;
+    maxWidth = 5;
+  }
+  if (GAME_RoundNumber >= 6) {
+    minHeight = 3;
+    maxHeight = 4;
+  }
+
 
   int currentX = -5;
 
   for (int i = 0; i < GAME_NumObstacles; i++) {
     GAME_Obstacles[i].x = currentX;
     GAME_Obstacles[i].y = 1;
-    GAME_Obstacles[i].height = random(2, 4);
-    GAME_Obstacles[i].width = random(2, 6);
+    GAME_Obstacles[i].height = random(minHeight, maxHeight + 1);
+    GAME_Obstacles[i].width = random(minWidth, maxWidth + 1);
 
-    currentX -= random(10, 15);
+    currentX -= random(minDistance, 15);
   }
 }
