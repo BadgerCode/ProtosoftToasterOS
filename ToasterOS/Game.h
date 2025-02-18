@@ -13,10 +13,9 @@ unsigned long GAME_Started = 0;  // Game state
 unsigned long GAME_Ended = 0;    // Game state
 unsigned long GAME_TouchStarted = 0;
 
-const int GAME_NumObstacles = 5;
+const int GAME_NumObstacles = 20;
 struct Rect GAME_Obstacles[GAME_NumObstacles];
 
-int GAME_OffsetX = 0;               // Game state
 unsigned long GAME_LastScroll = 0;  // Game state
 int GAME_ScrollDelay = 100;
 
@@ -31,6 +30,7 @@ unsigned long GAME_PlayerLastTookHit = 0;  // Game state
 int GAME_InvulnerabilityDuration = 1000;   //
 
 // TODO: Use a class instead (I hate the need for forward declaration)
+void ResetObstacles();
 void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer);
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
 void renderHUD(FaceRender* faceRenderer, int hp);
@@ -44,18 +44,12 @@ void GameInit(FaceRender* faceRenderer) {
   GAME_Started = millis();
   GAME_Ended = 0;
   GAME_GameOver = false;
-  GAME_OffsetX = 0;
   GAME_HP = 4;
   GAME_PlayerLastTookHit = 0;
   GAME_JumpStarted = 0;
   GAME_LastScroll = 0;
 
-  for (int i = 0; i < GAME_NumObstacles; i++) {
-    GAME_Obstacles[i].x = -2 - (i * 12);
-    GAME_Obstacles[i].y = 1;
-    GAME_Obstacles[i].height = (i % 2) == 0 ? 2 : 3;
-    GAME_Obstacles[i].width = 2;
-  }
+  ResetObstacles();
 
   GAME_Initalised = true;
 }
@@ -86,13 +80,9 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
         GAME_Obstacles[i].x++;
       }
 
-      GAME_OffsetX++;
-      if (GAME_OffsetX >= (GAME_NumObstacles * 12 + 50)) {
-        GAME_OffsetX = 0;
-
-        for (int i = 0; i < GAME_NumObstacles; i++) {
-          GAME_Obstacles[i].x = -2 - (i * 12);
-        }
+      // Reset obstacles once the last one has left the screen
+      if (GAME_Obstacles[GAME_NumObstacles - 1].x > 40) {
+        ResetObstacles();
       }
     }
 
@@ -283,4 +273,20 @@ void renderHUD(FaceRender* faceRenderer, int hp) {
   // From front to back
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE1, panel1, true, 0);
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE2, panel2, true, 0);
+}
+
+
+void ResetObstacles() {
+  // TODO: Concept of difficulty over time
+
+  int currentX = -5;
+
+  for (int i = 0; i < GAME_NumObstacles; i++) {
+    GAME_Obstacles[i].x = currentX;
+    GAME_Obstacles[i].y = 1;
+    GAME_Obstacles[i].height = random(2, 4);
+    GAME_Obstacles[i].width = random(2, 6);
+
+    currentX -= random(10, 15);
+  }
 }

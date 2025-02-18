@@ -44,6 +44,8 @@ void setup() {
     Serial.begin(9600);
   }
 
+  randomSeed(analogRead(3));
+
   // pinMode(PIN_BUTTON, INPUT);
   pinMode(PIN_LEFT_CS, OUTPUT);
   pinMode(PIN_RIGHT_CS, OUTPUT);
