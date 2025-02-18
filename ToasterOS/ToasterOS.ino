@@ -25,8 +25,8 @@
 
 
 // Additional defines
-#define DEBUG_MODE 0      // 0 = off, 1 = FPS log, 2 = max frame duration log
-#define BOOPS_FOR_GAME 2  // TODO: SET TO 7
+#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
+#define BOOPS_FOR_GAME 7
 
 
 
@@ -94,7 +94,7 @@ int ConsecutiveBoops = 0;
 
 
 // Game
-bool EnableGame = true;  // TODO: Set to false by default
+bool EnableGame = false;
 
 
 // Debug
