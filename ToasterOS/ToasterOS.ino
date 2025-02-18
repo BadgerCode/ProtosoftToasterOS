@@ -52,6 +52,7 @@ void setup() {
 
   // LED Face
   ProtoFaceRenderer->Initialise();
+  ProtoFaceRenderer->Clear();
 
   // LED strips
   FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
