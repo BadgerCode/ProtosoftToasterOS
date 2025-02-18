@@ -32,7 +32,7 @@ int GAME_InvulnerabilityDuration = 3000;   //
 
 // TODO: Use a class instead (I hate the need for forward declaration)
 void ResetObstacles();
-void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer);
+void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool boopSensorTouched);
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
 void renderHUD(FaceRender* faceRenderer, int hp);
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height);
@@ -69,7 +69,7 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
 
   // Show gameover screen
   if (GAME_GameOver) {
-    Gameover(faceRenderer, ledStripRenderer);
+    Gameover(faceRenderer, ledStripRenderer, boopSensorTouched);
   } else {
     // Player
     struct Rect player = { 27, 1, 3, 3 };
@@ -158,12 +158,13 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
 }
 
 unsigned long getScore() {
-  return (GAME_Ended - GAME_Started) / 1000 / 2;
+  return (GAME_Ended - GAME_Started) / 1000;
 }
 
-void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer) {
+void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool boopSensorTouched) {
   // Restart the game by holding the boop sensor for 5 seconds
-  if (GAME_TouchStarted != 0 && timeSince(GAME_TouchStarted) > 5000) {
+  unsigned long timeSinceTouchStarted = timeSince(GAME_TouchStarted);
+  if (GAME_TouchStarted != 0 && timeSinceTouchStarted > 5000) {
     GAME_Initalised = false;
     return;
   }
@@ -188,7 +189,12 @@ void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer) {
   faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit1], !isReversed, !isReversed, 0);
 
   // Side lights
-  ledStripRenderer->SetAllLEDs(CHSV(0, 242, 255));
+  if (boopSensorTouched) {
+    int hue = 0 + ((float)timeSinceTouchStarted / 5000.0f * 135.0f);
+    ledStripRenderer->SetAllLEDs(CHSV(hue, 242, 255));
+  } else {
+    ledStripRenderer->SetAllLEDs(CHSV(0, 242, 255));
+  }
 }
 
 
