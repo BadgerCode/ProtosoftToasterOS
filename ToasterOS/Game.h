@@ -29,12 +29,11 @@ int GAME_JumpDelay = 100;
 int GAME_HP = 4;                           // Game state; 4 max
 unsigned long GAME_PlayerLastTookHit = 0;  // Game state
 int GAME_InvulnerabilityDuration = 1000;   //
-int GAME_SCORE = 0;                        // Game state
 
 // TODO: Use a class instead (I hate the need for forward declaration)
 void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer);
 void renderOutput(FaceRender* faceRenderer, bool output[][8]);
-void renderScore(FaceRender* faceRenderer, int hp, int score);
+void renderHUD(FaceRender* faceRenderer, int hp);
 void drawRect(bool output[][8], int rectX, int rectY, int width, int height);
 bool areRectsColliding(Rect rect1, Rect rect2);
 
@@ -48,7 +47,6 @@ void GameInit(FaceRender* faceRenderer) {
   GAME_OffsetX = 0;
   GAME_HP = 4;
   GAME_PlayerLastTookHit = 0;
-  GAME_SCORE = 0;
   GAME_JumpStarted = 0;
   GAME_LastScroll = 0;
 
@@ -148,7 +146,7 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
 
 
     renderOutput(faceRenderer, output);
-    renderScore(faceRenderer, GAME_HP, GAME_SCORE);
+    renderHUD(faceRenderer, GAME_HP);
 
 
     // Side lights
@@ -166,6 +164,9 @@ bool GameLoop(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
   return true;
 }
 
+unsigned long getScore() {
+  return (GAME_Ended - GAME_Started) / 1000 / 2;
+}
 
 void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer) {
   // Restart the game by holding the boop sensor for 5 seconds
@@ -175,7 +176,23 @@ void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer) {
   }
 
 
-  unsigned long score = (GAME_Ended - GAME_Started) / 1000;
+  unsigned long score = getScore();
+  if (score > 999) score = 999;
+
+  int digit1 = (score / 100) % 10;
+  int digit2 = (score / 10) % 10;
+  int digit3 = score % 10;
+
+  bool isReversed = true;
+  // Left
+  faceRenderer->SetPanel(true, FACE_PANEL_NOSE, Numbers_ASCII[digit1], isReversed, isReversed, 0);
+  faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
+  faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
+
+  // Right
+  faceRenderer->SetPanel(false, FACE_PANEL_NOSE, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
+  faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
+  faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit1], !isReversed, !isReversed, 0);
 
   // Side lights
   ledStripRenderer->SetAllLEDs(CHSV(0, 242, 255));
@@ -237,10 +254,11 @@ void renderOutput(FaceRender* faceRenderer, bool output[][8]) {
   faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH4, panel4, false, 0);
 }
 
-void renderScore(FaceRender* faceRenderer, int hp, int score) {
+void renderHUD(FaceRender* faceRenderer, int hp) {
   byte panel1[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
   byte panel2[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+  // HP
   if (hp > 0) {
     panel1[0] |= B10100000;
     panel1[1] |= B11100000;
