@@ -179,14 +179,26 @@ void Gameover(FaceRender* faceRenderer, LEDStripRender* ledStripRenderer, bool b
 
   bool isReversed = true;
   // Left
-  faceRenderer->SetPanel(true, FACE_PANEL_NOSE, Numbers_ASCII[digit1], isReversed, isReversed, 0);
-  faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
-  faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
+  if (score < 100) {
+    faceRenderer->ClearPanel(FACE_PANEL_NOSE, true);
+    faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
+    faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
+  } else {
+    faceRenderer->SetPanel(true, FACE_PANEL_NOSE, Numbers_ASCII[digit1], isReversed, isReversed, 0);
+    faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
+    faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
+  }
 
   // Right
-  faceRenderer->SetPanel(false, FACE_PANEL_NOSE, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
-  faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
-  faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit1], !isReversed, !isReversed, 0);
+  if (score < 100) {
+    faceRenderer->ClearPanel(FACE_PANEL_NOSE, false);
+    faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
+    faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
+  } else {
+    faceRenderer->SetPanel(false, FACE_PANEL_NOSE, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
+    faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
+    faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit1], !isReversed, !isReversed, 0);
+  }
 
   // Side lights
   if (boopSensorTouched) {

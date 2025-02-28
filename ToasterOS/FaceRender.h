@@ -12,6 +12,7 @@
 class FaceRender {
 private:
   const int Brightness = 8;  // 0 - 15
+  byte EmptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   // Face LED state
   // 2 sides, 7 panels, 8 rows per panel
@@ -48,19 +49,22 @@ public:
 
 
   void Clear() {
-    byte emptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     // Mouth
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, emptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, emptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, emptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, EmptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, EmptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, EmptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, EmptyPanel, false, 0);
 
     // Nose
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, EmptyPanel, false, 0);
 
     // Eyes
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, emptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, emptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, EmptyPanel, false, 0);
+    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, EmptyPanel, false, 0);
+  }
+
+  void ClearPanel(int panelIndex, bool isLeft) {
+    FaceRender::SetPanel(isLeft, panelIndex, EmptyPanel, false, false, 0);
   }
 
 
