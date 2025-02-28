@@ -37,6 +37,8 @@ FaceRender* ProtoFaceRenderer = new FaceRender(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_L
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
+CubeGame* CubeGameRunner = new CubeGame();
+
 
 void setup() {
   if (DEBUG_MODE) {
@@ -160,7 +162,7 @@ void loop() {
 
 
   if (EnableGame) {
-    EnableGame = GameLoop(ProtoFaceRenderer, LEDStripRenderer, boopSensorTouched);
+    EnableGame = CubeGameRunner->GameLoop(ProtoFaceRenderer, LEDStripRenderer, boopSensorTouched);
   } else {
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
