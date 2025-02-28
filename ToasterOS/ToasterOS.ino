@@ -100,9 +100,7 @@ bool EnableGame = false;
 
 // Debug
 unsigned long DEBUG_LastOutputTime = 0;
-unsigned long FrameDuration_NextPrint = millis() + 20;
 unsigned int FrameDuration_MaxDuration = 0;
-unsigned long FPSCOUNT_CountingStarted = 0;
 unsigned int FPSCOUNT_Iterations = 0;
 
 

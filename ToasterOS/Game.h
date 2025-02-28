@@ -8,7 +8,7 @@ struct Rect {
 
 
 bool GAME_Initalised = false;
-bool GAME_GameOver = false;
+bool GAME_GameOver = false;      // Game state
 unsigned long GAME_Started = 0;  // Game state
 int GAME_RoundNumber = 0;        // Game state
 unsigned long GAME_Ended = 0;    // Game state
