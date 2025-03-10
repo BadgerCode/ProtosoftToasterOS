@@ -115,13 +115,23 @@ void loop() {
   }
 
   if (curTime >= Viseme_Next_Change) {
-    Viseme_Next_Change = millis() + random(100) + 100;
+    Viseme_Next_Change = millis() + random(100) + 500;
 
     if (Viseme_Index != 0) {
       Viseme_Index = 0;
     } else {
       Viseme_Index = random(1, 5);
     }
+
+    // Might need to blend between visemes
+    // Old viseme, new viseme
+    // Blend loop
+    //    Take all pixels which are enabled in both old/new viseme and set value to 1
+    //    Find all of their neighbours, which don't have a value, and set to 1 if present in old viseme
+    //        Travel up to 8 pixels away
+    //    Find all of their neighbours, which don't have a value, and set to 1 if present in new viseme
+    //        Travel up to 1 pixel away
+    // Keep repeating the blend loop, decreasing the travel distance for old viseme pixels and increasing the travel distance for new viseme pixels
   }
 
   // Time to return to the neutral face?
