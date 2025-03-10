@@ -71,6 +71,11 @@ int MinSpecialFaceWait = 10000;
 unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
+// Visemes
+bool Viseme_Enabled = true;
+int Viseme_Index = 0;
+unsigned long Viseme_Next_Change = millis() + random(100) + 100;
+
 // LED Strips
 bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
@@ -107,6 +112,16 @@ void loop() {
   // Time for a special face?
   if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
     Special_Face_Index = random(0, NumSpecialFaces);
+  }
+
+  if (curTime >= Viseme_Next_Change) {
+    Viseme_Next_Change = millis() + random(100) + 100;
+
+    if (Viseme_Index != 0) {
+      Viseme_Index = 0;
+    } else {
+      Viseme_Index = random(1, 5);
+    }
   }
 
   // Time to return to the neutral face?
@@ -264,9 +279,31 @@ void loop() {
 
 
 void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-    bool mirrorLeft = true;
-    bool mirrorRight = false;
+  bool mirrorLeft = true;
+  bool mirrorRight = false;
 
+  if (Viseme_Enabled) {
+    // Mouth
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, Visemes[Viseme_Index][0], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, Visemes[Viseme_Index][1], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, Visemes[Viseme_Index][2], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, Visemes[Viseme_Index][3], 0, mirrorLeft);
+
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, Visemes[Viseme_Index][0], 0, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, Visemes[Viseme_Index][1], 0, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, Visemes[Viseme_Index][2], 0, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, Visemes[Viseme_Index][3], 0, mirrorRight);
+
+    // Nose
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, Face_Neutral.Nose[0], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, Face_Neutral.Nose[0], 0, mirrorRight);
+
+    // Eyes
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, Face_Neutral.Eye[0], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, Face_Neutral.Eye[1], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Face_Neutral.Eye[0], 0, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Face_Neutral.Eye[1], 0, mirrorRight);
+  } else {
     // Mouth
     ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
     ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
@@ -289,6 +326,7 @@ void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int
     ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
     ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
   }
+}
 
 
 // utility functions
