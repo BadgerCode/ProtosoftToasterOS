@@ -81,6 +81,11 @@ int MinSpecialFaceWait = 10000;
 unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
 int SpecialFaceDurationMs = 5000;
 
+// Visemes
+bool Viseme_Enabled = true;
+int Viseme_Index = 0;
+unsigned long Viseme_Next_Change = millis() + random(100) + 100;
+
 // LED Strips
 bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
@@ -117,6 +122,16 @@ void loop() {
   // Time for a special face?
   if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
     Special_Face_Index = random(0, NumSpecialFaces);
+  }
+
+  if (curTime >= Viseme_Next_Change) {
+    Viseme_Next_Change = millis() + random(100) + 100;
+
+    if (Viseme_Index != 0) {
+      Viseme_Index = 0;
+    } else {
+      Viseme_Index = random(1, 5);
+    }
   }
 
   // Time to return to the neutral face?
@@ -187,7 +202,36 @@ void loop() {
 
 
     // Render the face
-    ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+    if (Viseme_Enabled) {
+      // Mouth
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH1, Visemes[Viseme_Index][0], false, 0);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH2, Visemes[Viseme_Index][1], false, 0);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH3, Visemes[Viseme_Index][2], false, 0);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH4, Visemes[Viseme_Index][3], false, 0);
+
+      // Nose
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_NOSE, Face_Neutral.Nose[0], true, 0);
+
+      // Eyes
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE1, Face_Neutral.Eye[0], true, 0);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE2, Face_Neutral.Eye[1], true, 0);
+    } else {
+      // Mouth
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH1, facialExpression.Mouth[0], false, Face_OffsetY);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH2, facialExpression.Mouth[1], false, Face_OffsetY);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH3, facialExpression.Mouth[2], false, Face_OffsetY);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH4, facialExpression.Mouth[3], false, Face_OffsetY);
+
+      // Nose
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_NOSE, facialExpression.Nose[0], true, 0);
+
+      // Eyes
+      EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE1, (*eyes)[0], true, Face_OffsetY);
+      ProtoFaceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE2, (*eyes)[1], true, Face_OffsetY);
+    }
+
+    // Render new changes
     ProtoFaceRenderer->ProcessRenderQueue();
 
 

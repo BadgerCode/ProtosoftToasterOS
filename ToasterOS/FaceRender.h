@@ -68,23 +68,6 @@ public:
   }
 
 
-  void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-    // Mouth
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, (facialExpression).Mouth[1], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, (facialExpression).Mouth[2], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, (facialExpression).Mouth[3], false, offsetY);
-
-    // Nose
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, (facialExpression).Nose[0], true, 0);
-
-    // Eyes
-    EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, (*eyes)[0], true, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, (*eyes)[1], true, offsetY);
-  }
-
-
   // Update face LED state
   void SetLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
     SetPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
