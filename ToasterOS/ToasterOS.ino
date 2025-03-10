@@ -115,13 +115,12 @@ void loop() {
   }
 
   if (curTime >= Viseme_Next_Change) {
-    Viseme_Next_Change = millis() + random(100) + 500;
+    Viseme_Next_Change = millis() + random(1000) + 1000;
 
-    if (Viseme_Index != 0) {
-      Viseme_Index = 0;
-    } else {
+    int oldindex = Viseme_Index;
+    do {
       Viseme_Index = random(1, 5);
-    }
+    } while (Viseme_Index == oldindex);
 
     // Might need to blend between visemes
     // Old viseme, new viseme
