@@ -9,6 +9,7 @@
 
 // Imports
 #include "Protogen_Faces.h"
+#include "Visemes.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "Game.h"
@@ -76,6 +77,11 @@ bool Viseme_Enabled = true;
 int Viseme_Index = 0;
 unsigned long Viseme_Next_Change = millis() + random(100) + 100;
 
+// Viseme animation test
+int Viseme_Animation_Frame_Index = 0;
+unsigned long Viseme_Animation_Frame_StartTime = millis();
+
+
 // LED Strips
 bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
@@ -114,24 +120,35 @@ void loop() {
     Special_Face_Index = random(0, NumSpecialFaces);
   }
 
-  if (curTime >= Viseme_Next_Change) {
-    Viseme_Next_Change = millis() + random(1000) + 1000;
+  // Viseme showcase
+  // if (curTime >= Viseme_Next_Change) {
+  //   Viseme_Next_Change = millis() + random(1000) + 1000;
 
-    int oldindex = Viseme_Index;
-    do {
-      Viseme_Index = random(1, 5);
-    } while (Viseme_Index == oldindex);
+  //   int oldindex = Viseme_Index;
+  //   do {
+  //     Viseme_Index = random(1, 5);
+  //   } while (Viseme_Index == oldindex);
 
-    // Might need to blend between visemes
-    // Old viseme, new viseme
-    // Blend loop
-    //    Take all pixels which are enabled in both old/new viseme and set value to 1
-    //    Find all of their neighbours, which don't have a value, and set to 1 if present in old viseme
-    //        Travel up to 8 pixels away
-    //    Find all of their neighbours, which don't have a value, and set to 1 if present in new viseme
-    //        Travel up to 1 pixel away
-    // Keep repeating the blend loop, decreasing the travel distance for old viseme pixels and increasing the travel distance for new viseme pixels
+  //   // Might need to blend between visemes
+  //   // Old viseme, new viseme
+  //   // Blend loop
+  //   //    Take all pixels which are enabled in both old/new viseme and set value to 1
+  //   //    Find all of their neighbours, which don't have a value, and set to 1 if present in old viseme
+  //   //        Travel up to 8 pixels away
+  //   //    Find all of their neighbours, which don't have a value, and set to 1 if present in new viseme
+  //   //        Travel up to 1 pixel away
+  //   // Keep repeating the blend loop, decreasing the travel distance for old viseme pixels and increasing the travel distance for new viseme pixels
+  // }
+
+  // Animation test
+  if (timeSince(Viseme_Animation_Frame_StartTime) >= TestAnimation[Viseme_Animation_Frame_Index].Duration) {
+    Viseme_Animation_Frame_Index++;
+    if (Viseme_Animation_Frame_Index >= TestAnimationNumFrames) Viseme_Animation_Frame_Index = 0;
+
+    Viseme_Animation_Frame_StartTime = millis();
   }
+  Viseme_Index = TestAnimation[Viseme_Animation_Frame_Index].Viseme_Index;
+
 
   // Time to return to the neutral face?
   if (curTime >= NextSpecialFace + SpecialFaceDurationMs) {
