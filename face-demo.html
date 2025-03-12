@@ -34,10 +34,14 @@
     #output {
       flex: 1;
       width: 100%;
+      margin-top: 10px;
+    }
+
+    textarea,
+    input {
       background-color: #1e1e1e;
       color: white;
       border: 1px solid black;
-      margin-top: 10px;
     }
 
     select {
@@ -83,6 +87,11 @@
 
     #loadedFacesSelect {
       width: 250px;
+    }
+
+    #animationTestOutput {
+      width: 100%;
+      height: 200px;
     }
   </style>
 </head>
@@ -139,6 +148,13 @@
 
         <button @click="parseWholeFace(output)">Load</button>
       </div>
+    </div>
+
+    <div>
+      <div>Animation timings</div>
+      <div>Press "a" for a voice viseme, "s" for a neutral viseme</div>
+      <input id="animationTestInput" type="text" />
+      <div><textarea id="animationTestOutput"></textarea></div>
     </div>
   </div>
 
@@ -271,7 +287,6 @@
           this.currentExpressionName = facename;
 
           this.showBlink = false;
-
           this.drawFace();
         },
 
@@ -519,6 +534,34 @@
         }
       }
     }).mount('#app');
+
+
+    let frameStart = Date.now();
+    let nextViseme = "VISEME_AA";
+    document.getElementById("animationTestInput").addEventListener("keydown", (e) => {
+      e.target.value = "";
+
+      let duration = Date.now() - frameStart;
+      frameStart = Date.now(); // Always clear duration, to allow reset
+
+      let key = e.key;
+      let visemeName = nextViseme;
+      switch (key) {
+        case "a":
+          if (nextViseme == "VISEME_AA") nextViseme = "VISEME_EE";
+          else if (nextViseme == "VISEME_EE") nextViseme = "VISEME_OU";
+          else if (nextViseme == "VISEME_OU") nextViseme = "VISEME_AA";
+          break;
+        case "s":
+          visemeName = "VISEME_NEUTRAL";
+          nextViseme = "VISEME_AA";
+          break;
+        default:
+          return;
+      }
+
+      document.getElementById("animationTestOutput").value += `{ .Viseme_Index = ${visemeName}, .Duration = ${duration} },\n`;
+    });
   </script>
 </body>
 

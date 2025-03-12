@@ -143,7 +143,9 @@ void loop() {
   // Animation test
   if (timeSince(Viseme_Animation_Frame_StartTime) >= TestAnimation[Viseme_Animation_Frame_Index].Duration) {
     Viseme_Animation_Frame_Index++;
-    if (Viseme_Animation_Frame_Index >= TestAnimationNumFrames) Viseme_Animation_Frame_Index = 0;
+
+    int animationNumFrames = sizeof(TestAnimation) / sizeof(TestAnimation[0]);
+    if (Viseme_Animation_Frame_Index >= animationNumFrames) Viseme_Animation_Frame_Index = 0;
 
     Viseme_Animation_Frame_StartTime = millis();
   }
