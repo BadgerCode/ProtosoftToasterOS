@@ -188,8 +188,9 @@ void loop() {
     } else if (Special_Face_Index != -1) {
       facialExpression = *(SpecialExpressions[Special_Face_Index]);
 
+      // Special spiral rotation logic
       if (SpecialExpressions[Special_Face_Index] == &Face_Spiral) {
-        if (timeSince(LastEyeRotation) > 200) {
+        if (timeSince(LastEyeRotation) > 150) {
           Eye_Rotation += 90;
           LastEyeRotation = millis();
         }
