@@ -1,5 +1,4 @@
 // Panel indexes (left and right have the same indexes)
-#define FACE_PANEL_COUNT 7
 #define FACE_PANEL_MOUTH1 3
 #define FACE_PANEL_MOUTH2 2
 #define FACE_PANEL_MOUTH3 1
@@ -9,15 +8,22 @@
 #define FACE_PANEL_EYE2 6
 
 
+struct FacePanelConfig {
+  LedControl* Controller;
+  int Address;
+  bool UpsideDown;
+};
+
+
 class FaceRender {
 private:
   const int Brightness = 8;  // 0 - 15
   byte EmptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   // Face LED state
-  // 2 sides, 7 panels, 8 rows per panel
-  byte FaceLEDRowValues[2][7][8];
-  bool FaceLEDRowRequiresRendering[2][7][8];
+  // 2 sides with 7 panels, 8 rows per panel
+  byte FaceLEDRowValues[14][8];
+  bool FaceLEDRowRequiresRendering[14][8];
 
   // Render queue
   // 0 = eyes, 1 = nose, 2 = mouth
@@ -27,13 +33,28 @@ private:
   int NumLEDControls;
   LedControl** LEDControls;
 
+  FacePanelConfig PanelMappings[14];
+
+  int EyePanelTypes[4] = { PANEL_LEFT_EYE_BACK, PANEL_LEFT_EYE_FRONT, PANEL_RIGHT_EYE_BACK, PANEL_RIGHT_EYE_FRONT };
+  int NosePanelTypes[2] = { PANEL_LEFT_NOSE, PANEL_RIGHT_NOSE };
+  int MouthPanelTypes[8] = { PANEL_LEFT_MOUTH_BACK, PANEL_LEFT_MOUTH_MID_BACK, PANEL_LEFT_MOUTH_MID_FRONT, PANEL_LEFT_MOUTH_FRONT,
+                             PANEL_RIGHT_MOUTH_BACK, PANEL_RIGHT_MOUTH_MID_BACK, PANEL_RIGHT_MOUTH_MID_FRONT, PANEL_RIGHT_MOUTH_FRONT };
 public:
   FaceRender(FaceConfig* faceConfig) {
     NumLEDControls = faceConfig->NumConnections;
     LEDControls = new LedControl*[NumLEDControls];
+
+    // Set up all of the LED controllers
     for (int i = 0; i < NumLEDControls; i++) {
       auto connection = faceConfig->Connections[i];
       LEDControls[i] = new LedControl(connection.PIN_DataIn, connection.PIN_CLK, connection.PIN_CS, connection.NumPanels);
+
+      // Register all of the panel mappings
+      // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, Upside down: false
+      for (int p = 0; p < connection.NumPanels; p++) {
+        auto panel = connection.Panels[p];
+        PanelMappings[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .UpsideDown = panel.UpsideDown };
+      }
     }
   }
 
@@ -119,12 +140,12 @@ public:
 
   void SetRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
     // If the output hasn't changed, do nothing
-    byte previousOutput = FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row];
+    byte previousOutput = FaceLEDRowValues[isLeft ? panelIndex : panelIndex + 7][row];
     if (previousOutput == output) return;
 
     // Update LED output to the new output
-    FaceLEDRowValues[isLeft ? 0 : 1][panelIndex][row] = output;
-    FaceLEDRowRequiresRendering[isLeft ? 0 : 1][panelIndex][row] = true;
+    FaceLEDRowValues[isLeft ? panelIndex : panelIndex + 7][row] = output;
+    FaceLEDRowRequiresRendering[isLeft ? panelIndex : panelIndex + 7][row] = true;
 
     // Rendering is handled by the render queue- processRenderQueue()
   }
@@ -137,6 +158,7 @@ public:
 
 
     // Render 1 section a time (eyes, nose, mouth) and avoid infinite loops
+    // Render both the left and right section at the same time
     while (sectionsRendered < 1 && sectionsChecked < 3) {
       // Determine the panels, based on the section
       int firstPanel = -1;
@@ -162,25 +184,25 @@ public:
       for (int panel = firstPanel; panel <= lastPanel; panel++) {
         for (int row = 0; row < 8; row++) {
           // Render left
-          bool shouldRenderLeft = FaceLEDRowRequiresRendering[0][panel][row];
+          bool shouldRenderLeft = FaceLEDRowRequiresRendering[panel][row];
 
           // TODO: Left and right are the wrong way around
           if (shouldRenderLeft) {
-            byte output = FaceLEDRowValues[0][panel][row];
+            byte output = FaceLEDRowValues[panel][row];
             LEDControls[0]->setRow(panel, row, output);
 
-            FaceLEDRowRequiresRendering[0][panel][row] = false;
+            FaceLEDRowRequiresRendering[panel][row] = false;
             anyPanelsRendered = true;
           }
 
           // Render right
-          bool shouldRenderRight = FaceLEDRowRequiresRendering[1][panel][row];
+          bool shouldRenderRight = FaceLEDRowRequiresRendering[panel + 7][row];
 
           if (shouldRenderRight) {
-            byte output = FaceLEDRowValues[1][panel][row];
+            byte output = FaceLEDRowValues[panel + 7][row];
             LEDControls[1]->setRow(panel, row, output);
 
-            FaceLEDRowRequiresRendering[1][panel][row] = false;
+            FaceLEDRowRequiresRendering[panel + 7][row] = false;
             anyPanelsRendered = true;
           }
         }
