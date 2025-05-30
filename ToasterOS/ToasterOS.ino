@@ -8,17 +8,11 @@
 #include "Game.h"
 
 // PIN DEFINITIONS
+// See Config.h for more
+
 // PINS: Input
 #define PIN_BUTTON 0
 #define PIN_ANALOG_DISTANCE 0
-
-// PINS: LED FACE PANELS
-#define PIN_LEFT_DIN 3
-#define PIN_LEFT_CS 4
-#define PIN_LEFT_CLK 5
-#define PIN_RIGHT_DIN 6
-#define PIN_RIGHT_CS 7
-#define PIN_RIGHT_CLK 8
 
 // PINS: LED STRIPS
 #define PIN_LEFT_LEDSTRIP_DATA 9
@@ -51,8 +45,6 @@ void setup() {
   randomSeed(analogRead(3));
 
   // pinMode(PIN_BUTTON, INPUT);
-  pinMode(PIN_LEFT_CS, OUTPUT);
-  pinMode(PIN_RIGHT_CS, OUTPUT);
 
   // LED Face
   ProtoFaceRenderer->Initialise();

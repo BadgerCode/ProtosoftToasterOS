@@ -171,26 +171,30 @@ private:
     int digit3 = score % 10;
 
     bool isReversed = true;
-    // Left
-    if (score < 100) {
-      faceRenderer->ClearPanel(FACE_PANEL_NOSE, true);
-      faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
-      faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
-    } else {
-      faceRenderer->SetPanel(true, FACE_PANEL_NOSE, Numbers_ASCII[digit1], isReversed, isReversed, 0);
-      faceRenderer->SetPanel(true, FACE_PANEL_EYE1, Numbers_ASCII[digit2], isReversed, isReversed, 0);
-      faceRenderer->SetPanel(true, FACE_PANEL_EYE2, Numbers_ASCII[digit3], isReversed, isReversed, 0);
-    }
-
     // Right
     if (score < 100) {
-      faceRenderer->ClearPanel(FACE_PANEL_NOSE, false);
-      faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
-      faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
+      // Don't use the nose for scores less than 100
+      faceRenderer->ClearPanel(PANEL_RIGHT_NOSE);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0);
     } else {
-      faceRenderer->SetPanel(false, FACE_PANEL_NOSE, Numbers_ASCII[digit3], !isReversed, !isReversed, 0);
-      faceRenderer->SetPanel(false, FACE_PANEL_EYE1, Numbers_ASCII[digit2], !isReversed, !isReversed, 0);
-      faceRenderer->SetPanel(false, FACE_PANEL_EYE2, Numbers_ASCII[digit1], !isReversed, !isReversed, 0);
+      // Use the nose for the hundreds
+      faceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, Numbers_ASCII[digit1], 0);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0);
+    }
+
+    // Left
+    if (score < 100) {
+      // Don't use the nose for scores less than 100
+      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit2], 0);
+      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit3], 0);
+      faceRenderer->ClearPanel(PANEL_LEFT_NOSE);
+    } else {
+      // Use the nose for the ones when the score is above 100
+      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit1], 0);
+      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit2], 0);
+      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_NOSE, Numbers_ASCII[digit3], 0);
     }
 
     // Side lights
@@ -265,6 +269,7 @@ private:
   }
 
   void renderOutput(FaceRender* faceRenderer, bool output[][8]) {
+    // From front to back
     byte panel1[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     byte panel2[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     byte panel3[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -297,42 +302,49 @@ private:
       }
     }
 
-    // From front to back
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH1, panel1, false, 0);
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH2, panel2, false, 0);
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH3, panel3, false, 0);
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_MOUTH4, panel4, false, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, panel1, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, panel2, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, panel3, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, panel4, 0);
+
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, panel1, 0);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, panel2, 0);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, panel3, 0);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, panel4, 0);
   }
 
   void renderHUD(FaceRender* faceRenderer, int hp) {
-    byte panel1[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    byte panel2[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    // From front to back
+    byte lowerHealthPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    byte upperHealthPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
     // HP
     if (hp > 0) {
-      panel1[0] |= B10100000;
-      panel1[1] |= B11100000;
-      panel1[2] |= B01000000;
+      lowerHealthPanel[0] |= B00001010;
+      lowerHealthPanel[1] |= B00001110;
+      lowerHealthPanel[2] |= B00000100;
     }
     if (hp > 1) {
-      panel1[0] |= B00001010;
-      panel1[1] |= B00001110;
-      panel1[2] |= B00000100;
+      lowerHealthPanel[0] |= B10100000;
+      lowerHealthPanel[1] |= B11100000;
+      lowerHealthPanel[2] |= B01000000;
     }
     if (hp > 2) {
-      panel2[0] |= B10100000;
-      panel2[1] |= B11100000;
-      panel2[2] |= B01000000;
+      upperHealthPanel[0] |= B00001010;
+      upperHealthPanel[1] |= B00001110;
+      upperHealthPanel[2] |= B00000100;
     }
     if (hp > 3) {
-      panel2[0] |= B00001010;
-      panel2[1] |= B00001110;
-      panel2[2] |= B00000100;
+      upperHealthPanel[0] |= B10100000;
+      upperHealthPanel[1] |= B11100000;
+      upperHealthPanel[2] |= B01000000;
     }
 
-    // From front to back
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE1, panel1, true, 0);
-    faceRenderer->SetLeftAndRightPanel(FACE_PANEL_EYE2, panel2, true, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, upperHealthPanel, 0);
+    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, lowerHealthPanel, 0);
+
+    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, upperHealthPanel, 0);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, lowerHealthPanel, 0);
   }
 
 

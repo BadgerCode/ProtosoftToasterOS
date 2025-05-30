@@ -1,3 +1,5 @@
+// All of the faces and digits are designed to work on the right face & be flipped on the left face
+
 
 typedef byte EyeFrame[2][8];
 
@@ -449,5 +451,3 @@ struct FaceExpression Face_Spiral4 = {
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
   }
 };
-
-

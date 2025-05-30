@@ -29,7 +29,8 @@ LEFT                                                                 RIGHT
 // Option 3: Overriding the bits you care about
 struct PanelConfig {
   int PanelType;
-  bool UpsideDown;
+  bool FlipX;
+  bool FlipY;
 };
 
 
@@ -38,7 +39,7 @@ struct FaceLEDConnection {
   int PIN_CS;
   int PIN_CLK;
   int NumPanels;
-  PanelConfig Panels[];
+  PanelConfig* Panels;
 };
 
 
@@ -89,17 +90,17 @@ public:
         .PIN_CS = 4,
         .PIN_CLK = 5,
         .NumPanels = 7,
-        .Panels = {
+        .Panels = new PanelConfig[7]{
           // Start: mouth back
-          { .PanelType = PANEL_RIGHT_MOUTH_BACK, .UpsideDown = true },
-          { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .UpsideDown = true },
-          { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .UpsideDown = true },
-          { .PanelType = PANEL_RIGHT_MOUTH_FRONT, .UpsideDown = true },
+          { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = false },
+          { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = false },
+          { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = false },
+          { .PanelType = PANEL_RIGHT_MOUTH_FRONT, .FlipX = false, .FlipY = false },
           // -> nose
-          { .PanelType = PANEL_RIGHT_NOSE, .UpsideDown = false },
+          { .PanelType = PANEL_RIGHT_NOSE, .FlipX = true, .FlipY = true },
           // -> eye front
-          { .PanelType = PANEL_RIGHT_EYE_FRONT, .UpsideDown = false },
-          { .PanelType = PANEL_RIGHT_EYE_BACK, .UpsideDown = false },
+          { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = true, .FlipY = true },
+          { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = true, .FlipY = true },
         },
       },
       {
@@ -107,17 +108,17 @@ public:
         .PIN_CS = 7,
         .PIN_CLK = 8,
         .NumPanels = 7,
-        .Panels = {
+        .Panels = new PanelConfig[7]{
           // Start: mouth back
-          { .PanelType = PANEL_LEFT_MOUTH_BACK, .UpsideDown = false },
-          { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .UpsideDown = false },
-          { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .UpsideDown = false },
-          { .PanelType = PANEL_LEFT_MOUTH_FRONT, .UpsideDown = false },
+          { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = false, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = false, .FlipY = true },
           // -> nose
-          { .PanelType = PANEL_LEFT_NOSE, .UpsideDown = true },
+          { .PanelType = PANEL_LEFT_NOSE, .FlipX = true, .FlipY = false },
           // -> eye front
-          { .PanelType = PANEL_LEFT_EYE_FRONT, .UpsideDown = true },
-          { .PanelType = PANEL_LEFT_EYE_BACK, .UpsideDown = true },
+          { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = true, .FlipY = false },
+          { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = true, .FlipY = false },
         },
       }
     };

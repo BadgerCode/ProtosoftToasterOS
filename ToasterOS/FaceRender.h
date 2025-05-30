@@ -1,17 +1,8 @@
-// Panel indexes (left and right have the same indexes)
-#define FACE_PANEL_MOUTH1 3
-#define FACE_PANEL_MOUTH2 2
-#define FACE_PANEL_MOUTH3 1
-#define FACE_PANEL_MOUTH4 0
-#define FACE_PANEL_NOSE 4
-#define FACE_PANEL_EYE1 5
-#define FACE_PANEL_EYE2 6
-
-
 struct FacePanelConfig {
   LedControl* Controller;
   int Address;
-  bool UpsideDown;
+  bool FlipX;
+  bool FlipY;
 };
 
 
@@ -25,16 +16,16 @@ private:
   byte FaceLEDRowValues[14][8];
   bool FaceLEDRowRequiresRendering[14][8];
 
-  // Render queue
-  // 0 = eyes, 1 = nose, 2 = mouth
-  unsigned int NextRenderSection = 0;
-
   // LED interface
   int NumLEDControls;
   LedControl** LEDControls;
 
   FacePanelConfig PanelMappings[14];
 
+  // Rendering
+  unsigned int NextRenderSection = 0;  // 0 = eyes, 1 = nose, 2 = mouth
+
+  // Split the face into sections, so we can render all panels for a section at the same time
   int EyePanelTypes[4] = { PANEL_LEFT_EYE_BACK, PANEL_LEFT_EYE_FRONT, PANEL_RIGHT_EYE_BACK, PANEL_RIGHT_EYE_FRONT };
   int NosePanelTypes[2] = { PANEL_LEFT_NOSE, PANEL_RIGHT_NOSE };
   int MouthPanelTypes[8] = { PANEL_LEFT_MOUTH_BACK, PANEL_LEFT_MOUTH_MID_BACK, PANEL_LEFT_MOUTH_MID_FRONT, PANEL_LEFT_MOUTH_FRONT,
@@ -50,10 +41,10 @@ public:
       LEDControls[i] = new LedControl(connection.PIN_DataIn, connection.PIN_CLK, connection.PIN_CS, connection.NumPanels);
 
       // Register all of the panel mappings
-      // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, Upside down: false
+      // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, FlipX: false, FlipY: True
       for (int p = 0; p < connection.NumPanels; p++) {
         auto panel = connection.Panels[p];
-        PanelMappings[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .UpsideDown = panel.UpsideDown };
+        PanelMappings[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY };
       }
     }
   }
@@ -71,81 +62,102 @@ public:
     }
   }
 
-
   void Clear() {
     // Mouth
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, EmptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, EmptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, EmptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, EmptyPanel, false, 0);
+    ClearPanel(PANEL_LEFT_MOUTH_BACK);
+    ClearPanel(PANEL_LEFT_MOUTH_MID_BACK);
+    ClearPanel(PANEL_LEFT_MOUTH_MID_FRONT);
+    ClearPanel(PANEL_LEFT_MOUTH_FRONT);
+
+    ClearPanel(PANEL_RIGHT_MOUTH_BACK);
+    ClearPanel(PANEL_RIGHT_MOUTH_MID_BACK);
+    ClearPanel(PANEL_RIGHT_MOUTH_MID_FRONT);
+    ClearPanel(PANEL_RIGHT_MOUTH_FRONT);
+
 
     // Nose
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, EmptyPanel, false, 0);
+    ClearPanel(PANEL_LEFT_NOSE);
+    ClearPanel(PANEL_RIGHT_NOSE);
 
     // Eyes
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, EmptyPanel, false, 0);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, EmptyPanel, false, 0);
+    ClearPanel(PANEL_LEFT_EYE_FRONT);
+    ClearPanel(PANEL_LEFT_EYE_BACK);
+    ClearPanel(PANEL_RIGHT_EYE_FRONT);
+    ClearPanel(PANEL_RIGHT_EYE_BACK);
   }
-
-  void ClearPanel(int panelIndex, bool isLeft) {
-    FaceRender::SetPanel(isLeft, panelIndex, EmptyPanel, false, false, 0);
-  }
-
 
   void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
     // Mouth
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH1, (facialExpression).Mouth[0], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH2, (facialExpression).Mouth[1], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH3, (facialExpression).Mouth[2], false, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_MOUTH4, (facialExpression).Mouth[3], false, offsetY);
+    UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY);
+    UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY);
+    UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY);
+    UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY);
+
+    UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY);
+    UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY);
+    UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY);
+    UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY);
 
     // Nose
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_NOSE, (facialExpression).Nose[0], true, 0);
+    UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0);
+    UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0);
 
     // Eyes
     EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE1, (*eyes)[0], true, offsetY);
-    FaceRender::SetLeftAndRightPanel(FACE_PANEL_EYE2, (*eyes)[1], true, offsetY);
+    UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY);
+    UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY);
+    UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY);
+    UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY);
+  }
+
+  void ClearPanel(int panelType) {
+    UpdatePanel(panelType, EmptyPanel, 0);
+  }
+
+  void UpdatePanel(int panelType, byte data[], int offsetY) {
+    auto panelMapping = PanelMappings[panelType];
+    UpdatePanelInternal(panelType, data, offsetY, panelMapping.FlipX, panelMapping.FlipY);
   }
 
 
-  // Update face LED state
-  void SetLeftAndRightPanel(int panelIndex, byte data[], bool isReversed, int offsetY) {
-    SetPanel(true, panelIndex, data, isReversed, isReversed, offsetY);
-    SetPanel(false, panelIndex, data, isReversed, !isReversed, offsetY * -1);
+  // TODO: Set up the config so that each panel will render exactly what you give it
+  //        Then make LoadFaceExpression override the FlipX to mirror the face on both sides
+  //        This will allow other areas like the game to render the score without the output being flipped
+  void UpdatePanelWithoutMirroring(int panelType, byte data[], int offsetY) {
+    auto panelMapping = PanelMappings[panelType];
+    UpdatePanelInternal(panelType, data, offsetY, false, panelMapping.FlipY);
   }
 
-
-
-  void SetPanel(bool isLeft, int panelIndex, byte data[], bool isReversed, bool isUpsideDown, int offsetY) {
+  void UpdatePanelInternal(int panelType, byte data[], int offsetY, bool flipX, bool flipY) {
     for (int row = 0; row < 8; row++) {
-      int rowIndex = row + offsetY;
-      if (rowIndex < 0 || rowIndex >= 8) {
-        SetRowIfDifferent(isLeft, panelIndex, row, 0);
+      byte rowData = 0;
+      int rowDataIndex = (flipY ? (7 - row) : row) + offsetY;
+
+      // If the offset has made this row empty, clear it
+      if (rowDataIndex < 0 || rowDataIndex >= 8) {
+        UpdatePanelRow(panelType, row, 0);
         continue;
       }
 
-      byte rowData = 0;
-      int rowDataIndex = isUpsideDown ? (7 - rowIndex) : rowIndex;
-      if (isReversed) {
+      if (flipX) {
         rowData = Reverse(data[rowDataIndex]);
       } else {
         rowData = data[rowDataIndex];
       }
 
-      SetRowIfDifferent(isLeft, panelIndex, row, rowData);
+      UpdatePanelRow(panelType, row, rowData);
     }
   }
 
 
-  void SetRowIfDifferent(bool isLeft, int panelIndex, int row, byte output) {
+  void UpdatePanelRow(int panelType, int row, byte output) {
     // If the output hasn't changed, do nothing
-    byte previousOutput = FaceLEDRowValues[isLeft ? panelIndex : panelIndex + 7][row];
+    byte previousOutput = FaceLEDRowValues[panelType][row];
     if (previousOutput == output) return;
 
     // Update LED output to the new output
-    FaceLEDRowValues[isLeft ? panelIndex : panelIndex + 7][row] = output;
-    FaceLEDRowRequiresRendering[isLeft ? panelIndex : panelIndex + 7][row] = true;
+    FaceLEDRowValues[panelType][row] = output;
+    FaceLEDRowRequiresRendering[panelType][row] = true;
 
     // Rendering is handled by the render queue- processRenderQueue()
   }
@@ -156,53 +168,42 @@ public:
     int sectionsRendered = 0;
     int sectionsChecked = 0;
 
-
     // Render 1 section a time (eyes, nose, mouth) and avoid infinite loops
     // Render both the left and right section at the same time
     while (sectionsRendered < 1 && sectionsChecked < 3) {
-      // Determine the panels, based on the section
-      int firstPanel = -1;
-      int lastPanel = -1;
+      int* panelTypes;
+      int numPanelTypes;
 
+      // Determine the panels, based on the section
       if (NextRenderSection == 0) {  // eyes
-        firstPanel = FACE_PANEL_EYE1;
-        lastPanel = FACE_PANEL_EYE2;
+        panelTypes = EyePanelTypes;
+        numPanelTypes = 4;
       } else if (NextRenderSection == 1) {  // nose
-        firstPanel = FACE_PANEL_NOSE;
-        lastPanel = FACE_PANEL_NOSE;
+        panelTypes = NosePanelTypes;
+        numPanelTypes = 2;
       } else if (NextRenderSection == 2) {  // mouth
-        firstPanel = FACE_PANEL_MOUTH4;
-        lastPanel = FACE_PANEL_MOUTH1;
+        panelTypes = MouthPanelTypes;
+        numPanelTypes = 8;
       } else {  // something's gone wrong
         NextRenderSection = 0;
         break;
       }
 
 
-      // Check if there's anything to render
+      // Render all panels with updates for the section
       bool anyPanelsRendered = false;
-      for (int panel = firstPanel; panel <= lastPanel; panel++) {
+      for (int p = 0; p < numPanelTypes; p++) {
+        int panelType = panelTypes[p];
+        auto panelMapping = PanelMappings[panelType];
+
         for (int row = 0; row < 8; row++) {
-          // Render left
-          bool shouldRenderLeft = FaceLEDRowRequiresRendering[panel][row];
+          bool shouldRender = FaceLEDRowRequiresRendering[panelType][row];
 
-          // TODO: Left and right are the wrong way around
-          if (shouldRenderLeft) {
-            byte output = FaceLEDRowValues[panel][row];
-            LEDControls[0]->setRow(panel, row, output);
+          if (shouldRender) {
+            byte output = FaceLEDRowValues[panelType][row];
+            panelMapping.Controller->setRow(panelMapping.Address, row, output);
 
-            FaceLEDRowRequiresRendering[panel][row] = false;
-            anyPanelsRendered = true;
-          }
-
-          // Render right
-          bool shouldRenderRight = FaceLEDRowRequiresRendering[panel + 7][row];
-
-          if (shouldRenderRight) {
-            byte output = FaceLEDRowValues[panel + 7][row];
-            LEDControls[1]->setRow(panel, row, output);
-
-            FaceLEDRowRequiresRendering[panel + 7][row] = false;
+            FaceLEDRowRequiresRendering[panelType][row] = false;
             anyPanelsRendered = true;
           }
         }
