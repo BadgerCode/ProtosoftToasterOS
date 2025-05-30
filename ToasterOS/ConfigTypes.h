@@ -1,0 +1,29 @@
+#define PANEL_LEFT_MOUTH_BACK 0
+#define PANEL_LEFT_MOUTH_MID_BACK 1
+#define PANEL_LEFT_MOUTH_MID_FRONT 2
+#define PANEL_LEFT_MOUTH_FRONT 3
+#define PANEL_LEFT_NOSE 4
+#define PANEL_LEFT_EYE_BACK 5
+#define PANEL_LEFT_EYE_FRONT 6
+#define PANEL_RIGHT_MOUTH_BACK 7
+#define PANEL_RIGHT_MOUTH_MID_BACK 8
+#define PANEL_RIGHT_MOUTH_MID_FRONT 9
+#define PANEL_RIGHT_MOUTH_FRONT 10
+#define PANEL_RIGHT_NOSE 11
+#define PANEL_RIGHT_EYE_BACK 12
+#define PANEL_RIGHT_EYE_FRONT 13
+
+struct PanelConfig {
+  int PanelType;
+  bool FlipX;
+  bool FlipY;
+};
+
+struct FaceLEDConnection {
+  int PIN_DataIn;
+  int PIN_CS;
+  int PIN_CLK;
+  int NumPanels;
+  PanelConfig* Panels;
+};
+

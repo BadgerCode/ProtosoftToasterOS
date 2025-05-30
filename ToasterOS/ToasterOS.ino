@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include "LedControl.h"
 #include "Utils.h"
+#include "ConfigTypes.h"
 #include "Config.h"
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
