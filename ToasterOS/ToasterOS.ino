@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include "LedControl.h"
 #include "Utils.h"
+#include "Config.h"
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
@@ -31,6 +32,7 @@
 
 
 // Face LEDs
+FaceConfig* ProtoFaceConfig = new FaceConfig();
 // If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
 FaceRender* ProtoFaceRenderer = new FaceRender(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS);
 
