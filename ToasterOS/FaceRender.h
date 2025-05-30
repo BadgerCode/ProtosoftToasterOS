@@ -24,26 +24,29 @@ private:
   unsigned int NextRenderSection = 0;
 
   // LED interface
-  LedControl* LEFT_LEDs;
-  LedControl* RIGHT_LEDs;
+  int NumLEDControls;
+  LedControl** LEDControls;
 
 public:
-  FaceRender(int pinLeftDIN, int pinLeftCLK, int pinLeftCS, int pinRightDIN, int pinRightCLK, int pinRightCS) {
-    LEFT_LEDs = new LedControl(pinLeftDIN, pinLeftCLK, pinLeftCS, FACE_PANEL_COUNT);
-    RIGHT_LEDs = new LedControl(pinRightDIN, pinRightCLK, pinRightCS, FACE_PANEL_COUNT);
+  FaceRender(FaceConfig* faceConfig) {
+    NumLEDControls = faceConfig->NumConnections;
+    LEDControls = new LedControl*[NumLEDControls];
+    for (int i = 0; i < NumLEDControls; i++) {
+      auto connection = faceConfig->Connections[i];
+      LEDControls[i] = new LedControl(connection.PIN_DataIn, connection.PIN_CLK, connection.PIN_CS, connection.NumPanels);
+    }
   }
 
   void Initialise() {
-    for (int address = 0; address < FACE_PANEL_COUNT; address++) {
-      LEFT_LEDs->shutdown(address, false);           // Disable power saving
-      LEFT_LEDs->setIntensity(address, Brightness);  // Set brightness 0-15
-      LEFT_LEDs->clearDisplay(address);              // Turn all LEDs off
-    }
+    for (int c = 0; c < NumLEDControls; c++) {
+      auto controller = LEDControls[c];
+      int numPanels = controller->getDeviceCount();
 
-    for (int address = 0; address < FACE_PANEL_COUNT; address++) {
-      RIGHT_LEDs->shutdown(address, false);           // Disable power saving
-      RIGHT_LEDs->setIntensity(address, Brightness);  // Set brightness 0-15
-      RIGHT_LEDs->clearDisplay(address);              // Turn all LEDs off
+      for (int address = 0; address < numPanels; address++) {
+        controller->shutdown(address, false);           // Disable power saving
+        controller->setIntensity(address, Brightness);  // Set brightness 0-15
+        controller->clearDisplay(address);              // Turn all LEDs off
+      }
     }
   }
 
@@ -161,9 +164,10 @@ public:
           // Render left
           bool shouldRenderLeft = FaceLEDRowRequiresRendering[0][panel][row];
 
+          // TODO: Left and right are the wrong way around
           if (shouldRenderLeft) {
             byte output = FaceLEDRowValues[0][panel][row];
-            LEFT_LEDs->setRow(panel, row, output);
+            LEDControls[0]->setRow(panel, row, output);
 
             FaceLEDRowRequiresRendering[0][panel][row] = false;
             anyPanelsRendered = true;
@@ -174,7 +178,7 @@ public:
 
           if (shouldRenderRight) {
             byte output = FaceLEDRowValues[1][panel][row];
-            RIGHT_LEDs->setRow(panel, row, output);
+            LEDControls[1]->setRow(panel, row, output);
 
             FaceLEDRowRequiresRendering[1][panel][row] = false;
             anyPanelsRendered = true;
