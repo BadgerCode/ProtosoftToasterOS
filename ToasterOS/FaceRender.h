@@ -118,7 +118,11 @@ public:
   }
 
   void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
-    auto outputOverride = DEBUG_MODE == 3 ? Numbers_ASCII[7] : data;
+    if (DEBUG_MODE == 3) {
+      mirror = false;
+      data = Numbers_ASCII[7];
+    }
+    // auto outputOverride = DEBUG_MODE == 3 ? Numbers_ASCII[7] : data;
 
     auto panelMapping = PanelMappings[panelType];
     bool flipX = mirror ? !panelMapping.FlipX : panelMapping.FlipX;
@@ -134,9 +138,9 @@ public:
       }
 
       if (flipX) {
-        rowData = Reverse(outputOverride[rowDataIndex]);
+        rowData = Reverse(data[rowDataIndex]);
       } else {
-        rowData = outputOverride[rowDataIndex];
+        rowData = data[rowDataIndex];
       }
 
       UpdatePanelRow(panelType, row, rowData);

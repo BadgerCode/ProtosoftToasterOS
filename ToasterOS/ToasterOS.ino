@@ -4,24 +4,8 @@
 #include "Utils.h"
 #include "ConfigTypes.h"
 
-
 // CONFIGURATION
 #include "Config.h"
-
-// PINS: Input
-#define PIN_BUTTON 0
-#define PIN_ANALOG_DISTANCE 0
-
-// PINS: LED STRIPS
-#define PIN_LEFT_LEDSTRIP_DATA 9
-#define PIN_RIGHT_LEDSTRIP_DATA 10
-
-
-// Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
-#define BOOPS_FOR_GAME 7
-
-
 
 // Imports
 #include "Protogen_Faces.h"
@@ -30,7 +14,7 @@
 #include "Game.h"
 
 
-
+// Global variables
 // Face LEDs
 FaceConfig* ProtoFaceConfig = new FaceConfig();
 // If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
@@ -39,6 +23,7 @@ FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
+// Secret game
 CubeGame* CubeGameRunner = new CubeGame();
 
 

@@ -39,32 +39,89 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 * A 5V Noctua fan (40x40x10mm) for ventilation (not connected to the arduino)
 * A USB cable and voltage + ground splitters to power everything via a USB battery pack
 
+<br>
+
+## Configuring
+The configuration can be found in `ToasterOS/Config.h`
 
 ### Arudino Pin Layout
-LEFT = The protogen's left (your right)<br>
-RIGHT = The protogen's right (your left)
 
-* VIN/GND: USB cable power connection
-    * ⚠⚠⚠ Do not plug the power connection into the wrong pins/the wrong way around
-    * This can kill the board if left for too long
-* Analog 0: IR sensor data connection
-* Digital 3: LEFT LED matrices data in (DIN)
-* Digital 4: LEFT LED matrices CS
-* Digital 5: LEFT LED matrices CLK
-* Digital 6: RIGHT LED matrices data in (DIN)
-* Digital 7: RIGHT LED matrices CS
-* Digital 8: RIGHT LED matrices CLK
-* Digital 9: LEFT LED matrices data in (DIN)
-* Digital 10: RIGHT LED matrices data in (DIN)
+TODO: Diagram (left vs right, the different panel names, IR sensor, pins used on the arduino, VIN/GND)
+
+
+### Face LEDs Configuration
+These are configured in the `FaceConfig` class.
+
+The default set up is for faces with separate connections for the left and right half.<br>
+But there is an example below for people with a single connection for all LED panels.
 
 <br>
 
-### Nano Every
-![nano every pin layout](https://content.arduino.cc/assets/Pinout-NANOevery_latest.png)
+#### Example: Single connection for all LED panels
+
+TODO: DIAGRAM
+
+```cpp
+NumConnections = 1;
+
+Connections = new FaceLEDConnection[NumConnections]{
+    {
+        // Pin configuration
+        .PIN_DataIn = 11,
+        .PIN_CS = 9,
+        .PIN_CLK = 13,
+
+        // Define the order of the panels
+        .NumPanels = 14,
+        .Panels = {
+            // Start: Right mouth back
+            { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_RIGHT_MOUTH_FRONT, .FlipX = false, .FlipY = false },
+
+            // -> Left mouth front
+            { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = false, .FlipY = false },
+
+            // -> Left eye back
+            { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = false },
+
+            // -> Left nose
+            { .PanelType = PANEL_LEFT_NOSE, .FlipX = false, .FlipY = false },
+
+            // -> Right nose
+            { .PanelType = PANEL_RIGHT_NOSE, .FlipX = false, .FlipY = false },
+
+            // -> Right eye front
+            { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = false, .FlipY = false },
+            { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = false, .FlipY = false },
+        },
+    }
+};
+```
+
+<br>
+
+### Debugging issues with the face config
+If the face isn't rendering properly, there are some steps you can take
+
+1. In `ToasterOS/Config.h`, set `DEBUG_MODE` to 3
+    * This will render 7s to every LED panel
+2. If one of the panels is displaying the 7 the wrong way or upside down, update the config
+    * In `ToasterOS/Config.h` under `FaceConfig`
+    * Find the right panel (see the diagrams above)
+    * If the 7 is facing the wrong way, change the `FlipX` value
+    * If the 7 is upside down, change the `FlipY` value
+3. In `ToasterOS/Config.h`, set `DEBUG_MODE` back to 0
+4. If the face still looks wrong, check that you have added the panels to the config in the right order
+    * They should be added in the same order they are wired
 
 
-
-<br><br>
+<br><br><br>
 
 # Creating new faces
 1. Open the file `face-demo.html` in your browser
@@ -85,4 +142,5 @@ RIGHT = The protogen's right (your left)
 * [Example projects](https://github.com/BadgerCode/Arduino-Test-Projects)
 
 
-
+## Nano Every Pin out
+![nano every pin layout](https://content.arduino.cc/assets/Pinout-NANOevery_latest.png)
