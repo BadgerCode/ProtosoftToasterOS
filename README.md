@@ -46,11 +46,13 @@ The configuration can be found in `ToasterOS/Config.h`
 
 ### Arudino Pin Layout
 
-TODO: Diagram (left vs right, the different panel names, IR sensor, pins used on the arduino, VIN/GND)
+TODO: Diagram (IR sensor, pins used on the arduino, VIN/GND)
 
 
 ### Face LEDs Configuration
 These are configured in the `FaceConfig` class.
+
+![panels_diagram](Docs/Images/panels_diagram.png)
 
 The default set up is for faces with separate connections for the left and right half.<br>
 But there is an example below for people with a single connection for all LED panels.
