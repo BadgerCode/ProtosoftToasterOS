@@ -170,31 +170,33 @@ private:
     int digit2 = (score / 10) % 10;
     int digit3 = score % 10;
 
-    bool isReversed = true;
+    // Don't mirror the numbers
+    bool mirrorDigits = false;
+
     // Right
     if (score < 100) {
       // Don't use the nose for scores less than 100
       faceRenderer->ClearPanel(PANEL_RIGHT_NOSE);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0, mirrorDigits);
     } else {
       // Use the nose for the hundreds
-      faceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, Numbers_ASCII[digit1], 0);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, Numbers_ASCII[digit1], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, Numbers_ASCII[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, Numbers_ASCII[digit3], 0, mirrorDigits);
     }
 
     // Left
     if (score < 100) {
       // Don't use the nose for scores less than 100
-      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit2], 0);
-      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit3], 0);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit3], 0, mirrorDigits);
       faceRenderer->ClearPanel(PANEL_LEFT_NOSE);
     } else {
       // Use the nose for the ones when the score is above 100
-      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit1], 0);
-      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit2], 0);
-      faceRenderer->UpdatePanelWithoutMirroring(PANEL_LEFT_NOSE, Numbers_ASCII[digit3], 0);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, Numbers_ASCII[digit1], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, Numbers_ASCII[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_NOSE, Numbers_ASCII[digit3], 0, mirrorDigits);
     }
 
     // Side lights
@@ -302,15 +304,17 @@ private:
       }
     }
 
-    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, panel1, 0);
-    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, panel2, 0);
-    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, panel3, 0);
-    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, panel4, 0);
+    bool mirrorLeft = true;
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, panel1, 0, mirrorLeft);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, panel2, 0, mirrorLeft);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, panel3, 0, mirrorLeft);
+    faceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, panel4, 0, mirrorLeft);
 
-    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, panel1, 0);
-    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, panel2, 0);
-    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, panel3, 0);
-    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, panel4, 0);
+    bool mirrorRight = false;
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, panel1, 0, mirrorRight);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, panel2, 0, mirrorRight);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, panel3, 0, mirrorRight);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, panel4, 0, mirrorRight);
   }
 
   void renderHUD(FaceRender* faceRenderer, int hp) {
@@ -340,11 +344,13 @@ private:
       upperHealthPanel[2] |= B01000000;
     }
 
-    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, upperHealthPanel, 0);
-    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, lowerHealthPanel, 0);
+    bool mirrorLeft = true;
+    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, upperHealthPanel, 0, mirrorLeft);
+    faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, lowerHealthPanel, 0, mirrorLeft);
 
-    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, upperHealthPanel, 0);
-    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, lowerHealthPanel, 0);
+    bool mirrorRight = false;
+    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, upperHealthPanel, 0, mirrorRight);
+    faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, lowerHealthPanel, 0, mirrorRight);
   }
 
 

@@ -77,15 +77,15 @@ public:
         .NumPanels = 7,
         .Panels = new PanelConfig[7]{
           // Start: mouth back
-          { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = false, .FlipY = true },
-          { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
-          { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
-          { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = false, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = true, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = true, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = true, .FlipY = true },
+          { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = true, .FlipY = true },
           // -> nose
-          { .PanelType = PANEL_LEFT_NOSE, .FlipX = true, .FlipY = false },
+          { .PanelType = PANEL_LEFT_NOSE, .FlipX = false, .FlipY = false },
           // -> eye front
-          { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = true, .FlipY = false },
-          { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = true, .FlipY = false },
+          { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = false },
+          { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = false },
         },
       }
     };

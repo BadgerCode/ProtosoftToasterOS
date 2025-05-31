@@ -87,51 +87,45 @@ public:
   }
 
   void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-    // Mouth
-    UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY);
-    UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY);
-    UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY);
-    UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY);
+    bool mirrorLeft = true;
+    bool mirrorRight = false;
 
-    UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY);
-    UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY);
-    UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY);
-    UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY);
+    // Mouth
+    UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
+    UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
+    UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
+    UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
+
+    UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
+    UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
+    UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
+    UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
 
     // Nose
-    UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0);
-    UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0);
+    UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
+    UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
 
     // Eyes
     EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY);
-    UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY);
-    UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY);
-    UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY);
+    UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY, mirrorLeft);
+    UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY, mirrorLeft);
+    UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY, mirrorRight);
+    UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY, mirrorRight);
   }
 
   void ClearPanel(int panelType) {
-    UpdatePanel(panelType, EmptyPanel, 0);
+    UpdatePanel(panelType, EmptyPanel, 0, false);
   }
 
-  void UpdatePanel(int panelType, byte data[], int offsetY) {
+  void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
+    auto outputOverride = DEBUG_MODE == 3 ? Numbers_ASCII[7] : data;
+
     auto panelMapping = PanelMappings[panelType];
-    UpdatePanelInternal(panelType, data, offsetY, panelMapping.FlipX, panelMapping.FlipY);
-  }
+    bool flipX = mirror ? !panelMapping.FlipX : panelMapping.FlipX;
 
-
-  // TODO: Set up the config so that each panel will render exactly what you give it
-  //        Then make LoadFaceExpression override the FlipX to mirror the face on both sides
-  //        This will allow other areas like the game to render the score without the output being flipped
-  void UpdatePanelWithoutMirroring(int panelType, byte data[], int offsetY) {
-    auto panelMapping = PanelMappings[panelType];
-    UpdatePanelInternal(panelType, data, offsetY, false, panelMapping.FlipY);
-  }
-
-  void UpdatePanelInternal(int panelType, byte data[], int offsetY, bool flipX, bool flipY) {
     for (int row = 0; row < 8; row++) {
       byte rowData = 0;
-      int rowDataIndex = (flipY ? (7 - row) : row) + offsetY;
+      int rowDataIndex = (panelMapping.FlipY ? (7 - row) : row) + offsetY;
 
       // If the offset has made this row empty, clear it
       if (rowDataIndex < 0 || rowDataIndex >= 8) {
@@ -140,9 +134,9 @@ public:
       }
 
       if (flipX) {
-        rowData = Reverse(data[rowDataIndex]);
+        rowData = Reverse(outputOverride[rowDataIndex]);
       } else {
-        rowData = data[rowDataIndex];
+        rowData = outputOverride[rowDataIndex];
       }
 
       UpdatePanelRow(panelType, row, rowData);

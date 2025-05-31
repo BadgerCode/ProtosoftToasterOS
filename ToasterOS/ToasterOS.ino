@@ -1,15 +1,12 @@
+// Imports
 #include <FastLED.h>
 #include "LedControl.h"
 #include "Utils.h"
 #include "ConfigTypes.h"
-#include "Config.h"
-#include "Protogen_Faces.h"
-#include "FaceRender.h"
-#include "LEDStripRender.h"
-#include "Game.h"
 
-// PIN DEFINITIONS
-// See Config.h for more
+
+// CONFIGURATION
+#include "Config.h"
 
 // PINS: Input
 #define PIN_BUTTON 0
@@ -21,8 +18,16 @@
 
 
 // Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
+#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
 #define BOOPS_FOR_GAME 7
+
+
+
+// Imports
+#include "Protogen_Faces.h"
+#include "FaceRender.h"
+#include "LEDStripRender.h"
+#include "Game.h"
 
 
 
