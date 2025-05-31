@@ -169,7 +169,10 @@ void loop() {
     bool shouldBlink = (curTime >= NextBlink);
 
     if (BeingBooped) {
-      facialExpression = Face_Heart;
+      // Simulate beating heart, by changing between the small & big heart
+      bool showSmallHeart = ((timeSince(BoopHoldStarted) / 700) % 3 == 0);
+
+      facialExpression = showSmallHeart ? Face_Heart_Small : Face_Heart;
     } else if (Special_Face_Index != -1) {
       facialExpression = *(SpecialExpressions[Special_Face_Index]);
 
