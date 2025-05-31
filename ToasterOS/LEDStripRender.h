@@ -17,6 +17,8 @@ public:
   }
 
   void Render() {
-    FastLED.show();
+    if (ENABLE_SIDE_LEDS) {
+      FastLED.show();
+    }
   }
 };
