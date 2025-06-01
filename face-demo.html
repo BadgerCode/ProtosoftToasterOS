@@ -124,6 +124,8 @@
             <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo</button>
             <div class="subtext">{{latestChange}}</div>
           </div>
+
+          <button @click="PopRedoStack" :disabled="redoStack.length == 0">Redo</button>
         </div>
 
         <textarea id="output" v-model="output"></textarea>
@@ -228,6 +230,7 @@
           expressions: ref({}),
           showBlink: ref(false),
           output: ref(""),
+          redoStack: ref([]),
           undoStack: ref([]),
           activeTool: ref("brush"),
           inProgressBrushStroke: ref(false)
@@ -268,20 +271,42 @@
           this.drawFace();
         },
 
-        PushUndoStack(description) {
+        PushUndoStack(description, keepRedoStack) {
           this.undoStack.push({
             currentExpressionName: this.currentExpressionName,
             expressions: JSON.parse(JSON.stringify(this.expressions)),
             description: description
           });
+
+          if (!keepRedoStack)
+            this.redoStack.splice(0);
         },
 
         PopUndoStack() {
           if (this.undoStack.length == 0) return;
 
           let previousState = this.undoStack.pop();
+
+          this.redoStack.push({
+            currentExpressionName: this.currentExpressionName,
+            expressions: JSON.parse(JSON.stringify(this.expressions)),
+            description: previousState.description
+          });
+
           this.currentExpressionName = previousState.currentExpressionName;
           this.expressions = previousState.expressions;
+          this.drawFace();
+        },
+
+        PopRedoStack() {
+          if (this.redoStack.length == 0) return;
+
+          let newState = this.redoStack.pop();
+
+          this.PushUndoStack(newState.description, true);
+
+          this.currentExpressionName = newState.currentExpressionName;
+          this.expressions = newState.expressions;
           this.drawFace();
         },
 
