@@ -9,18 +9,17 @@ struct FacePanelConfig {
 class FaceRender {
 private:
   const int Brightness = 8;  // 0 - 15
-  byte EmptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   // Face LED state
   // 2 sides with 7 panels, 8 rows per panel
-  byte FaceLEDRowValues[14][8];
-  bool FaceLEDRowRequiresRendering[14][8];
+  byte FaceLEDRowValues[TOTAL_LED_PANELS][8];
+  bool FaceLEDRowRequiresRendering[TOTAL_LED_PANELS][8];
 
   // LED interface
   int NumLEDControls;
   LedControl** LEDControls;
 
-  FacePanelConfig PanelMappings[14];
+  FacePanelConfig PanelMappings[TOTAL_LED_PANELS];
 
   // Rendering
   unsigned int NextRenderSection = 0;  // 0 = eyes, 1 = nose, 2 = mouth
@@ -63,27 +62,14 @@ public:
   }
 
   void Clear() {
-    // Mouth
-    ClearPanel(PANEL_LEFT_MOUTH_BACK);
-    ClearPanel(PANEL_LEFT_MOUTH_MID_BACK);
-    ClearPanel(PANEL_LEFT_MOUTH_MID_FRONT);
-    ClearPanel(PANEL_LEFT_MOUTH_FRONT);
+    for (int i = 0; i < TOTAL_LED_PANELS; i++) {
+      ClearPanel(i);
+    }
+  }
 
-    ClearPanel(PANEL_RIGHT_MOUTH_BACK);
-    ClearPanel(PANEL_RIGHT_MOUTH_MID_BACK);
-    ClearPanel(PANEL_RIGHT_MOUTH_MID_FRONT);
-    ClearPanel(PANEL_RIGHT_MOUTH_FRONT);
-
-
-    // Nose
-    ClearPanel(PANEL_LEFT_NOSE);
-    ClearPanel(PANEL_RIGHT_NOSE);
-
-    // Eyes
-    ClearPanel(PANEL_LEFT_EYE_FRONT);
-    ClearPanel(PANEL_LEFT_EYE_BACK);
-    ClearPanel(PANEL_RIGHT_EYE_FRONT);
-    ClearPanel(PANEL_RIGHT_EYE_BACK);
+  void ClearPanel(int panelType) {
+    auto panelMapping = PanelMappings[panelType];
+    panelMapping.Controller->clearDisplay(panelMapping.Address);
   }
 
   void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
@@ -111,10 +97,6 @@ public:
     UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY, mirrorLeft);
     UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY, mirrorRight);
     UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY, mirrorRight);
-  }
-
-  void ClearPanel(int panelType) {
-    UpdatePanel(panelType, EmptyPanel, 0, false);
   }
 
   void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
