@@ -90,7 +90,8 @@
   <div id="app">
     <div id="face">
       <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;" @mousemove="HandleCanvasBrush"
-        @mouseup="inProgressBrushStroke = false" @mousedown="inProgressBrushStroke = false"></canvas>
+        @mouseup="inProgressBrushStroke = false"
+        @mousedown="e => { inProgressBrushStroke = false; HandleCanvasBrush(e); }"></canvas>
 
       <div id="outputArea">
         <div class="row">
