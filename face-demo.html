@@ -37,7 +37,7 @@
       background-color: #1e1e1e;
       color: white;
       border: 1px solid black;
-      margin-top: 50px;
+      margin-top: 10px;
     }
 
     select {
@@ -53,6 +53,7 @@
       cursor: pointer;
       border: 1px solid #353a46;
       padding: 5px 15px;
+      height: 2.5em;
     }
 
     button:hover {
@@ -90,8 +91,7 @@
   <div id="app">
     <div id="face">
       <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;" @mousemove="HandleCanvasBrush"
-        @mouseup="inProgressBrushStroke = false"
-        @mousedown="e => { inProgressBrushStroke = false; HandleCanvasBrush(e); }"></canvas>
+        @mouseup="ResetBrush" @mousedown="e => { ResetBrush(); HandleCanvasBrush(e); }"></canvas>
 
       <div id="outputArea">
         <div class="row">
@@ -115,8 +115,14 @@
 
         <div class="row">
           <div>Tools</div>
-          <button @click="activeTool = 'brush'" :class="{ active: activeTool == 'brush' }">Brush</button>
-          <button @click="activeTool = 'eraser'" :class="{ active: activeTool == 'eraser' }">Eraser</button>
+
+          <button @click="brushState.activeTool = 'brush'" :class="{ active: brushState.activeTool == 'brush' }">
+            Brush
+          </button>
+
+          <button @click="brushState.activeTool = 'eraser'" :class="{ active: brushState.activeTool == 'eraser' }">
+            Eraser
+          </button>
         </div>
 
         <div class="row">
@@ -233,8 +239,10 @@
           output: ref(""),
           redoStack: ref([]),
           undoStack: ref([]),
-          activeTool: ref("brush"),
-          inProgressBrushStroke: ref(false)
+          brushState: ref({
+            activeTool: "brush",
+            inProgressBrushStroke: false
+          })
         }
       },
       mounted() {
@@ -334,6 +342,9 @@
 
 
         // Canvas interaction
+        ResetBrush() {
+          this.brushState.inProgressBrushStroke = false;
+        },
         HandleCanvasBrush(event) {
           if (!(event.buttons & 1)) return;
 
@@ -347,12 +358,12 @@
           let dot = clickableLights[`${dotX},${dotY}`];
           if (dot) {
             // Only push to the undo stack at the start of a brush stroke
-            if (!this.inProgressBrushStroke)
+            if (!this.brushState.inProgressBrushStroke)
               this.PushUndoStack("Pixel brush");
 
-            this.inProgressBrushStroke = true;
+            this.brushState.inProgressBrushStroke = true;
 
-            dot.pattern[dot.row][dot.column] = this.activeTool == "brush" ? 1 : 0;
+            dot.panel[dot.row][dot.column] = this.brushState.activeTool == "brush" ? 1 : 0;
             this.drawFace();
           }
         },
@@ -362,31 +373,31 @@
         // CODE OUTPUT
         updateOutput() {
           let blinkOutput = !this.currentExpression.hasBlink ? "{}" : `{
-    { ${this.patternToMatrixString(this.currentExpression.eyeBlinkPatterns[0])} },  //
-    { ${this.patternToMatrixString(this.currentExpression.eyeBlinkPatterns[1])} }   //
+    { ${this.panelToMatrixString(this.currentExpression.eyeBlinkPatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.eyeBlinkPatterns[1])} }   //
   }`;
 
           this.output = `struct FaceExpression ${this.currentExpressionName} = {
   .Nose = {
-    { ${this.patternToMatrixString(this.currentExpression.nosePatterns[0])} }  //
+    { ${this.panelToMatrixString(this.currentExpression.nosePatterns[0])} }  //
   },
   .Eye = {
-    { ${this.patternToMatrixString(this.currentExpression.eyePatterns[0])} },  //
-    { ${this.patternToMatrixString(this.currentExpression.eyePatterns[1])} }   //
+    { ${this.panelToMatrixString(this.currentExpression.eyePatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.eyePatterns[1])} }   //
   },
   .HasBlink = ${this.currentExpression.hasBlink},
   .Eye_Blink = ${blinkOutput},
   .Mouth = {
-    { ${this.patternToMatrixString(this.currentExpression.mouthPatterns[0])} },  //
-    { ${this.patternToMatrixString(this.currentExpression.mouthPatterns[1])} },  //
-    { ${this.patternToMatrixString(this.currentExpression.mouthPatterns[2])} },  //
-    { ${this.patternToMatrixString(this.currentExpression.mouthPatterns[3])} }   //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[1])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[2])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[3])} }   //
   }
 };`;
         },
 
-        patternToMatrixString(pattern) {
-          return pattern.map(row => `B${row.join("")}`).join(", ");
+        panelToMatrixString(panel) {
+          return panel.map(row => `B${row.join("")}`).join(", ");
         },
 
 
@@ -400,32 +411,32 @@
           let lines = input.trim().split("\n");
           let newExpressionName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
 
-          let pattern = /\s+\{\s(.*)\s\},?\s+\/\//;
+          let panel = /\s+\{\s(.*)\s\},?\s+\/\//;
 
           let nosePatterns = [
-            this.parseMatrixPattern(lines[2].replace(pattern, "$1")),
+            this.parseMatrixPanel(lines[2].replace(panel, "$1")),
           ];
 
           let eyePatterns = [
-            this.parseMatrixPattern(lines[5].replace(pattern, "$1")),
-            this.parseMatrixPattern(lines[6].replace(pattern, "$1")),
+            this.parseMatrixPanel(lines[5].replace(panel, "$1")),
+            this.parseMatrixPanel(lines[6].replace(panel, "$1")),
           ];
 
           let hasBlink = lines[8].includes("true");
           let eyeBlinkPatterns = [];
           if (hasBlink) {
             eyeBlinkPatterns = [
-              this.parseMatrixPattern(lines[10].replace(pattern, "$1")),
-              this.parseMatrixPattern(lines[11].replace(pattern, "$1")),
+              this.parseMatrixPanel(lines[10].replace(panel, "$1")),
+              this.parseMatrixPanel(lines[11].replace(panel, "$1")),
             ];
           }
 
           let offset = hasBlink ? 3 : 0;
           let mouthPatterns = [
-            this.parseMatrixPattern(lines[11 + offset].replace(pattern, "$1")),
-            this.parseMatrixPattern(lines[12 + offset].replace(pattern, "$1")),
-            this.parseMatrixPattern(lines[13 + offset].replace(pattern, "$1")),
-            this.parseMatrixPattern(lines[14 + offset].replace(pattern, "$1")),
+            this.parseMatrixPanel(lines[11 + offset].replace(panel, "$1")),
+            this.parseMatrixPanel(lines[12 + offset].replace(panel, "$1")),
+            this.parseMatrixPanel(lines[13 + offset].replace(panel, "$1")),
+            this.parseMatrixPanel(lines[14 + offset].replace(panel, "$1")),
           ];
 
           this.PushUndoStack(`Loaded expression ${newExpressionName}`);
@@ -442,8 +453,8 @@
           this.drawFace();
         },
 
-        parseMatrixPattern(patternString) {
-          return patternString.split(",")
+        parseMatrixPanel(panelString) {
+          return panelString.split(",")
             .map(row =>
               row.trim().replace("B", "")
                 .split("")
@@ -490,18 +501,18 @@
           ctx.stroke();
         },
 
-        drawGrid(ctx, startX, startY, pattern) {
+        drawGrid(ctx, startX, startY, panel) {
           for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
               let x = startX + (j * dotSize);
               let y = startY + (i * dotSize);
 
-              if (pattern[i][j])
+              if (panel[i][j])
                 this.drawDot(ctx, x, y, dotSize);
 
               let clickX = x / dotSize;
               let clickY = y / dotSize;
-              clickableLights[`${clickX},${clickY}`] = { pattern: pattern, row: i, column: j };
+              clickableLights[`${clickX},${clickY}`] = { panel: panel, row: i, column: j };
             }
 
           }
