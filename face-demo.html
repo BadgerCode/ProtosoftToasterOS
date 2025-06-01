@@ -43,6 +43,13 @@
       padding: 5px 15px;
     }
 
+    button:disabled,
+    button:disabled:hover {
+      background: #14161a;
+      color: #737373;
+      cursor: initial;
+    }
+
     button:hover {
       background: #1f2229;
     }
@@ -78,6 +85,7 @@
 
         <div>
           <button id="toggleBlink">Enable Blink</button>
+          <button id="addOrRemoveBlink">Add Blink</button>
         </div>
 
         <textarea id="output"></textarea>
@@ -110,6 +118,23 @@
     { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
     { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};`,
+      `struct FaceExpression Face_Heart = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000110, B00001111, B00011111, B00011111, B00001111, B00000111, B00000011, B00000001 },  //
+    { B11000000, B11100000, B11110000, B11110000, B11100000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B10000000, B11000000, B01110000, B00111110, B00001111, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00011111, B01111111, B11100000, B00000000 },  //
+    { B00000000, B00000010, B00001110, B01111100, B11100000, B11000000, B00000000, B00000000 }   //
   }
 };`,
       `struct FaceExpression Face_Blep = {
@@ -162,16 +187,12 @@
     let showBlink = false;
 
     // Current loaded expression
-    let faceVariableName = "Face_Name";
-    let nosePatterns = [];
-    let eyePatterns = [];
-    let hasBlink = false;
-    let eyeBlinkPatterns = [];
-    let mouthPatterns = [];
+    let currentExpressionName = "Face_Name";
 
 
     // Saved expressions
     let expressions = {};
+    let currentExpression = {};
 
 
 
@@ -198,8 +219,12 @@
         document.getElementById("toggleBlink").addEventListener("click", (e) => {
           showBlink = !showBlink;
           drawFace();
+          UpdateBlinkButton();
+        });
 
-          document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
+        // Add or remove blink
+        document.getElementById("addOrRemoveBlink").addEventListener("click", (e) => {
+          AddOrRemoveBlink();
         });
 
 
@@ -221,7 +246,7 @@
           let dot = clickableLights[`${dotX},${dotY}`];
           if (dot) {
             dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
-            drawFace(nosePatterns, eyePatterns, mouthPatterns);
+            drawFace();
           }
         });
 
@@ -240,23 +265,52 @@
     // FACE SWITCHER
     function updateFaceSwitcher() {
       document.getElementById("loadedFacesSelect").innerHTML = Object.keys(expressions).map(name => `<option>${name}</option>\n`);
-      document.getElementById("loadedFacesSelect").value = faceVariableName;
+      document.getElementById("loadedFacesSelect").value = currentExpressionName;
+    }
+
+    function UpdateBlinkButton() {
+      document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
+      document.getElementById("toggleBlink").disabled = !currentExpression.hasBlink;
+    }
+
+    function UpdateAddOrRemoveBlinkButton() {
+      document.getElementById("addOrRemoveBlink").innerHTML = currentExpression.hasBlink ? "Remove Blink" : "Add Blink";
     }
 
 
     function switchFace(facename) {
-      let expression = expressions[facename];
+      currentExpression = expressions[facename];
+      currentExpressionName = facename;
 
-      faceVariableName = facename;
-      nosePatterns = expression.nosePatterns;
-      eyePatterns = expression.eyePatterns;
-      hasBlink = expression.hasBlink;
-      eyeBlinkPatterns = expression.eyeBlinkPatterns;
-      mouthPatterns = expression.mouthPatterns;
-
-      drawFace();
+      showBlink = false;
+      UpdateBlinkButton();
+      UpdateAddOrRemoveBlinkButton();
 
       document.getElementById("loadedFacesSelect").value = facename;
+
+      drawFace();
+    }
+
+    function AddOrRemoveBlink() {
+      // If we're removing the blink
+      if (currentExpression.hasBlink) {
+        if (confirm("Are you sure you want to remove the blink? This can't be undone") == false) return;
+      }
+
+      currentExpression.hasBlink = !currentExpression.hasBlink;
+
+      currentExpression.eyeBlinkPatterns.splice(0);
+      if (currentExpression.hasBlink) {
+        // Deep copy the non-blink eye
+        currentExpression.eyeBlinkPatterns = currentExpression.eyePatterns.map(panel => panel.map(row => row.slice()));
+      }
+
+      // Stop showing or immediately show the new blink
+      showBlink = currentExpression.hasBlink;
+      UpdateBlinkButton();
+      UpdateAddOrRemoveBlinkButton();
+
+      drawFace();
     }
 
 
@@ -266,26 +320,26 @@
     function updateOutput() {
       let output = document.getElementById("output");
 
-      let blinkOutput = !hasBlink ? "{}" : `{
-    { ${patternToMatrixString(eyeBlinkPatterns[0])} },  //
-    { ${patternToMatrixString(eyeBlinkPatterns[1])} }   //
+      let blinkOutput = !currentExpression.hasBlink ? "{}" : `{
+    { ${patternToMatrixString(currentExpression.eyeBlinkPatterns[0])} },  //
+    { ${patternToMatrixString(currentExpression.eyeBlinkPatterns[1])} }   //
   }`;
 
-      output.value = `struct FaceExpression ${faceVariableName} = {
+      output.value = `struct FaceExpression ${currentExpressionName} = {
   .Nose = {
-    { ${patternToMatrixString(nosePatterns[0])} }  //
+    { ${patternToMatrixString(currentExpression.nosePatterns[0])} }  //
   },
   .Eye = {
-    { ${patternToMatrixString(eyePatterns[0])} },  //
-    { ${patternToMatrixString(eyePatterns[1])} }   //
+    { ${patternToMatrixString(currentExpression.eyePatterns[0])} },  //
+    { ${patternToMatrixString(currentExpression.eyePatterns[1])} }   //
   },
-  .HasBlink = ${hasBlink},
+  .HasBlink = ${currentExpression.hasBlink},
   .Eye_Blink = ${blinkOutput},
   .Mouth = {
-    { ${patternToMatrixString(mouthPatterns[0])} },  //
-    { ${patternToMatrixString(mouthPatterns[1])} },  //
-    { ${patternToMatrixString(mouthPatterns[2])} },  //
-    { ${patternToMatrixString(mouthPatterns[3])} }   //
+    { ${patternToMatrixString(currentExpression.mouthPatterns[0])} },  //
+    { ${patternToMatrixString(currentExpression.mouthPatterns[1])} },  //
+    { ${patternToMatrixString(currentExpression.mouthPatterns[2])} },  //
+    { ${patternToMatrixString(currentExpression.mouthPatterns[3])} }   //
   }
 };`;
     }
@@ -300,44 +354,40 @@
     // CODE INPUT
 
 
-    // Load a face
+    // Load a face & switch to it
     function parseWholeFace(input) {
       let lines = input.trim().split("\n");
-      faceVariableName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
+      let newExpressionName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
 
       let pattern = /\s+\{\s(.*)\s\},?\s+\/\//;
 
-      nosePatterns = [
+      let nosePatterns = [
         parseMatrixPattern(lines[2].replace(pattern, "$1")),
       ];
 
-      eyePatterns = [
+      let eyePatterns = [
         parseMatrixPattern(lines[5].replace(pattern, "$1")),
         parseMatrixPattern(lines[6].replace(pattern, "$1")),
       ];
 
-      hasBlink = lines[8].includes("true");
+      let hasBlink = lines[8].includes("true");
+      let eyeBlinkPatterns = [];
       if (hasBlink) {
         eyeBlinkPatterns = [
           parseMatrixPattern(lines[10].replace(pattern, "$1")),
           parseMatrixPattern(lines[11].replace(pattern, "$1")),
         ];
       }
-      else {
-        eyeBlinkPatterns = [];
-      }
 
       let offset = hasBlink ? 3 : 0;
-      mouthPatterns = [
+      let mouthPatterns = [
         parseMatrixPattern(lines[11 + offset].replace(pattern, "$1")),
         parseMatrixPattern(lines[12 + offset].replace(pattern, "$1")),
         parseMatrixPattern(lines[13 + offset].replace(pattern, "$1")),
         parseMatrixPattern(lines[14 + offset].replace(pattern, "$1")),
       ];
 
-      drawFace();
-
-      expressions[faceVariableName] = {
+      expressions[newExpressionName] = {
         nosePatterns: nosePatterns,
         eyePatterns: eyePatterns,
         hasBlink: hasBlink,
@@ -345,6 +395,10 @@
         mouthPatterns: mouthPatterns
       };
 
+      currentExpression = expressions[newExpressionName];
+      currentExpressionName = newExpressionName;
+
+      drawFace();
       updateFaceSwitcher();
     }
 
@@ -364,17 +418,17 @@
     function drawFace() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawGrid(40, 200, nosePatterns[0]);
+      drawGrid(40, 200, currentExpression.nosePatterns[0]);
       drawPanelBox(40, 200, 1);
 
-      drawGrid(500, 40, (showBlink && hasBlink) ? eyeBlinkPatterns[0] : eyePatterns[0]);
-      drawGrid(500 + (dotSize * 8), 40, (showBlink && hasBlink) ? eyeBlinkPatterns[1] : eyePatterns[1]);
+      drawGrid(500, 40, (showBlink && currentExpression.hasBlink) ? currentExpression.eyeBlinkPatterns[0] : currentExpression.eyePatterns[0]);
+      drawGrid(500 + (dotSize * 8), 40, (showBlink && currentExpression.hasBlink) ? currentExpression.eyeBlinkPatterns[1] : currentExpression.eyePatterns[1]);
       drawPanelBox(500, 40, 2);
 
-      drawGrid(140, 400, mouthPatterns[0]);
-      drawGrid(140 + (dotSize * 8), 400, mouthPatterns[1]);
-      drawGrid(140 + (dotSize * 8) * 2, 400, mouthPatterns[2]);
-      drawGrid(140 + (dotSize * 8) * 3, 400, mouthPatterns[3]);
+      drawGrid(140, 400, currentExpression.mouthPatterns[0]);
+      drawGrid(140 + (dotSize * 8), 400, currentExpression.mouthPatterns[1]);
+      drawGrid(140 + (dotSize * 8) * 2, 400, currentExpression.mouthPatterns[2]);
+      drawGrid(140 + (dotSize * 8) * 3, 400, currentExpression.mouthPatterns[3]);
       drawPanelBox(140, 400, 4);
 
       updateOutput();
