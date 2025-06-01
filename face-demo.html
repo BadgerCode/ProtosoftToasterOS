@@ -82,7 +82,7 @@
       <div id="outputArea">
         <div class="row">
           <div>Expression</div>
-          <select id="loadedFacesSelect" :value="currentExpressionName" @change="e => switchFace(e.target.value)">
+          <select id="loadedFacesSelect" v-model="currentExpressionName" @change="e => switchFace(e.target.value)">
             <option v-for="name in Object.keys(expressions)">{{name}}</option>
           </select>
         </div>
@@ -99,9 +99,13 @@
           </button>
         </div>
 
-        <textarea id="output" :value="output"></textarea>
+        <div class="row">
+          <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo</button>
+        </div>
 
-        <button @click="parseWholeFace(output)">Load</button>
+        <textarea id="output" v-model="output"></textarea>
+
+        <button @click="e => {PushUndoStack(); parseWholeFace(output)}">Load</button>
       </div>
     </div>
   </div>
@@ -199,9 +203,9 @@
         return {
           currentExpressionName: ref("Face_Name"),
           expressions: ref({}),
-          currentExpression: ref({}),
           showBlink: ref(false),
-          output: ref("")
+          output: ref(""),
+          undoStack: ref([])
         }
       },
       mounted() {
@@ -212,10 +216,14 @@
 
         this.switchFace(Object.keys(this.expressions)[0]);
       },
+      computed: {
+        currentExpression() {
+          return this.expressions[this.currentExpressionName] || {};
+        }
+      },
       methods: {
         // FACE SWITCHER
         switchFace(facename) {
-          this.currentExpression = this.expressions[facename];
           this.currentExpressionName = facename;
 
           this.showBlink = false;
@@ -228,12 +236,29 @@
           this.drawFace();
         },
 
+        PushUndoStack() {
+          this.undoStack.push({
+            currentExpressionName: this.currentExpressionName,
+            expressions: JSON.parse(JSON.stringify(this.expressions))
+          });
+        },
+
+        PopUndoStack() {
+          if (this.undoStack.length == 0) return;
+
+          let previousState = this.undoStack.pop();
+          this.currentExpressionName = previousState.currentExpressionName;
+          this.expressions = previousState.expressions;
+          this.drawFace();
+        },
+
         AddOrRemoveBlink() {
           // If we're removing the blink
           if (this.currentExpression.hasBlink) {
             if (confirm("Are you sure you want to remove the blink? This can't be undone") == false) return;
           }
 
+          this.PushUndoStack();
           this.currentExpression.hasBlink = !this.currentExpression.hasBlink;
 
           this.currentExpression.eyeBlinkPatterns.splice(0);
@@ -260,6 +285,8 @@
 
           let dot = clickableLights[`${dotX},${dotY}`];
           if (dot) {
+            this.PushUndoStack();
+
             dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
             this.drawFace();
           }
@@ -344,7 +371,6 @@
             mouthPatterns: mouthPatterns
           };
 
-          this.currentExpression = this.expressions[newExpressionName];
           this.currentExpressionName = newExpressionName;
 
           this.drawFace();
