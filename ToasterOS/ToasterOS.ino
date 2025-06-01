@@ -1,42 +1,29 @@
+// Imports
 #include <FastLED.h>
 #include "LedControl.h"
 #include "Utils.h"
+#include "ConfigTypes.h"
+
+// CONFIGURATION
+#include "Config.h"
+
+// Imports
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "Game.h"
 
-// PIN DEFINITIONS
-// PINS: Input
-#define PIN_BUTTON 0
-#define PIN_ANALOG_DISTANCE 0
 
-// PINS: LED FACE PANELS
-#define PIN_LEFT_DIN 3
-#define PIN_LEFT_CS 4
-#define PIN_LEFT_CLK 5
-#define PIN_RIGHT_DIN 6
-#define PIN_RIGHT_CS 7
-#define PIN_RIGHT_CLK 8
-
-// PINS: LED STRIPS
-#define PIN_LEFT_LEDSTRIP_DATA 9
-#define PIN_RIGHT_LEDSTRIP_DATA 10
-
-
-// Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log
-#define BOOPS_FOR_GAME 7
-
-
-
+// Global variables
 // Face LEDs
+FaceConfig* ProtoFaceConfig = new FaceConfig();
 // If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
-FaceRender* ProtoFaceRenderer = new FaceRender(PIN_LEFT_DIN, PIN_LEFT_CLK, PIN_LEFT_CS, PIN_RIGHT_DIN, PIN_RIGHT_CLK, PIN_RIGHT_CS);
+FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
 
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
+// Secret game
 CubeGame* CubeGameRunner = new CubeGame();
 
 
@@ -48,17 +35,15 @@ void setup() {
 
   randomSeed(analogRead(3));
 
-  // pinMode(PIN_BUTTON, INPUT);
-  pinMode(PIN_LEFT_CS, OUTPUT);
-  pinMode(PIN_RIGHT_CS, OUTPUT);
-
   // LED Face
   ProtoFaceRenderer->Initialise();
   ProtoFaceRenderer->Clear();
 
   // LED strips
-  FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
-  FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
+  if (ENABLE_SIDE_LEDS) {
+    FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
+    FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
+  }
 }
 
 
@@ -274,10 +259,5 @@ void loop() {
 
 // utility functions
 int getDistance() {
-  return 1023 - analogRead(PIN_ANALOG_DISTANCE);  // Higher value = further away
+  return 1023 - analogRead(PIN_ANALOG_BOOP_SENSOR);  // Higher value = further away
 }
-
-
-// bool isButtonDown() {
-//   return digitalRead(PIN_BUTTON) == 0;  // Invert it, so that it's 0 when off and 1 when on
-// }
