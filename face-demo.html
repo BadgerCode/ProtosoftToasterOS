@@ -97,6 +97,7 @@
     let faceVariableName = "Face_Name";
     let nosePatterns = [];
     let eyePatterns = [];
+    let hasBlink = false;
     let eyeBlinkPatterns = [];
     let mouthPatterns = [];
 
@@ -132,7 +133,7 @@
       drawFace();
 
       document.getElementById("toggleBlink").innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
-    })
+    });
 
 
 
@@ -141,6 +142,12 @@
     // CODE OUTPUT
     function updateOutput() {
       let output = document.getElementById("output");
+
+      let blinkOutput = !hasBlink ? "{}" : `{
+    { ${patternToMatrixString(eyeBlinkPatterns[0])} },  //
+    { ${patternToMatrixString(eyeBlinkPatterns[1])} }   //
+  }`;
+
       output.value = `struct FaceExpression ${faceVariableName} = {
   .Nose = {
     { ${patternToMatrixString(nosePatterns[0])} }  //
@@ -149,10 +156,8 @@
     { ${patternToMatrixString(eyePatterns[0])} },  //
     { ${patternToMatrixString(eyePatterns[1])} }   //
   },
-  .Eye_Blink = {
-    { ${patternToMatrixString(eyeBlinkPatterns[0])} },  //
-    { ${patternToMatrixString(eyeBlinkPatterns[1])} }   //
-  },
+  .HasBlink = ${hasBlink},
+  .Eye_Blink = ${blinkOutput},
   .Mouth = {
     { ${patternToMatrixString(mouthPatterns[0])} },  //
     { ${patternToMatrixString(mouthPatterns[1])} },  //
@@ -180,10 +185,8 @@
     { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
     { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
   },
-  .Eye_Blink = {
-    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
-  },
+  .HasBlink = false,
+  .Eye_Blink = { },
   .Mouth = {
     { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
     { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
@@ -214,16 +217,24 @@
         parseMatrixPattern(lines[6].replace(pattern, "$1")),
       ];
 
-      eyeBlinkPatterns = [
-        parseMatrixPattern(lines[9].replace(pattern, "$1")),
-        parseMatrixPattern(lines[10].replace(pattern, "$1")),
-      ];
+      hasBlink = lines[8].includes("true");
 
+      if (hasBlink) {
+        eyeBlinkPatterns = [
+          parseMatrixPattern(lines[10].replace(pattern, "$1")),
+          parseMatrixPattern(lines[11].replace(pattern, "$1")),
+        ];
+      }
+      else {
+        eyeBlinkPatterns = [];
+      }
+
+      let offset = hasBlink ? 3 : 0;
       mouthPatterns = [
-        parseMatrixPattern(lines[13].replace(pattern, "$1")),
-        parseMatrixPattern(lines[14].replace(pattern, "$1")),
-        parseMatrixPattern(lines[15].replace(pattern, "$1")),
-        parseMatrixPattern(lines[16].replace(pattern, "$1")),
+        parseMatrixPattern(lines[11 + offset].replace(pattern, "$1")),
+        parseMatrixPattern(lines[12 + offset].replace(pattern, "$1")),
+        parseMatrixPattern(lines[13 + offset].replace(pattern, "$1")),
+        parseMatrixPattern(lines[14 + offset].replace(pattern, "$1")),
       ];
 
       drawFace();
@@ -231,6 +242,7 @@
       expressions[faceVariableName] = {
         nosePatterns: nosePatterns,
         eyePatterns: eyePatterns,
+        hasBlink: hasBlink,
         eyeBlinkPatterns: eyeBlinkPatterns,
         mouthPatterns: mouthPatterns
       };
@@ -257,8 +269,8 @@
       drawGrid(40, 200, nosePatterns[0]);
       drawPanelBox(40, 200, 1);
 
-      drawGrid(500, 40, showBlink ? eyeBlinkPatterns[0] : eyePatterns[0]);
-      drawGrid(500 + (dotSize * 8), 40, showBlink ? eyeBlinkPatterns[1] : eyePatterns[1]);
+      drawGrid(500, 40, (showBlink && hasBlink) ? eyeBlinkPatterns[0] : eyePatterns[0]);
+      drawGrid(500 + (dotSize * 8), 40, (showBlink && hasBlink) ? eyeBlinkPatterns[1] : eyePatterns[1]);
       drawPanelBox(500, 40, 2);
 
       drawGrid(140, 400, mouthPatterns[0]);
