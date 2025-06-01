@@ -60,7 +60,7 @@
       padding: 10px 20px;
     }
 
-    #faceSwitcher {
+    .row {
       display: flex;
       flex-direction: row;
       gap: 10px;
@@ -76,23 +76,32 @@
 <body>
   <div id="app">
     <div id="face">
-      <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;"></canvas>
+      <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;"
+        @click="HandleCanvasClick"></canvas>
+
       <div id="outputArea">
-        <div id="faceSwitcher">
-          <div>Expression:</div>
+        <div class="row">
+          <div>Expression</div>
           <select id="loadedFacesSelect" :value="currentExpressionName" @change="e => switchFace(e.target.value)">
             <option v-for="name in Object.keys(expressions)">{{name}}</option>
           </select>
         </div>
 
-        <div>
-          <button id="toggleBlink">Enable Blink</button>
-          <button id="addOrRemoveBlink">Add Blink</button>
+        <div class="row">
+          <div>Blink options</div>
+
+          <button :disabled="!currentExpression.hasBlink" @click="ToggleBlink">
+            {{showBlink ? "Hide" : "Show"}}
+          </button>
+
+          <button @click="AddOrRemoveBlink">
+            {{currentExpression.hasBlink ? "Remove Blink" : "Add Blink"}}
+          </button>
         </div>
 
-        <textarea id="output"></textarea>
+        <textarea id="output" :value="output"></textarea>
 
-        <button id="loadButton">Load</button>
+        <button @click="parseWholeFace(output)">Load</button>
       </div>
     </div>
   </div>
@@ -182,7 +191,6 @@
     import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
     const dotSize = 20;
     let clickableLights = {};
-    let showBlink = false;
 
     // Current loaded expression
     // Saved expressions
@@ -191,48 +199,12 @@
         return {
           currentExpressionName: ref("Face_Name"),
           expressions: ref({}),
-          currentExpression: ref({})
+          currentExpression: ref({}),
+          showBlink: ref(false),
+          output: ref("")
         }
       },
       mounted() {
-        // Register events
-        // TOGGLE BLINK
-        document.getElementById("toggleBlink").addEventListener("click", (e) => {
-          showBlink = !showBlink;
-          this.drawFace();
-          this.UpdateBlinkButton();
-        });
-
-        // Add or remove blink
-        document.getElementById("addOrRemoveBlink").addEventListener("click", (e) => {
-          this.AddOrRemoveBlink();
-        });
-
-
-        // Click load
-        loadButton.addEventListener('click', () => {
-          this.parseWholeFace(document.getElementById("output").value);
-        });
-
-
-        // Canvas interaction
-        faceCanvas.addEventListener('click', (e) => {
-          const rect = faceCanvas.getBoundingClientRect()
-          const x = event.clientX - rect.left;
-          const y = event.clientY - rect.top;
-
-          let dotX = Math.floor((x + dotSize / 2) / dotSize);
-          let dotY = Math.floor((y + dotSize / 2) / dotSize);
-
-          let dot = clickableLights[`${dotX},${dotY}`];
-          if (dot) {
-            dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
-            this.drawFace();
-          }
-        });
-
-
-
         // Load default faces and set initial face
         for (const face of defaultFaces) {
           this.parseWholeFace(face);
@@ -242,24 +214,17 @@
       },
       methods: {
         // FACE SWITCHER
-        UpdateBlinkButton() {
-          toggleBlink.innerHTML = showBlink ? "Disable Blink" : "Enable Blink";
-          toggleBlink.disabled = !this.currentExpression.hasBlink;
-        },
-
-        UpdateAddOrRemoveBlinkButton() {
-          addOrRemoveBlink.innerHTML = this.currentExpression.hasBlink ? "Remove Blink" : "Add Blink";
-        },
-
-
         switchFace(facename) {
           this.currentExpression = this.expressions[facename];
           this.currentExpressionName = facename;
 
-          showBlink = false;
-          this.UpdateBlinkButton();
-          this.UpdateAddOrRemoveBlinkButton();
+          this.showBlink = false;
 
+          this.drawFace();
+        },
+
+        ToggleBlink() {
+          this.showBlink = !this.showBlink;
           this.drawFace();
         },
 
@@ -278,26 +243,38 @@
           }
 
           // Stop showing or immediately show the new blink
-          showBlink = this.currentExpression.hasBlink;
-          this.UpdateBlinkButton();
-          this.UpdateAddOrRemoveBlinkButton();
+          this.showBlink = this.currentExpression.hasBlink;
 
           this.drawFace();
         },
 
 
+        // Canvas interaction
+        HandleCanvasClick(event) {
+          const rect = faceCanvas.getBoundingClientRect()
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+
+          let dotX = Math.floor((x + dotSize / 2) / dotSize);
+          let dotY = Math.floor((y + dotSize / 2) / dotSize);
+
+          let dot = clickableLights[`${dotX},${dotY}`];
+          if (dot) {
+            dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
+            this.drawFace();
+          }
+        },
+
 
 
         // CODE OUTPUT
         updateOutput() {
-          let output = document.getElementById("output");
-
           let blinkOutput = !this.currentExpression.hasBlink ? "{}" : `{
     { ${this.patternToMatrixString(this.currentExpression.eyeBlinkPatterns[0])} },  //
     { ${this.patternToMatrixString(this.currentExpression.eyeBlinkPatterns[1])} }   //
   }`;
 
-          output.value = `struct FaceExpression ${this.currentExpressionName} = {
+          this.output = `struct FaceExpression ${this.currentExpressionName} = {
   .Nose = {
     { ${this.patternToMatrixString(this.currentExpression.nosePatterns[0])} }  //
   },
@@ -394,8 +371,8 @@
           this.drawGrid(ctx, 40, 200, face.nosePatterns[0]);
           this.drawPanelBox(ctx, 40, 200, 1);
 
-          this.drawGrid(ctx, 500, 40, (showBlink && face.hasBlink) ? face.eyeBlinkPatterns[0] : face.eyePatterns[0]);
-          this.drawGrid(ctx, 500 + (dotSize * 8), 40, (showBlink && face.hasBlink) ? face.eyeBlinkPatterns[1] : face.eyePatterns[1]);
+          this.drawGrid(ctx, 500, 40, (this.showBlink && face.hasBlink) ? face.eyeBlinkPatterns[0] : face.eyePatterns[0]);
+          this.drawGrid(ctx, 500 + (dotSize * 8), 40, (this.showBlink && face.hasBlink) ? face.eyeBlinkPatterns[1] : face.eyePatterns[1]);
           this.drawPanelBox(ctx, 500, 40, 2);
 
           this.drawGrid(ctx, 140, 400, face.mouthPatterns[0]);
@@ -438,10 +415,7 @@
           }
         }
       }
-    }).mount('#app')
-
-
-
+    }).mount('#app');
   </script>
 </body>
 
