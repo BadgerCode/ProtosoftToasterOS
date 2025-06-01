@@ -9,6 +9,17 @@
       font-family: Inter, SF Pro, Segoe UI, Roboto, Oxygen, Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     }
 
+    .row {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .subtext {
+      font-size: 12px;
+    }
+
     #face {
       display: flex;
       flex-direction: row;
@@ -44,6 +55,19 @@
       padding: 5px 15px;
     }
 
+    button:hover {
+      background: #1f2229;
+    }
+
+    button.active {
+      background: #0152bb;
+      color: white;
+    }
+
+    button.active:hover {
+      background: #1c6cd3;
+    }
+
     button:disabled,
     button:disabled:hover {
       background: #14161a;
@@ -51,20 +75,9 @@
       cursor: initial;
     }
 
-    button:hover {
-      background: #1f2229;
-    }
-
     #loadButton {
       font-size: 32px;
       padding: 10px 20px;
-    }
-
-    .row {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      padding: 10px;
     }
 
     #loadedFacesSelect {
@@ -76,8 +89,8 @@
 <body>
   <div id="app">
     <div id="face">
-      <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;"
-        @click="HandleCanvasClick"></canvas>
+      <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;" @mousemove="HandleCanvasBrush"
+        @mouseup="inProgressBrushStroke = false" @mousedown="inProgressBrushStroke = false"></canvas>
 
       <div id="outputArea">
         <div class="row">
@@ -100,12 +113,22 @@
         </div>
 
         <div class="row">
-          <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo</button>
+          <div>Tools</div>
+          <button @click="activeTool = 'brush'" :class="{ active: activeTool == 'brush' }">Brush</button>
+          <button @click="activeTool = 'eraser'" :class="{ active: activeTool == 'eraser' }">Eraser</button>
+        </div>
+
+        <div class="row">
+          <div>Options</div>
+          <div>
+            <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo</button>
+            <div class="subtext">{{latestChange}}</div>
+          </div>
         </div>
 
         <textarea id="output" v-model="output"></textarea>
 
-        <button @click="e => {PushUndoStack(); parseWholeFace(output)}">Load</button>
+        <button @click="parseWholeFace(output)">Load</button>
       </div>
     </div>
   </div>
@@ -205,7 +228,9 @@
           expressions: ref({}),
           showBlink: ref(false),
           output: ref(""),
-          undoStack: ref([])
+          undoStack: ref([]),
+          activeTool: ref("brush"),
+          inProgressBrushStroke: ref(false)
         }
       },
       mounted() {
@@ -214,11 +239,18 @@
           this.parseWholeFace(face);
         }
 
+        // Clear undo stack
+        this.undoStack.splice(0);
+
         this.switchFace(Object.keys(this.expressions)[0]);
       },
       computed: {
         currentExpression() {
           return this.expressions[this.currentExpressionName] || {};
+        },
+        latestChange() {
+          if (this.undoStack.length == 0) return "";
+          return this.undoStack[this.undoStack.length - 1].description;
         }
       },
       methods: {
@@ -236,10 +268,11 @@
           this.drawFace();
         },
 
-        PushUndoStack() {
+        PushUndoStack(description) {
           this.undoStack.push({
             currentExpressionName: this.currentExpressionName,
-            expressions: JSON.parse(JSON.stringify(this.expressions))
+            expressions: JSON.parse(JSON.stringify(this.expressions)),
+            description: description
           });
         },
 
@@ -258,7 +291,7 @@
             if (confirm("Are you sure you want to remove the blink? This can't be undone") == false) return;
           }
 
-          this.PushUndoStack();
+          this.PushUndoStack(this.currentExpression.hasBlink ? "Blink removed" : "Blink added");
           this.currentExpression.hasBlink = !this.currentExpression.hasBlink;
 
           this.currentExpression.eyeBlinkPatterns.splice(0);
@@ -275,7 +308,9 @@
 
 
         // Canvas interaction
-        HandleCanvasClick(event) {
+        HandleCanvasBrush(event) {
+          if (!(event.buttons & 1)) return;
+
           const rect = faceCanvas.getBoundingClientRect()
           const x = event.clientX - rect.left;
           const y = event.clientY - rect.top;
@@ -285,9 +320,13 @@
 
           let dot = clickableLights[`${dotX},${dotY}`];
           if (dot) {
-            this.PushUndoStack();
+            // Only push to the undo stack at the start of a brush stroke
+            if (!this.inProgressBrushStroke)
+              this.PushUndoStack("Pixel brush");
 
-            dot.pattern[dot.row][dot.column] = 1 - dot.pattern[dot.row][dot.column];
+            this.inProgressBrushStroke = true;
+
+            dot.pattern[dot.row][dot.column] = this.activeTool == "brush" ? 1 : 0;
             this.drawFace();
           }
         },
@@ -363,6 +402,7 @@
             this.parseMatrixPattern(lines[14 + offset].replace(pattern, "$1")),
           ];
 
+          this.PushUndoStack(`Loaded expression ${newExpressionName}`);
           this.expressions[newExpressionName] = {
             nosePatterns: nosePatterns,
             eyePatterns: eyePatterns,
