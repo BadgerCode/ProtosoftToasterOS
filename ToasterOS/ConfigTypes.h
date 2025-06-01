@@ -27,3 +27,9 @@ struct FaceLEDConnection {
   PanelConfig* Panels;
 };
 
+class FaceConfig {
+public:
+  int NumConnections;
+  FaceLEDConnection* Connections;
+  FaceConfig();
+};

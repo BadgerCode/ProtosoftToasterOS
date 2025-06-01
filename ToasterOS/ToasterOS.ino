@@ -35,8 +35,6 @@ void setup() {
 
   randomSeed(analogRead(3));
 
-  // pinMode(PIN_BUTTON, INPUT);
-
   // LED Face
   ProtoFaceRenderer->Initialise();
   ProtoFaceRenderer->Clear();
@@ -261,10 +259,5 @@ void loop() {
 
 // utility functions
 int getDistance() {
-  return 1023 - analogRead(PIN_ANALOG_DISTANCE);  // Higher value = further away
+  return 1023 - analogRead(PIN_ANALOG_BOOP_SENSOR);  // Higher value = further away
 }
-
-
-// bool isButtonDown() {
-//   return digitalRead(PIN_BUTTON) == 0;  // Invert it, so that it's 0 when off and 1 when on
-// }
