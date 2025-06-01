@@ -171,7 +171,8 @@ void loop() {
 
     if (BeingBooped) {
       // Simulate beating heart, by changing between the small & big heart
-      bool showSmallHeart = ((timeSince(BoopHoldStarted) / 700) % 3 == 0);
+      // Big (800 ms), Small (400 ms), Big (800 ms)
+      bool showSmallHeart = ((timeSince(BoopHoldStarted) / 400) % 3 == 0);
 
       facialExpression = showSmallHeart ? Face_Heart_Small : Face_Heart;
     } else if (Special_Face_Index != -1) {
