@@ -197,7 +197,7 @@ void loop() {
 
 
     // Render the face
-    ProtoFaceRenderer->LoadFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+    RenderFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
     ProtoFaceRenderer->ProcessRenderQueue();
 
 
@@ -259,6 +259,35 @@ void loop() {
     }
   }
 }
+
+
+void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
+    bool mirrorLeft = true;
+    bool mirrorRight = false;
+
+    // Mouth
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
+
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
+
+    // Nose
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
+
+    // Eyes
+    EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
+    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
+  }
+
 
 // utility functions
 int getDistance() {
