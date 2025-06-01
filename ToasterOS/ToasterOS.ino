@@ -60,8 +60,9 @@ int Eye_Rotation = 0;
 unsigned long LastEyeRotation = 0;
 
 // Blinking
-int MinBlinkWait = 2000;
-unsigned long NextBlink = millis() + random(100) + MinBlinkWait;
+int MinBlinkWait = 10000;
+int MaxBlinkRandomDelay = 5000;
+unsigned long NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
 int BlinkDurationMs = 200;
 
 // Expression faces
@@ -100,7 +101,7 @@ void loop() {
 
   // Time to stop blinking
   if (timeSince(NextBlink) >= BlinkDurationMs) {
-    NextBlink = millis() + random(100) + MinBlinkWait;
+    NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
   }
 
   // Time for a special face?
@@ -281,7 +282,7 @@ void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int
     ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
 
     // Eyes
-    EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+    EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
     ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
     ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
     ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);

@@ -1,4 +1,5 @@
-unsigned long timeSince(unsigned long previousTime) {
+/// Will be negative for future times
+long timeSince(unsigned long previousTime) {
   return millis() - previousTime;
 }
 
