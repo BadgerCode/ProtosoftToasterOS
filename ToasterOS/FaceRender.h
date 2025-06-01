@@ -9,6 +9,7 @@ struct FacePanelConfig {
 class FaceRender {
 private:
   const int Brightness = 8;  // 0 - 15
+  byte EmptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   // Face LED state
   // 2 sides with 7 panels, 8 rows per panel
@@ -19,7 +20,7 @@ private:
   int NumLEDControls;
   LedControl** LEDControls;
 
-  FacePanelConfig PanelMappings[TOTAL_LED_PANELS];
+  FacePanelConfig PanelConfigs[TOTAL_LED_PANELS];
 
   // Rendering
   unsigned int NextRenderSection = 0;  // 0 = eyes, 1 = nose, 2 = mouth
@@ -43,7 +44,7 @@ public:
       // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, FlipX: false, FlipY: True
       for (int p = 0; p < connection.NumPanels; p++) {
         auto panel = connection.Panels[p];
-        PanelMappings[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY };
+        PanelConfigs[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY };
       }
     }
   }
@@ -68,8 +69,9 @@ public:
   }
 
   void ClearPanel(int panelType) {
-    auto panelMapping = PanelMappings[panelType];
-    panelMapping.Controller->clearDisplay(panelMapping.Address);
+    // Instead of directly calling controller->clearDisplay, render an empty screen.
+    // The render system avoids re-rendering rows that have not changed.
+    UpdatePanel(panelType, EmptyPanel, 0, false);
   }
 
   void LoadFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
@@ -93,10 +95,10 @@ public:
 
     // Eyes
     EyeFrame* eyes = shouldBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY, mirrorLeft);
-    UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY, mirrorLeft);
-    UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY, mirrorRight);
-    UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY, mirrorRight);
+    UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
+    UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
+    UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
+    UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
   }
 
   void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
@@ -104,27 +106,20 @@ public:
       mirror = false;
       data = Numbers_ASCII[7];
     }
-    // auto outputOverride = DEBUG_MODE == 3 ? Numbers_ASCII[7] : data;
 
-    auto panelMapping = PanelMappings[panelType];
-    bool flipX = mirror ? !panelMapping.FlipX : panelMapping.FlipX;
+    auto panelConfig = PanelConfigs[panelType];
+    bool flipX = mirror ? !panelConfig.FlipX : panelConfig.FlipX;
 
     for (int row = 0; row < 8; row++) {
-      byte rowData = 0;
-      int rowDataIndex = (panelMapping.FlipY ? (7 - row) : row) + offsetY;
+      int rowDataIndex = (panelConfig.FlipY ? (7 - row) : row) + offsetY;
 
-      // If the offset has made this row empty, clear it
+      // If the offset has pushed us beyond the available data, render it as empty
       if (rowDataIndex < 0 || rowDataIndex >= 8) {
         UpdatePanelRow(panelType, row, 0);
         continue;
       }
 
-      if (flipX) {
-        rowData = Reverse(data[rowDataIndex]);
-      } else {
-        rowData = data[rowDataIndex];
-      }
-
+      byte rowData = flipX ? Reverse(data[rowDataIndex]) : data[rowDataIndex];
       UpdatePanelRow(panelType, row, rowData);
     }
   }
@@ -145,12 +140,13 @@ public:
 
   // Render face
   void ProcessRenderQueue() {
-    int sectionsRendered = 0;
-    int sectionsChecked = 0;
+    bool hasRenderedASection = false;
 
-    // Render 1 section a time (eyes, nose, mouth) and avoid infinite loops
-    // Render both the left and right section at the same time
-    while (sectionsRendered < 1 && sectionsChecked < 3) {
+    // Check if any sections need rendering (eyes, nose, mouth)
+    for (int i = 0; i < 3; i++) {
+      // Only render 1 section at a time
+      if (hasRenderedASection) break;
+
       int* panelTypes;
       int numPanelTypes;
 
@@ -171,27 +167,21 @@ public:
 
 
       // Render all panels with updates for the section
-      bool anyPanelsRendered = false;
       for (int p = 0; p < numPanelTypes; p++) {
         int panelType = panelTypes[p];
-        auto panelMapping = PanelMappings[panelType];
+        auto panelConfig = PanelConfigs[panelType];
 
         for (int row = 0; row < 8; row++) {
-          bool shouldRender = FaceLEDRowRequiresRendering[panelType][row];
+          if (!FaceLEDRowRequiresRendering[panelType][row]) continue;
 
-          if (shouldRender) {
-            byte output = FaceLEDRowValues[panelType][row];
-            panelMapping.Controller->setRow(panelMapping.Address, row, output);
+          panelConfig.Controller->setRow(panelConfig.Address, row, FaceLEDRowValues[panelType][row]);
 
-            FaceLEDRowRequiresRendering[panelType][row] = false;
-            anyPanelsRendered = true;
-          }
+          FaceLEDRowRequiresRendering[panelType][row] = false;
+          hasRenderedASection = true;
         }
       }
 
-      sectionsChecked++;
-      if (anyPanelsRendered) sectionsRendered++;
-
+      // Move onto the next section
       NextRenderSection++;
       if (NextRenderSection > 2) NextRenderSection = 0;
     }
