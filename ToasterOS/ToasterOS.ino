@@ -11,6 +11,7 @@
 #include "Protogen_Faces.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
+#include "BoopState.h"
 #include "Game.h"
 
 
@@ -22,6 +23,8 @@ FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
 
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
+
+BoopStateHandler* BoopState = new BoopStateHandler(PIN_ANALOG_BOOP_SENSOR);
 
 // Secret game
 CubeGame* CubeGameRunner = new CubeGame();
@@ -76,16 +79,6 @@ bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
 unsigned long NextLEDStripUpdate = millis();
 
-// Booping
-bool BeingBooped = false;
-unsigned long BoopHoldStarted = 0;
-int MinBoopHoldForTriggerMs = 300;
-unsigned long BoopLastDetected = 0;
-int MaxBoopRetainAfterStopMs = 2000;
-unsigned long LastBoop = 0;
-int ConsecutiveBoops = 0;
-
-
 // Game
 bool EnableGame = false;
 
@@ -116,47 +109,25 @@ void loop() {
   }
 
 
-  // Touch sensor
-  bool boopSensorTouched = getDistance() < 500;
-  if (boopSensorTouched) {
-    // If there's not an active boop
-    // And we're not still within the grace window for a boop
-    if (BoopHoldStarted == 0 && !BeingBooped) BoopHoldStarted = millis();
+  // Boop behaviour
+  BoopState->Update();
 
-    BoopLastDetected = millis();
-  } else {
-    BoopHoldStarted = 0;
-  }
-
-  bool wasBeingBooped = BeingBooped;
-  BeingBooped = BoopLastDetected > 0                                           // Don't trigger on reboot
-                && (timeSince(BoopHoldStarted) >= MinBoopHoldForTriggerMs)     // Avoid accidental short detection
-                && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
-
-
-  // Consecutive boop detection
-  if (!wasBeingBooped && BeingBooped) LastBoop = millis();
-
-  if (timeSince(LastBoop) > 10000) ConsecutiveBoops = 0;
-
-  // If we're coming out of a boop
-  if (wasBeingBooped && !BeingBooped) {
-    ConsecutiveBoops++;
-
-    // Force change to a special face
+  // Force change to a special face if a boop just ended
+  if (BoopState->BoopJustEnded) {
     Special_Face_Index = random(0, NumSpecialFaces);
     NextSpecialFace = millis();
   }
 
-  if (ConsecutiveBoops >= BOOPS_FOR_GAME) EnableGame = true;
+  if (BoopState->ConsecutiveBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
 
+  // Main logic
   if (EnableGame) {
-    EnableGame = CubeGameRunner->GameLoop(ProtoFaceRenderer, LEDStripRenderer, boopSensorTouched);
+    EnableGame = CubeGameRunner->GameLoop(ProtoFaceRenderer, LEDStripRenderer, BoopState->BoopSensorTouched);
   } else {
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
-      NextOffsetShift = curTime + (BeingBooped ? OffsetDelay * 1.5 : OffsetDelay);
+      NextOffsetShift = curTime + (BoopState->BoopActive ? OffsetDelay * 1.5 : OffsetDelay);
 
       Face_OffsetY += Face_OffsetY_Dir;
 
@@ -169,12 +140,8 @@ void loop() {
     struct FaceExpression facialExpression = Face_Neutral;
     bool shouldBlink = (curTime >= NextBlink);
 
-    if (BeingBooped) {
-      // Simulate beating heart, by changing between the small & big heart
-      // Big (800 ms), Small (400 ms), Big (800 ms)
-      bool showSmallHeart = ((timeSince(BoopHoldStarted) / 400) % 3 == 0);
-
-      facialExpression = showSmallHeart ? Face_Heart_Small : Face_Heart;
+    if (BoopState->BoopActive) {
+      facialExpression = BoopState->DetermineExpression();
     } else if (Special_Face_Index != -1) {
       facialExpression = *(SpecialExpressions[Special_Face_Index]);
 
@@ -205,7 +172,7 @@ void loop() {
 
     // LED strips
     if (NextLEDStripUpdate <= curTime) {
-      if (BeingBooped && !EnableGame) {
+      if (BoopState->BoopActive && !EnableGame) {
         // RGB scrolling
         for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
           LEDStripRenderer->SetLED(i, CHSV(LEDStripAnimationOffset + (i * 5), 255, 255));
@@ -264,34 +231,28 @@ void loop() {
 
 
 void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-    bool mirrorLeft = true;
-    bool mirrorRight = false;
+  bool mirrorLeft = true;
+  bool mirrorRight = false;
 
-    // Mouth
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
+  // Mouth
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
 
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
 
-    // Nose
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
+  // Nose
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
 
-    // Eyes
-    EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
-    ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
-  }
-
-
-// utility functions
-int getDistance() {
-  return 1023 - analogRead(PIN_ANALOG_BOOP_SENSOR);  // Higher value = further away
+  // Eyes
+  EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
 }
