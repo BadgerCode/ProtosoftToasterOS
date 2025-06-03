@@ -7,11 +7,13 @@ public:
   bool BoopJustEnded = false;
   int ConsecutiveShortBoops = 0;
 
+
 private:
   // Config
   const int MinBoopHoldForTriggerMs = 300;
   const int MaxBoopRetainAfterStopMs = 1000;
   const int ShortBoopMaxDuration = 1700;
+  const int FirstShortBoopResetDuration = 4000;
   const int ShortBoopResetDuration = 7000;
 
   int BoopSensorPin;
@@ -19,8 +21,8 @@ private:
   // Private state
   unsigned long BoopHoldStarted = 0;
   unsigned long BoopLastDetected = 0;
-  unsigned long LastBoopStart = 0;
   unsigned long LastBoopDuration = 0;
+  unsigned long LastBoopStart = 0;
   unsigned long LastBoopEnded = 0;
 
 
@@ -64,28 +66,17 @@ public:
     }
 
     // Reset consecutive boops upon face rub or after a period of no boops
-    if (IsFaceRub() || timeSince(LastBoopEnded) >= ShortBoopResetDuration) ConsecutiveShortBoops = 0;
-  }
-
-  bool ShouldShowBoopExpression() {
-    return BoopActive || ConsecutiveShortBoops > 0;
+    int adjustedBoopResetDuration = ConsecutiveShortBoops == 1 ? FirstShortBoopResetDuration : ShortBoopResetDuration;  // Shorter reset period for the first boop
+    if (IsFaceRub()) ConsecutiveShortBoops = 0;
+    else if (BoopActive == false && timeSince(LastBoopEnded) >= adjustedBoopResetDuration) ConsecutiveShortBoops = 0;
   }
 
   bool IsFaceRub() {
     return BoopActive && timeSince(LastBoopStart) > ShortBoopMaxDuration;
   }
 
-  FaceExpression DetermineExpression() {
-    if (IsFaceRub()) {
-      // Simulate beating heart, by changing between the small & big heart
-      // Big (800 ms), Small (400 ms), Big (800 ms)
-      bool showSmallHeart = ((timeSince(LastBoopStart) / 400) % 3 == 1);
-      return showSmallHeart ? Face_Heart_Small : Face_Heart;
-    }
-
-    if (ConsecutiveShortBoops < 3) return Face_Surprised;
-    if (ConsecutiveShortBoops < 6) return Face_Angry;
-    return Face_X_X;
+  int TimeSinceBoopStart() {
+    return BoopActive ? timeSince(LastBoopStart) : -1;
   }
 
 private:

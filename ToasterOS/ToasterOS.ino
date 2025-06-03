@@ -125,10 +125,18 @@ void loop() {
   if (EnableGame) {
     EnableGame = CubeGameRunner->GameLoop(ProtoFaceRenderer, LEDStripRenderer, BoopState->BoopSensorTouched);
   } else {
+
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
-      NextOffsetShift = curTime + (BoopState->ShouldShowBoopExpression() ? OffsetDelay * 1.5 : OffsetDelay);
+      int adjustedDelay = OffsetDelay;
 
+      // Make the face move slower when being booped/face rubbed
+      if (ShouldShowBoopExpression()) {
+        adjustedDelay = BoopState->ConsecutiveShortBoops < 6 ? OffsetDelay * 1.5 : OffsetDelay * 2.25;
+      }
+
+      // Update state
+      NextOffsetShift = curTime + adjustedDelay;
       Face_OffsetY += Face_OffsetY_Dir;
 
       // Check if it's time to reverse direction
@@ -140,8 +148,8 @@ void loop() {
     struct FaceExpression facialExpression = Face_Neutral;  // TODO: Changing to FaceExpression* might reduce memory
     bool shouldBlink = (curTime >= NextBlink);
 
-    if (BoopState->ShouldShowBoopExpression()) {
-      facialExpression = BoopState->DetermineExpression();
+    if (ShouldShowBoopExpression()) {
+      facialExpression = DetermineBoopExpression();
     } else if (Special_Face_Index != -1) {
       facialExpression = *(SpecialExpressions[Special_Face_Index]);
 
@@ -172,7 +180,7 @@ void loop() {
 
     // LED strips
     if (NextLEDStripUpdate <= curTime) {
-      if (BoopState->BoopActive && !EnableGame) {
+      if (BoopState->BoopActive) {
         // RGB scrolling
         for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
           LEDStripRenderer->SetLED(i, CHSV(LEDStripAnimationOffset + (i * 5), 255, 255));
@@ -227,6 +235,25 @@ void loop() {
       FrameDuration_MaxDuration = 0;
     }
   }
+}
+
+
+
+bool ShouldShowBoopExpression() {
+  return BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0;
+}
+
+FaceExpression DetermineBoopExpression() {
+  if (BoopState->IsFaceRub()) {
+    // Simulate beating heart, by changing between the small & big heart
+    // Big (800 ms), Small (400 ms), Big (800 ms)
+    bool showSmallHeart = ((BoopState->TimeSinceBoopStart() / 400) % 3 == 1);
+    return showSmallHeart ? Face_Heart_Small : Face_Heart;
+  }
+
+  if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
+  if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
+  return Face_X_X;
 }
 
 
