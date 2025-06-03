@@ -145,7 +145,7 @@ void loop() {
 
 
     // Determine expression
-    struct FaceExpression facialExpression = Face_Neutral;  // TODO: Changing to FaceExpression* might reduce memory
+    struct FaceExpression facialExpression = Face_Neutral;  // For some reason, this is more memory efficient than using pointers
     bool shouldBlink = (curTime >= NextBlink);
 
     if (ShouldShowBoopExpression()) {
