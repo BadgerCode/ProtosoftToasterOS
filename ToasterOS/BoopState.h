@@ -5,12 +5,14 @@ public:
   bool BoopSensorTouched = false;
   bool BoopActive = false;
   bool BoopJustEnded = false;
-  int ConsecutiveBoops = 0;
+  int ConsecutiveShortBoops = 0;
 
 private:
   // Config
   const int MinBoopHoldForTriggerMs = 300;
-  const int MaxBoopRetainAfterStopMs = 2000;
+  const int MaxBoopRetainAfterStopMs = 1000;
+  const int ShortBoopMaxDuration = 2000;
+  const int ShortBoopResetDuration = 10000;
 
   int BoopSensorPin;
 
@@ -18,6 +20,8 @@ private:
   unsigned long BoopHoldStarted = 0;
   unsigned long BoopLastDetected = 0;
   unsigned long LastBoopStart = 0;
+  unsigned long LastBoopDuration = 0;
+  unsigned long LastBoopEnded = 0;
 
 
 public:
@@ -49,12 +53,35 @@ public:
     // Determine if a boop just ended
     BoopJustEnded = boopWasActive && !BoopActive;
 
-    // Consecutive boop detection
-    if (timeSince(LastBoopStart) > 10000) ConsecutiveBoops = 0;
-    if (BoopJustEnded) ConsecutiveBoops++;
+    // Record the duration of a boop
+    if (BoopJustEnded) {
+      LastBoopEnded = millis();
+      LastBoopDuration = LastBoopEnded - LastBoopStart;
+    }
+
+    // Consecutive boops
+    if (BoopJustEnded) {
+      if (LastBoopDuration <= ShortBoopMaxDuration) ConsecutiveShortBoops++;
+      else ConsecutiveShortBoops = 0;
+    }
+    // Reset consecutive boops after a period of no boops
+    if (timeSince(LastBoopEnded) >= ShortBoopResetDuration) ConsecutiveShortBoops = 0;
+  }
+
+  bool ShouldShowBoopExpression() {
+    return BoopActive || ConsecutiveShortBoops > 0;
   }
 
   FaceExpression DetermineExpression() {
+    // Override the angry/dead/suprised expression if the short boop turns into a long one
+    bool becomeHappy = BoopActive && timeSince(LastBoopStart) > ShortBoopMaxDuration;
+
+    if (ConsecutiveShortBoops > 0 && becomeHappy == false) {
+      if (ConsecutiveShortBoops < 3) return Face_Surprised;
+      if (ConsecutiveShortBoops < 6) return Face_Angry;
+      return Face_X_X;
+    }
+
     // Simulate beating heart, by changing between the small & big heart
     // Big (800 ms), Small (400 ms), Big (800 ms)
     bool showSmallHeart = ((timeSince(LastBoopStart) / 400) % 3 == 1);

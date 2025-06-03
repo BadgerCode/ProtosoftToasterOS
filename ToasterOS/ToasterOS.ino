@@ -118,7 +118,7 @@ void loop() {
     NextSpecialFace = millis();
   }
 
-  if (BoopState->ConsecutiveBoops >= BOOPS_FOR_GAME) EnableGame = true;
+  if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
 
   // Main logic
@@ -127,7 +127,7 @@ void loop() {
   } else {
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
-      NextOffsetShift = curTime + (BoopState->BoopActive ? OffsetDelay * 1.5 : OffsetDelay);
+      NextOffsetShift = curTime + (BoopState->ShouldShowBoopExpression() ? OffsetDelay * 1.5 : OffsetDelay);
 
       Face_OffsetY += Face_OffsetY_Dir;
 
@@ -137,10 +137,10 @@ void loop() {
 
 
     // Determine expression
-    struct FaceExpression facialExpression = Face_Neutral;
+    struct FaceExpression facialExpression = Face_Neutral;  // TODO: Changing to FaceExpression* might reduce memory
     bool shouldBlink = (curTime >= NextBlink);
 
-    if (BoopState->BoopActive) {
+    if (BoopState->ShouldShowBoopExpression()) {
       facialExpression = BoopState->DetermineExpression();
     } else if (Special_Face_Index != -1) {
       facialExpression = *(SpecialExpressions[Special_Face_Index]);

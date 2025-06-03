@@ -9,7 +9,7 @@
 
 // Additional defines
 #define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
-#define BOOPS_FOR_GAME 7
+#define BOOPS_FOR_GAME 15
 
 
 // Configure the pins and layout of the face LED panels
