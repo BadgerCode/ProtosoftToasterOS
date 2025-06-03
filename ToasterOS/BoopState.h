@@ -11,8 +11,8 @@ private:
   // Config
   const int MinBoopHoldForTriggerMs = 300;
   const int MaxBoopRetainAfterStopMs = 1000;
-  const int ShortBoopMaxDuration = 2000;
-  const int ShortBoopResetDuration = 10000;
+  const int ShortBoopMaxDuration = 1700;
+  const int ShortBoopResetDuration = 7000;
 
   int BoopSensorPin;
 
@@ -48,7 +48,11 @@ public:
                  && (timeSince(BoopLastDetected) <= MaxBoopRetainAfterStopMs);  // Retain the boop for some time after detection stops
 
     // Record the start time of a new boop
-    if (!boopWasActive && BoopActive) LastBoopStart = millis();
+    bool boopJustStarted = !boopWasActive && BoopActive;
+    if (boopJustStarted) {
+      LastBoopStart = millis();
+      ConsecutiveShortBoops++;
+    }
 
     // Determine if a boop just ended
     BoopJustEnded = boopWasActive && !BoopActive;
@@ -59,34 +63,29 @@ public:
       LastBoopDuration = LastBoopEnded - LastBoopStart;
     }
 
-    // Consecutive boops
-    if (BoopJustEnded) {
-      if (LastBoopDuration <= ShortBoopMaxDuration) ConsecutiveShortBoops++;
-      else ConsecutiveShortBoops = 0;
-    }
-    // Reset consecutive boops after a period of no boops
-    if (timeSince(LastBoopEnded) >= ShortBoopResetDuration) ConsecutiveShortBoops = 0;
+    // Reset consecutive boops upon face rub or after a period of no boops
+    if (IsFaceRub() || timeSince(LastBoopEnded) >= ShortBoopResetDuration) ConsecutiveShortBoops = 0;
   }
 
   bool ShouldShowBoopExpression() {
     return BoopActive || ConsecutiveShortBoops > 0;
   }
 
-  FaceExpression DetermineExpression() {
-    // Override the angry/dead/suprised expression if the short boop turns into a long one
-    bool becomeHappy = BoopActive && timeSince(LastBoopStart) > ShortBoopMaxDuration;
+  bool IsFaceRub() {
+    return BoopActive && timeSince(LastBoopStart) > ShortBoopMaxDuration;
+  }
 
-    if (ConsecutiveShortBoops > 0 && becomeHappy == false) {
-      if (ConsecutiveShortBoops < 3) return Face_Surprised;
-      if (ConsecutiveShortBoops < 6) return Face_Angry;
-      return Face_X_X;
+  FaceExpression DetermineExpression() {
+    if (IsFaceRub()) {
+      // Simulate beating heart, by changing between the small & big heart
+      // Big (800 ms), Small (400 ms), Big (800 ms)
+      bool showSmallHeart = ((timeSince(LastBoopStart) / 400) % 3 == 1);
+      return showSmallHeart ? Face_Heart_Small : Face_Heart;
     }
 
-    // Simulate beating heart, by changing between the small & big heart
-    // Big (800 ms), Small (400 ms), Big (800 ms)
-    bool showSmallHeart = ((timeSince(LastBoopStart) / 400) % 3 == 1);
-
-    return showSmallHeart ? Face_Heart_Small : Face_Heart;
+    if (ConsecutiveShortBoops < 3) return Face_Surprised;
+    if (ConsecutiveShortBoops < 6) return Face_Angry;
+    return Face_X_X;
   }
 
 private:
