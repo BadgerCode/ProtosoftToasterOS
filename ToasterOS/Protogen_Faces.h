@@ -210,7 +210,7 @@ struct FaceExpression Face_Silly = {
 
 
 const int NumSpecialFaces = 7;
-struct FaceExpression* SpecialExpressions[NumSpecialFaces] = {
+struct FaceExpression* HappyExpressions[NumSpecialFaces] = {
   &Face_Happy_Closed_eyes,
   &Face_OWO,
   &Face_Smirk,
@@ -238,7 +238,7 @@ byte Numbers_ASCII[10][8] = {
 
 
 
-// Unused faces
+// Extra faces
 // &Face_Bored,
 // &Face_UWU,
 // &Face_X_X,
@@ -354,11 +354,8 @@ struct FaceExpression Face_X_X = {
     { B00000000, B00001100, B00000110, B00000011, B00000001, B00000011, B00000110, B00001100 },  //
     { B00000000, B00110000, B01100000, B11000000, B10000000, B11000000, B01100000, B00110000 }   //
   },
-  .HasBlink = true,
-  .Eye_Blink = {
-    { B00000000, B00000000, B00000000, B00000011, B00000001, B00000011, B00000000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B11000000, B10000000, B11000000, B00000000, B00000000 }   //
-  },
+  .HasBlink = false,
+  .Eye_Blink = {},
   .Mouth = {
     { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
     { B00000000, B00000000, B00000000, B00000000, B01110101, B00011111, B00000000, B00000000 },  //
