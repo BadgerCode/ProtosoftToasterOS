@@ -58,10 +58,6 @@ int Face_OffsetY_Dir = 1;
 int OffsetDelay = 200;
 unsigned long NextOffsetShift = millis() + OffsetDelay;
 
-// Face rotation
-int Eye_Rotation = 0;
-unsigned long LastEyeRotation = 0;
-
 // Blinking
 int MinBlinkWait = 10000;
 int MaxBlinkRandomDelay = 5000;
@@ -155,18 +151,14 @@ void loop() {
 
       // Special spiral rotation logic
       if (HappyExpressions[Special_Face_Index] == &Face_Spiral) {
-        if (timeSince(LastEyeRotation) > 150) {
-          Eye_Rotation += 90;
-          LastEyeRotation = millis();
-        }
+        // Rotate the eye 90 degrees every 150ms
+        int eyeRotation = (timeSince(NextSpecialFace) / 150) % 4;
 
-        if (Eye_Rotation >= 360) Eye_Rotation = 0;
-
-        if (Eye_Rotation == 90) {
+        if (eyeRotation == 1) {
           facialExpression = Face_Spiral2;
-        } else if (Eye_Rotation == 180) {
+        } else if (eyeRotation == 2) {
           facialExpression = Face_Spiral3;
-        } else if (Eye_Rotation == 270) {
+        } else if (eyeRotation == 3) {
           facialExpression = Face_Spiral4;
         }
       }
