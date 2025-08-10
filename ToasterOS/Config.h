@@ -5,6 +5,7 @@
 #define ENABLE_SIDE_LEDS 1
 #define PIN_LEFT_LEDSTRIP_DATA 9
 #define PIN_RIGHT_LEDSTRIP_DATA 10
+#define LEDSTRIP_NUM_LEDS 15
 
 
 // Additional defines

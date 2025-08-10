@@ -1,5 +1,3 @@
-#define LEDSTRIP_NUM_LEDS 15
-
 class LEDStripRender {
 public:
   // LED Strips
