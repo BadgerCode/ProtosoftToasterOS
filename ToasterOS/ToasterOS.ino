@@ -181,8 +181,8 @@ void loop() {
 
       // Special spiral rotation logic
       if (HappyExpressions[Special_Face_Index] == &Face_Spiral) {
-        // Rotate the eye 90 degrees every 150ms
-        int eyeRotation = (timeSince(NextSpecialFace) / 150) % 4;
+        // Rotate the eye 90 degrees every 200ms
+        int eyeRotation = (millis() / 200) % 4;
 
         if (eyeRotation == 1) {
           facialExpression = Face_Spiral2;
