@@ -8,6 +8,14 @@
 #define LEDSTRIP_NUM_LEDS 15
 
 
+// Remote control
+#define ENABLE_REMOTE_CONTROL 1
+#define PIN_REMOTE_BUTTON_A 18
+#define PIN_REMOTE_BUTTON_B 17
+#define PIN_REMOTE_BUTTON_C 16
+#define PIN_REMOTE_BUTTON_D 15
+
+
 // Additional defines
 #define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
 #define BOOPS_FOR_GAME 15

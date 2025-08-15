@@ -47,6 +47,14 @@ void setup() {
     FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
     FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
   }
+
+  // Remote control
+  if (ENABLE_REMOTE_CONTROL) {
+    pinMode(PIN_REMOTE_BUTTON_A, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_B, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_C, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_D, INPUT);
+  }
 }
 
 
@@ -115,6 +123,28 @@ void loop() {
   }
 
   if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
+
+
+  // Remote control (override expression)
+  // Buttons can be combined
+  // int remoteState = (digitalRead(PIN_REMOTE_BUTTON_A))
+  //                   + (digitalRead(PIN_REMOTE_BUTTON_B) << 1)
+  //                   + (digitalRead(PIN_REMOTE_BUTTON_C) << 2)
+  //                   + (digitalRead(PIN_REMOTE_BUTTON_D) << 3);
+
+  if (digitalRead(PIN_REMOTE_BUTTON_A)) {
+    Special_Face_Index = 4;
+    NextSpecialFace = millis() + 60000;
+  } else if (digitalRead(PIN_REMOTE_BUTTON_B)) {
+    Special_Face_Index = 2;
+    NextSpecialFace = millis() + 60000;
+  } else if (digitalRead(PIN_REMOTE_BUTTON_C)) {
+    Special_Face_Index = 5;
+    NextSpecialFace = millis() + 60000;
+  } else if (digitalRead(PIN_REMOTE_BUTTON_D)) {
+    Special_Face_Index = 6;
+    NextSpecialFace = millis() + 60000;
+  }
 
 
   // Main logic
