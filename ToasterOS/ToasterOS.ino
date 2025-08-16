@@ -9,9 +9,11 @@
 
 // Imports
 #include "Protogen_Faces.h"
+#include "Protogen_Face_Collections.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "BoopState.h"
+#include "ExpressionManager.h"
 #include "Game.h"
 
 
@@ -24,7 +26,10 @@ FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
+// State managers
 BoopStateHandler* BoopState = new BoopStateHandler(PIN_ANALOG_BOOP_SENSOR);
+ExpressionManager* Expression = new ExpressionManager();
+
 
 // Secret game
 CubeGame* CubeGameRunner = new CubeGame();
@@ -73,10 +78,10 @@ unsigned long NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
 int BlinkDurationMs = 200;
 
 // Expression faces
-int Special_Face_Index = -1;
-int MinSpecialFaceWait = 10000;
-unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
-int SpecialFaceDurationMs = 5000;
+// int Special_Face_Index = -1;
+// int MinSpecialFaceWait = 10000;
+// unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
+// int SpecialFaceDurationMs = 5000;
 
 // LED Strips
 bool HueShiftForward = true;
@@ -101,50 +106,11 @@ void loop() {
     NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
   }
 
-  // Time for a special face?
-  if (curTime >= NextSpecialFace && Special_Face_Index == -1) {
-    Special_Face_Index = random(0, NumSpecialFaces);
-  }
-
-  // Time to return to the neutral face?
-  if (curTime >= NextSpecialFace + SpecialFaceDurationMs) {
-    NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
-    Special_Face_Index = -1;
-  }
-
-
   // Boop behaviour
   BoopState->Update();
 
-  // Force change to a special face if a boop just ended
-  if (BoopState->BoopJustEnded) {
-    Special_Face_Index = random(0, NumSpecialFaces);
-    NextSpecialFace = millis();
-  }
-
   if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
-
-  // Remote control (override expression)
-  // Buttons can be combined
-  // int remoteState = (digitalRead(PIN_REMOTE_BUTTON_A))
-  //                   + (digitalRead(PIN_REMOTE_BUTTON_B) << 1)
-  //                   + (digitalRead(PIN_REMOTE_BUTTON_C) << 2)
-  //                   + (digitalRead(PIN_REMOTE_BUTTON_D) << 3);
-
-  if (digitalRead(PIN_REMOTE_BUTTON_A)) {
-    Special_Face_Index = 4;
-    NextSpecialFace = millis() + 60000;
-  } else if (digitalRead(PIN_REMOTE_BUTTON_B)) {
-    Special_Face_Index = 2;
-    NextSpecialFace = millis() + 60000;
-  } else if (digitalRead(PIN_REMOTE_BUTTON_C)) {
-    Special_Face_Index = 5;
-    NextSpecialFace = millis() + 60000;
-  } else if (digitalRead(PIN_REMOTE_BUTTON_D)) {
-    Special_Face_Index = 6;
-    NextSpecialFace = millis() + 60000;
-  }
 
 
   // Main logic
@@ -170,35 +136,17 @@ void loop() {
     }
 
 
-    // Determine expression
-    struct FaceExpression facialExpression = Face_Neutral;  // For some reason, this is more memory efficient than using pointers
+    bool forceRandomExpression = BoopState->BoopJustEnded; // Force change to a special face if a boop just ended
+
+    // Determine expression (boop overrides expression)
+    struct FaceExpression facialExpression = ShouldShowBoopExpression()
+                                               ? DetermineBoopExpression()
+                                               : Expression->GetExpression(forceRandomExpression);
     bool shouldBlink = (curTime >= NextBlink);
-
-    if (ShouldShowBoopExpression()) {
-      facialExpression = DetermineBoopExpression();
-    } else if (Special_Face_Index != -1) {
-      facialExpression = *(HappyExpressions[Special_Face_Index]);
-
-      // Special spiral rotation logic
-      if (HappyExpressions[Special_Face_Index] == &Face_Spiral) {
-        // Rotate the eye 90 degrees every 200ms
-        int eyeRotation = (millis() / 200) % 4;
-
-        if (eyeRotation == 1) {
-          facialExpression = Face_Spiral2;
-        } else if (eyeRotation == 2) {
-          facialExpression = Face_Spiral3;
-        } else if (eyeRotation == 3) {
-          facialExpression = Face_Spiral4;
-        }
-      }
-    }
-
 
     // Render the face
     RenderFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
     ProtoFaceRenderer->ProcessRenderQueue();
-
 
     // LED strips
     if (NextLEDStripUpdate <= curTime) {

@@ -209,17 +209,6 @@ struct FaceExpression Face_Silly = {
 
 
 
-const int NumSpecialFaces = 7;
-struct FaceExpression* HappyExpressions[NumSpecialFaces] = {
-  &Face_Happy_Closed_eyes,
-  &Face_OWO,
-  &Face_Smirk,
-  &Face_Cute,
-  &Face_Blep,
-  &Face_Spiral,
-  &Face_Silly
-};
-
 
 
 
@@ -443,3 +432,4 @@ struct FaceExpression Face_Spiral4 = {
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
   }
 };
+
