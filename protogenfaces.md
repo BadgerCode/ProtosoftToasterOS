@@ -35,6 +35,7 @@ Randomly switch between these expressions every so often when in happy state.
 
 
 ## Quick reactions
+Hold instead of toggle?
 - Page 1 - A
     - Face_Blep
     - (NEW) Wink (could go back to neutral after a few seconds)
