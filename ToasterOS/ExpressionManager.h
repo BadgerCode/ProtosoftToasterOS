@@ -27,7 +27,7 @@ public:
 
       // Time for a special face?
       if (forceRandomExpression || (Special_Face_Index == -1 && curTime >= NextSpecialFace)) {
-        Special_Face_Index = random(0, NumSpecialFaces);
+        Special_Face_Index = random(0, NumRandomExpressions);
         NextSpecialFace = millis();
       }
       // Time to return to the neutral face?
@@ -38,42 +38,48 @@ public:
 
       struct FaceExpression facialExpression = Face_Neutral;  // For some reason, this is more memory efficient than using pointers
       if (Special_Face_Index != -1) {
-        facialExpression = *(HappyExpressions[Special_Face_Index]);
+        facialExpression = *(RandomExpressions[Special_Face_Index]);
 
         // Special spiral rotation logic
-        if (HappyExpressions[Special_Face_Index] == &Face_Spiral) {
+        if (RandomExpressions[Special_Face_Index] == &Face_Spiral) {
           return GetSpiralFrame();
         }
       }
 
       return facialExpression;
-
-    } else {
-      // Remote control
-      if (RemoteMenu->ButtonWasHeld(BUTTON_A)) {
-        InNeutralState = true;
-        CurrentExpression = &Face_Neutral;
-      } else if (RemoteMenu->ButtonWasTapped(BUTTON_A)) {
-        InNeutralState = false;
-        CurrentExpression = &Face_Blep;
-      } else if (RemoteMenu->ButtonWasTapped(BUTTON_B)) {
-        InNeutralState = false;
-        CurrentExpression = &Face_Smirk;
-      } else if (RemoteMenu->ButtonWasTapped(BUTTON_C)) {
-        InNeutralState = false;
-        CurrentExpression = &Face_Spiral;
-      } else if (RemoteMenu->ButtonWasTapped(BUTTON_D)) {
-        InNeutralState = false;
-        CurrentExpression = &Face_Silly;
-      }
-
-      // Animate spirals
-      if (CurrentExpression == &Face_Spiral) {
-        return GetSpiralFrame();
-      }
-
-      return *CurrentExpression;
     }
+    // End of no remote control logic
+
+
+
+    // Remote control
+    if (RemoteMenu->ButtonWasHeld(BUTTON_A)) {
+      InNeutralState = true;
+      CurrentExpression = &Face_Neutral;
+      NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
+    } else {
+      bool expressionChanged = CheckForMenuSelection();
+      if (expressionChanged) InNeutralState = false;
+    }
+
+    if (InNeutralState) {
+      // Time for a different expression?
+      if (forceRandomExpression || (CurrentExpression == &Face_Neutral && curTime >= NextSpecialFace)) {
+        CurrentExpression = HappyExpressions[random(0, NumHappyExpressions)];
+        NextSpecialFace = millis();
+      }
+      // Time to return to the neutral expression?
+      else if (timeSince(NextSpecialFace) >= SpecialFaceDurationMs) {
+        CurrentExpression = &Face_Neutral;
+        NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
+      }
+    }
+    // Animate spirals
+    else if (CurrentExpression == &Face_Spiral) {
+      return GetSpiralFrame();
+    }
+
+    return *CurrentExpression;
   }
 
 private:
@@ -90,5 +96,110 @@ private:
     } else if (eyeRotation == 3) {
       return Face_Spiral4;
     }
+  }
+
+  bool CheckForMenuSelection() {
+    if (RemoteMenu->ButtonWasTapped(BUTTON_A)) {
+      CurrentExpression = &Face_Blep;
+      return true;
+    } else if (RemoteMenu->ButtonWasTapped(BUTTON_B)) {
+      CurrentExpression = &Face_Smirk;
+      return true;
+    } else if (RemoteMenu->ButtonWasTapped(BUTTON_C)) {
+      CurrentExpression = &Face_OWO;
+      return true;
+    } else if (RemoteMenu->ButtonWasTapped(BUTTON_D)) {
+      CurrentExpression = &Face_Spiral;
+      return true;
+    }
+
+
+    // TODO: Fix
+    // int pageNumber = RemoteMenu->SelectedMenuPage();
+    // int menuItemButton = RemoteMenu->SelectedMenuItemButton();
+
+    // switch (RemoteMenu->SelectedMenuButton()) {
+    //   case BUTTON_A:
+    //     if (pageNumber == 1) {
+    //       if (RemoteMenu->ButtonIsDown(BUTTON_B)) {
+    //         CurrentExpression = &Face_Blep;
+    //         return true;
+    //       } else if (RemoteMenu->ButtonIsDown(BUTTON_C)) {
+    //         // TODO: Wink
+    //         // CurrentExpression = &Face_Wink;
+    //         // return true;
+    //       } else if (RemoteMenu->ButtonIsDown(BUTTON_D)) {
+    //         CurrentExpression = &Face_Surprised;
+    //         return true;
+    //       }
+    //     }
+    //     break;
+    //   case BUTTON_B:
+    //     if (pageNumber == 1) {
+    //       switch (menuItemButton) {
+    //         case BUTTON_A:
+    //           CurrentExpression = &Face_Spiral;
+    //           return true;
+    //         case BUTTON_C:
+    //           CurrentExpression = &Face_Silly;
+    //           return true;
+    //         // case BUTTON_D:
+    //         // TODO: Sad
+    //         // CurrentExpression = &Face_Sad;
+    //         // return true;
+    //         default:
+    //           break;
+    //       }
+    //     } else if (pageNumber == 2) {
+    //       switch (menuItemButton) {
+    //         case BUTTON_A:
+    //           CurrentExpression = &Face_Bored;
+    //           return true;
+    //         case BUTTON_C:
+    //           CurrentExpression = &Face_Angry;
+    //           return true;
+    //         case BUTTON_D:
+    //           CurrentExpression = &Face_X_X;
+    //           return true;
+    //         default:
+    //           break;
+    //       }
+    //     } else if (pageNumber == 3) {
+    //       switch (menuItemButton) {
+    //         case BUTTON_A:
+    //           CurrentExpression = &Face_Smirk;
+    //           return true;
+    //         case BUTTON_C:
+    //           CurrentExpression = &Face_Heart;
+    //           return true;
+    //         default:
+    //           break;
+    //       }
+    //     }
+    //     break;
+    //   case BUTTON_C:
+    //     if (pageNumber == 1) {
+    //       switch (menuItemButton) {
+    //         case BUTTON_A:
+    //           CurrentExpression = &Face_OWO;
+    //           return true;
+    //         case BUTTON_B:
+    //           CurrentExpression = &Face_UWU;
+    //           return true;
+    //         case BUTTON_D:
+    //           CurrentExpression = &Face_AmongUs;
+    //           return true;
+    //         default:
+    //           break;
+    //       }
+    //     }
+    //     break;
+    //   case BUTTON_D:
+    //     break;
+    //   default:
+    //     break;
+    // }
+
+    return false;
   }
 };

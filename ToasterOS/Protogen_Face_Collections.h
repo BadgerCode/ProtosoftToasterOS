@@ -1,6 +1,6 @@
 // Face collections
-const int NumSpecialFaces = 7;
-struct FaceExpression* HappyExpressions[7] = {
+const int NumRandomExpressions = 7;
+struct FaceExpression* RandomExpressions[NumRandomExpressions] = {
   &Face_Happy_Closed_eyes,
   &Face_OWO,
   &Face_Smirk,
@@ -11,3 +11,10 @@ struct FaceExpression* HappyExpressions[7] = {
 };
 
 
+const int NumHappyExpressions = 4;
+struct FaceExpression* HappyExpressions[NumHappyExpressions] = {
+  &Face_Happy_Closed_eyes,
+  &Face_Cute,
+  &Face_Blep,
+  &Face_Silly
+};
