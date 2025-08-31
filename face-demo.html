@@ -499,6 +499,17 @@
           ctx.rect(x - (dotSize / 2) - 1, y - (dotSize / 2) - 1, dotSize * 8 * numMatrices + 2, dotSize * 8 + 2);
           ctx.strokeStyle = "#444";
           ctx.stroke();
+
+          // Draw faint dividing lines between the matrices
+          for (let panel = 1; panel < numMatrices; panel++) {
+            let startX = x - (dotSize / 2) - 1 + (dotSize * 8 * panel);
+            let startY = y - (dotSize / 2) - 1;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + (dotSize * 8));
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+          }
         },
 
         drawGrid(ctx, startX, startY, panel) {
