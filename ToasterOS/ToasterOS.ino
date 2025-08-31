@@ -79,12 +79,6 @@ int MaxBlinkRandomDelay = 5000;
 unsigned long NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
 int BlinkDurationMs = 200;
 
-// Expression faces
-// int Special_Face_Index = -1;
-// int MinSpecialFaceWait = 10000;
-// unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
-// int SpecialFaceDurationMs = 5000;
-
 // LED Strips
 bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
