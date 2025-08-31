@@ -14,24 +14,7 @@ private:
   unsigned long ButtonPressStart = 0;
   const int HoldDurationMs = 3000;
 
-  // Menu tracking
-  unsigned long MenuSelectionLastPress = 0;
-  int MenuButton = -1;
-  int MenuPage = 1;
-  int MenuItem = -1;
-  const int MenuSelectionWaitMs = 5000;
-
 public:
-  int SelectedMenuButton() {
-    return MenuButton;
-  }
-  int SelectedMenuPage() {
-    return MenuPage;
-  }
-  int SelectedMenuItemButton() {
-    return MenuItem;
-  }
-
   bool ButtonIsDown(int button) {
     return PressedButtons[button];
   }
@@ -45,34 +28,7 @@ public:
   }
 
   void Update() {
-    // Reset menu state (selection made last frame or long press made last frame or timeout)
-    bool anyButtonsLongPressed = LongPressButtons[0] || LongPressButtons[1] || LongPressButtons[2] || LongPressButtons[3];
-    if (MenuItem != -1 || anyButtonsLongPressed || MenuButton != -1 && timeSince(MenuSelectionLastPress) >= MenuSelectionWaitMs) {
-      MenuButton = -1;
-      MenuPage = 1;
-      MenuItem = 0;
-    }
-
     UpdateButtonPressState();
-
-    // Check for menu selection
-    if (ShortPressSingleButton != -1) {
-      // Menu selection
-      if (MenuButton == -1) {
-        MenuButton = ShortPressSingleButton;
-        MenuSelectionLastPress = millis();
-      }
-      // Page selection
-      else if (ShortPressSingleButton == MenuButton) {
-        MenuPage++;
-        MenuSelectionLastPress = millis();
-      }
-      // Item Selection
-      else {
-        MenuItem = ShortPressSingleButton;
-        MenuSelectionLastPress = millis();
-      }
-    }
   }
 
 private:
@@ -84,7 +40,7 @@ private:
       LongPressButtons[i] = 0;
     }
 
-    bool NewPressedButtons[4] = {
+    bool newPressedButtons[4] = {
       digitalRead(PIN_REMOTE_BUTTON_A),
       digitalRead(PIN_REMOTE_BUTTON_B),
       digitalRead(PIN_REMOTE_BUTTON_C),
@@ -92,7 +48,7 @@ private:
     };
 
     bool anyButtonsAlreadyPressed = PressedButtons[0] || PressedButtons[1] || PressedButtons[2] || PressedButtons[3];
-    bool anyButtonsNowPressed = NewPressedButtons[0] || NewPressedButtons[1] || NewPressedButtons[2] || NewPressedButtons[3];
+    bool anyButtonsNowPressed = newPressedButtons[0] || newPressedButtons[1] || newPressedButtons[2] || newPressedButtons[3];
 
     // Nothing happening
     if (!anyButtonsAlreadyPressed && !anyButtonsNowPressed) return;
@@ -132,9 +88,9 @@ private:
     }
 
     // Update pressed state
-    PressedButtons[0] = NewPressedButtons[0];
-    PressedButtons[1] = NewPressedButtons[1];
-    PressedButtons[2] = NewPressedButtons[2];
-    PressedButtons[3] = NewPressedButtons[3];
+    PressedButtons[0] = newPressedButtons[0];
+    PressedButtons[1] = newPressedButtons[1];
+    PressedButtons[2] = newPressedButtons[2];
+    PressedButtons[3] = newPressedButtons[3];
   }
 };
