@@ -3,6 +3,7 @@ struct FacePanelConfig {
   int Address;
   bool FlipX;
   bool FlipY;
+  bool Enabled;
 };
 
 
@@ -35,6 +36,10 @@ public:
     NumLEDControls = faceConfig->NumConnections;
     LEDControls = new LedControl*[NumLEDControls];
 
+    for (int i = 0; i < TOTAL_LED_PANELS; i++) {
+      PanelConfigs[i] = { .Controller = NULL, .Address = 0, .FlipX = false, .FlipY = false, .Enabled = false };
+    }
+
     // Set up all of the LED controllers
     for (int i = 0; i < NumLEDControls; i++) {
       auto connection = faceConfig->Connections[i];
@@ -44,7 +49,9 @@ public:
       // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, FlipX: false, FlipY: True
       for (int p = 0; p < connection.NumPanels; p++) {
         auto panel = connection.Panels[p];
-        PanelConfigs[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY };
+        if (panel.PanelType < 0) continue;
+
+        PanelConfigs[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY, .Enabled = true };
       }
     }
   }
@@ -82,6 +89,8 @@ public:
 
     auto panelConfig = PanelConfigs[panelType];
     bool flipX = mirror ? !panelConfig.FlipX : panelConfig.FlipX;
+
+    if (!panelConfig.Enabled) return; // Skip disabled panels
 
     for (int row = 0; row < 8; row++) {
       int rowDataIndex = (panelConfig.FlipY ? (7 - row) : row) + offsetY;
@@ -143,6 +152,8 @@ public:
       for (int p = 0; p < numPanelTypes; p++) {
         int panelType = panelTypes[p];
         auto panelConfig = PanelConfigs[panelType];
+
+        if (!panelConfig.Enabled) return; // Skip disabled panels
 
         for (int row = 0; row < 8; row++) {
           if (!FaceLEDRowRequiresRendering[panelType][row]) continue;
