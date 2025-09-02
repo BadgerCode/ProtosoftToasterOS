@@ -1,5 +1,5 @@
 struct FacePanelConfig {
-  LedControl2* Controller;
+  MAX7219Control* Controller;
   int Address;
   bool FlipX;
   bool FlipY;
@@ -19,7 +19,7 @@ private:
 
   // LED interface
   int NumLEDControls;
-  LedControl2** LEDControls;
+  MAX7219Control** LEDControls;
 
   FacePanelConfig PanelConfigs[TOTAL_LED_PANELS];
 
@@ -34,7 +34,7 @@ private:
 public:
   FaceRender(FaceConfig* faceConfig) {
     NumLEDControls = faceConfig->NumConnections;
-    LEDControls = new LedControl2*[NumLEDControls];
+    LEDControls = new MAX7219Control*[NumLEDControls];
 
     for (int i = 0; i < TOTAL_LED_PANELS; i++) {
       PanelConfigs[i] = { .Controller = NULL, .Address = 0, .FlipX = false, .FlipY = false, .Enabled = false };
@@ -43,7 +43,7 @@ public:
     // Set up all of the LED controllers
     for (int i = 0; i < NumLEDControls; i++) {
       auto connection = faceConfig->Connections[i];
-      LEDControls[i] = new LedControl2(connection.PIN_DataIn, connection.PIN_CS, connection.PIN_CLK, connection.NumPanels);
+      LEDControls[i] = new MAX7219Control(connection.PIN_DataIn, connection.PIN_CS, connection.PIN_CLK, connection.NumPanels);
 
       // Register all of the panel mappings
       // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, FlipX: false, FlipY: True
@@ -139,8 +139,8 @@ public:
       }
 
 
-      // For some reason, sometimes just after booting the nose will render once but then get wiped
-      // And never render again
+      // For some reason, sometimes just after booting the nose will render once but then get wiped.
+      // And never render again. This fixes that.
       bool hasJustBooted = millis() < 2000;
 
       // Render all panels with updates for the section

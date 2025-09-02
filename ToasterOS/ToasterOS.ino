@@ -1,6 +1,6 @@
 // Imports
 #include <FastLED.h>
-#include "LedControl2.h"
+#include "MAX7219Control.h"
 #include "Utils.h"
 #include "ConfigTypes.h"
 

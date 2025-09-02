@@ -21,7 +21,6 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 ## Dependencies
 
 - [FastLED](https://fastled.io/) (not included; installed via Arduino IDE)
-- [LedControl](https://github.com/wayoda/LedControl) (included)
 
 <br>
 

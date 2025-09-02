@@ -1,30 +1,4 @@
-/*
-Comparison
-For n panels, 8 rows per panel
-Ops = number of data frames transmitted
-
-- Render row 1 to panel 1
-  - LedControl: n ops
-  - LedControl2: n ops
-- Render row 1 to all panels
-  - LedControl: 8n ops
-  - LedControl2: n ops
-- Render all rows to panel 1
-  - LedControl: 8n ops
-  - LedControl2: 8n ops
-- Render all rows to all panels
-  - LedControl: 8n^2 ops
-  - LedControl2: 8n ops
-
-For 14 panels, re-rendering everything
-  - LedControl: 1568 ops
-  - LedControl2: 112 ops
-*/
-
-
-
-
-class LedControl2 {
+class MAX7219Control {
 private:
   int DataPin;
   int CSPin;
@@ -39,7 +13,7 @@ private:
 
 
 public:
-  LedControl2(int dataPin, int csPin, int clkPin, int numPanels) {
+  MAX7219Control(int dataPin, int csPin, int clkPin, int numPanels) {
     DataPin = dataPin;
     CSPin = csPin;
     CLKPin = clkPin;
