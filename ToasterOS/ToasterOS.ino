@@ -20,9 +20,7 @@
 
 // Global variables
 // Face LEDs
-FaceConfig* ProtoFaceConfig = new FaceConfig();
-// If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
-FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
+FaceRender* ProtoFaceRenderer = new FaceRender(new FaceConfig());
 
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
@@ -42,10 +40,6 @@ void setup() {
     // Debug output on serial port; Used for Serial.println("blah blah");
     Serial.begin(9600);
   }
-
-  // When debugging via USB, wait before running the rest of the code, to allow the IDE to hook in
-  // Otherwise, you can end up with problems like the nose turning off
-  delay(1000);
 
   randomSeed(analogRead(3));
 

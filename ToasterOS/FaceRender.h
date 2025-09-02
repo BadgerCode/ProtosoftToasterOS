@@ -139,13 +139,17 @@ public:
       }
 
 
+      // For some reason, sometimes just after booting the nose will render once but then get wiped
+      // And never render again
+      bool hasJustBooted = millis() < 2000;
+
       // Render all panels with updates for the section
       for (int p = 0; p < numPanelTypes; p++) {
         int panelType = panelTypes[p];
         auto panelConfig = PanelConfigs[panelType];
 
         for (int row = 0; row < 8; row++) {
-          if (!FaceLEDRowRequiresRendering[panelType][row]) continue;
+          if (!FaceLEDRowRequiresRendering[panelType][row] && !hasJustBooted) continue;
 
           panelConfig.Controller->SetRow(panelConfig.Address, row, FaceLEDRowValues[panelType][row]);
 
