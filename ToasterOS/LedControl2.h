@@ -33,6 +33,7 @@ private:
   int NumPanels;
   int NumRows = 8;
 
+  bool* RowsRequiringUpdate;
   byte** NewPanelRowData;
   byte** CurrentPanelRowData;
 
@@ -45,6 +46,11 @@ public:
     NumPanels = numPanels;
 
     // Initialise panel data
+    RowsRequiringUpdate = new bool[NumRows];
+    for (int row = 0; row < NumRows; row++) {
+      RowsRequiringUpdate[row] = true;
+    }
+
     NewPanelRowData = new byte*[NumPanels];
     CurrentPanelRowData = new byte*[NumPanels];
     for (int panel = 0; panel < NumPanels; panel++) {
@@ -71,11 +77,8 @@ public:
     SetValueForAllPanels(15, 0);            // Disable test mode
 
     // Force all rows to clear, bypassing caching
-    // Have to do it a few times for some reason
-    for (int i = 0; i < 1; i++) {
-      for (int row = 1; row <= NumRows; row++) {
-        SetValueForAllPanels(row, 0);
-      }
+    for (int row = 1; row <= NumRows; row++) {
+      SetValueForAllPanels(row, 0);
     }
   }
 
@@ -104,24 +107,21 @@ public:
     if (rowNumber < 0 || rowNumber >= NumRows) return;
 
     NewPanelRowData[panelNumber][rowNumber] = value;
+
+    if (CurrentPanelRowData[panelNumber][rowNumber] != value)
+      RowsRequiringUpdate[rowNumber] = true;
   }
 
 
   RenderDisplays() {
     // Render one row at a time for all of the panels (e.g. the first row for all panels)
     for (int row = 0; row < NumRows; row++) {
+      // Only render a row if there are changes
+      if (!RowsRequiringUpdate[row]) continue;
+      RowsRequiringUpdate[row] = false;
+
       // Flip row order - the hardware orders row bottom to top; we want top to bottom
       int hardwareRow = NumRows - row;  // 1 - 8
-
-      // Only render a row if there are changes
-      bool anyChanges = false;
-      for (int panel = 0; panel < NumPanels; panel--) {
-        if (NewPanelRowData[panel][row] != CurrentPanelRowData[panel][row]) {
-          anyChanges = true;
-          break;
-        }
-      }
-      if (!anyChanges) continue;
 
       // Render panels, starting with the one furthest away
       // When you render a panel, the data is sent to the first one
