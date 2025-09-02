@@ -1,6 +1,6 @@
 // Imports
 #include <FastLED.h>
-#include "LedControl.h"
+#include "LedControl2.h"
 #include "Utils.h"
 #include "ConfigTypes.h"
 
@@ -47,7 +47,6 @@ void setup() {
 
   // LED Face
   ProtoFaceRenderer->Initialise();
-  ProtoFaceRenderer->Clear();
 
   // LED strips
   if (ENABLE_SIDE_LEDS) {
@@ -133,12 +132,15 @@ void loop() {
     }
 
 
-    bool forceRandomExpression = BoopState->BoopJustEnded; // Force change to a special face if a boop just ended
+
+    bool forceRandomExpression = BoopState->BoopJustEnded;  // Force change to a special face if a boop just ended
 
     // Determine expression (boop overrides expression)
     struct FaceExpression facialExpression = ShouldShowBoopExpression()
                                                ? DetermineBoopExpression()
                                                : Expression->GetExpression(forceRandomExpression);
+
+
     bool shouldBlink = (curTime >= NextBlink);
 
     // Render the face

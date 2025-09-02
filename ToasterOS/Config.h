@@ -18,7 +18,7 @@
 
 
 // Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
+#define DEBUG_MODE 1  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
 #define BOOPS_FOR_GAME 15
 
 
@@ -36,28 +36,31 @@ FaceConfig::FaceConfig() {
       .PIN_CLK = 10,
 
       // Define the order of the panels
-      .NumPanels = 11,
-      .Panels = new PanelConfig[11]{
+      .NumPanels = 12,
+      .Panels = new PanelConfig[12]{
         // Start Right eye back
-        { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = false, .FlipY = true },
 
         // -> Right mouth back
-        { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
 
-        // -> Left nose
-        { .PanelType = -1, .FlipX = true, .FlipY = true }, // TODO: Support single nose panel
+        // -> Nose
+        { .PanelType = -1, .FlipX = false, .FlipY = false }, // TODO: Support single nose panel
 
         // -> Left mouth front
-        { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = false, .FlipY = true },
 
-        // -> Left eye back
-        { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = true, .FlipY = true },
+        // // -> Left eye back
+        { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = true },
+
+        // Empty panel
+        { .PanelType = -1, .FlipX = false, .FlipY = false },
       },
     }
   };
