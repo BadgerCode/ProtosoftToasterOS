@@ -158,6 +158,54 @@ FaceConfig::FaceConfig() {
 }
 ```
 
+<br><br><br>
+
+
+### Example Single connection, single nose panel, shorter mouth panels
+```cpp
+FaceConfig::FaceConfig() {
+  // Separate left and right connection
+  NumConnections = 1;
+
+  Connections = new FaceLEDConnection[NumConnections]{
+    {
+      // Pin configuration
+      .PIN_DataIn = 12,
+      .PIN_CS = 11,
+      .PIN_CLK = 10,
+
+      // Define the order of the panels
+      .NumPanels = 11,
+      .Panels = new PanelConfig[11]{
+        // Start Right eye back
+        { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = false, .FlipY = true },
+
+        // -> Right mouth back
+        { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
+
+        // -> Nose
+        { .PanelType = PANEL_SINGLE_NOSE, .FlipX = false, .FlipY = true },
+
+        // -> Left mouth front
+        { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = false, .FlipY = true },
+
+        // // -> Left eye back
+        { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = true },
+
+        // Example empty panel
+        // { .PanelType = -1, .FlipX = false, .FlipY = false },
+      },
+    }
+  };
+}
+```
+
 <br>
 
 ### Debugging issues with the face config
