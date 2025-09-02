@@ -28,7 +28,7 @@ private:
 
   // Split the face into sections, so we can render all panels for a section at the same time
   int EyePanelTypes[4] = { PANEL_LEFT_EYE_BACK, PANEL_LEFT_EYE_FRONT, PANEL_RIGHT_EYE_BACK, PANEL_RIGHT_EYE_FRONT };
-  int NosePanelTypes[2] = { PANEL_LEFT_NOSE, PANEL_RIGHT_NOSE };
+  int NosePanelTypes[3] = { PANEL_LEFT_NOSE, PANEL_RIGHT_NOSE, PANEL_SINGLE_NOSE };
   int MouthPanelTypes[8] = { PANEL_LEFT_MOUTH_BACK, PANEL_LEFT_MOUTH_MID_BACK, PANEL_LEFT_MOUTH_MID_FRONT, PANEL_LEFT_MOUTH_FRONT,
                              PANEL_RIGHT_MOUTH_BACK, PANEL_RIGHT_MOUTH_MID_BACK, PANEL_RIGHT_MOUTH_MID_FRONT, PANEL_RIGHT_MOUTH_FRONT };
 public:
@@ -129,7 +129,7 @@ public:
         numPanelTypes = 4;
       } else if (NextRenderSection == 1) {  // nose
         panelTypes = NosePanelTypes;
-        numPanelTypes = 2;
+        numPanelTypes = 3;
       } else if (NextRenderSection == 2) {  // mouth
         panelTypes = MouthPanelTypes;
         numPanelTypes = 8;

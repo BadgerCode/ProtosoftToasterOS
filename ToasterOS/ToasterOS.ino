@@ -43,6 +43,10 @@ void setup() {
     Serial.begin(9600);
   }
 
+  // When debugging via USB, wait before running the rest of the code, to allow the IDE to hook in
+  // Otherwise, you can end up with problems like the nose turning off
+  delay(1000);
+
   randomSeed(analogRead(3));
 
   // LED Face
@@ -244,6 +248,7 @@ void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int
   // Nose
   ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
   ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_SINGLE_NOSE, Face_Nose_Single, 0, false);
 
   // Eyes
   EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);

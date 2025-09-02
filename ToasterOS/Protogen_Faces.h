@@ -33,6 +33,8 @@ struct FaceExpression Face_Neutral = {
   }
 };
 
+byte Face_Nose_Single[8] = { B00000000, B00000000, B01111110, B00111100, B00011000, B00000000, B00000000, B00000000 };
+
 
 struct FaceExpression Face_Heart = {
   .Nose = {
@@ -432,4 +434,3 @@ struct FaceExpression Face_Spiral4 = {
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
   }
 };
-

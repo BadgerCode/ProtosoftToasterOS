@@ -48,7 +48,7 @@ FaceConfig::FaceConfig() {
         { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
 
         // -> Nose
-        { .PanelType = -1, .FlipX = false, .FlipY = false }, // TODO: Support single nose panel
+        { .PanelType = PANEL_SINGLE_NOSE, .FlipX = false, .FlipY = true },
 
         // -> Left mouth front
         { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
