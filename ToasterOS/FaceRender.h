@@ -90,7 +90,7 @@ public:
 
       // If the offset has pushed us beyond the available data, render it as empty
       byte rowData = 0;
-      if (rowDataIndex > 0 && rowDataIndex < 8) {
+      if (0 <= rowDataIndex && rowDataIndex < 8) {
         rowData = flipX ? Reverse(data[rowDataIndex]) : data[rowDataIndex];
       }
 
