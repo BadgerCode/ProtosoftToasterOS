@@ -1,4 +1,4 @@
-#define TOTAL_LED_PANELS 14
+#define TOTAL_LED_PANELS 15
 #define PANEL_LEFT_MOUTH_BACK 0
 #define PANEL_LEFT_MOUTH_MID_BACK 1
 #define PANEL_LEFT_MOUTH_MID_FRONT 2
@@ -13,6 +13,7 @@
 #define PANEL_RIGHT_NOSE 11
 #define PANEL_RIGHT_EYE_BACK 12
 #define PANEL_RIGHT_EYE_FRONT 13
+#define PANEL_SINGLE_NOSE 14
 
 struct PanelConfig {
   int PanelType;

@@ -32,6 +32,8 @@ public:
   }
 
   void Update() {
+    if (!ENABLE_BOOP_SENSOR) return;
+
     BoopSensorTouched = GetSensorDistance() < 500;
     if (BoopSensorTouched) {
       // If a boop hasn't already started, track the start time

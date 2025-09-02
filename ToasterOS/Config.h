@@ -1,4 +1,5 @@
 // PINS: Input
+#define ENABLE_BOOP_SENSOR 0
 #define PIN_ANALOG_BOOP_SENSOR 0
 
 // PINS: LED STRIPS
@@ -38,15 +39,15 @@ FaceConfig::FaceConfig() {
       .NumPanels = 7,
       .Panels = new PanelConfig[7]{
         // Start: mouth back
-        { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = false },
-        { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = false },
-        { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = false },
-        { .PanelType = PANEL_RIGHT_MOUTH_FRONT, .FlipX = false, .FlipY = false },
+        { .PanelType = PANEL_RIGHT_MOUTH_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_BACK, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_MID_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_MOUTH_FRONT, .FlipX = false, .FlipY = true },
         // -> nose
-        { .PanelType = PANEL_RIGHT_NOSE, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_NOSE, .FlipX = true, .FlipY = false },
         // -> eye front
-        { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_RIGHT_EYE_FRONT, .FlipX = true, .FlipY = false },
+        { .PanelType = PANEL_RIGHT_EYE_BACK, .FlipX = true, .FlipY = false },
       },
     },
     {
@@ -54,20 +55,19 @@ FaceConfig::FaceConfig() {
       .PIN_DataIn = 6,
       .PIN_CS = 7,
       .PIN_CLK = 8,
-
       // Define the order of the panels
       .NumPanels = 7,
       .Panels = new PanelConfig[7]{
         // Start: mouth back
-        { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = true, .FlipY = true },
-        { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = true, .FlipY = true },
+        { .PanelType = PANEL_LEFT_MOUTH_BACK, .FlipX = true, .FlipY = false },
+        { .PanelType = PANEL_LEFT_MOUTH_MID_BACK, .FlipX = true, .FlipY = false },
+        { .PanelType = PANEL_LEFT_MOUTH_MID_FRONT, .FlipX = true, .FlipY = false },
+        { .PanelType = PANEL_LEFT_MOUTH_FRONT, .FlipX = true, .FlipY = false },
         // -> nose
-        { .PanelType = PANEL_LEFT_NOSE, .FlipX = false, .FlipY = false },
+        { .PanelType = PANEL_LEFT_NOSE, .FlipX = false, .FlipY = true },
         // -> eye front
-        { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = false },
-        { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = false },
+        { .PanelType = PANEL_LEFT_EYE_FRONT, .FlipX = false, .FlipY = true },
+        { .PanelType = PANEL_LEFT_EYE_BACK, .FlipX = false, .FlipY = true },
       },
     }
   };

@@ -1,6 +1,6 @@
 // Imports
 #include <FastLED.h>
-#include "LedControl.h"
+#include "MAX7219Control.h"
 #include "Utils.h"
 #include "ConfigTypes.h"
 
@@ -20,9 +20,7 @@
 
 // Global variables
 // Face LEDs
-FaceConfig* ProtoFaceConfig = new FaceConfig();
-// If you new up this variable in the setup method, the nose will turn off when you're debugging via USB
-FaceRender* ProtoFaceRenderer = new FaceRender(ProtoFaceConfig);
+FaceRender* ProtoFaceRenderer = new FaceRender(new FaceConfig());
 
 // LED Strips
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
@@ -47,7 +45,6 @@ void setup() {
 
   // LED Face
   ProtoFaceRenderer->Initialise();
-  ProtoFaceRenderer->Clear();
 
   // LED strips
   if (ENABLE_SIDE_LEDS) {
@@ -133,12 +130,15 @@ void loop() {
     }
 
 
-    bool forceRandomExpression = BoopState->BoopJustEnded; // Force change to a special face if a boop just ended
+
+    bool forceRandomExpression = BoopState->BoopJustEnded;  // Force change to a special face if a boop just ended
 
     // Determine expression (boop overrides expression)
     struct FaceExpression facialExpression = ShouldShowBoopExpression()
                                                ? DetermineBoopExpression()
                                                : Expression->GetExpression(forceRandomExpression);
+
+
     bool shouldBlink = (curTime >= NextBlink);
 
     // Render the face
@@ -242,6 +242,7 @@ void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int
   // Nose
   ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
   ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
+  ProtoFaceRenderer->UpdatePanel(PANEL_SINGLE_NOSE, Face_Nose_Single, 0, false);
 
   // Eyes
   EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
