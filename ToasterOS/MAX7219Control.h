@@ -102,9 +102,14 @@ public:
       // If a panel already has data, it gets pushed to the next one in the chain
       digitalWrite(CSPin, LOW);
       for (int panel = (NumPanels - 1); panel >= 0; panel--) {
+        // Output the row number we'll be setting
         shiftOut(DataPin, CLKPin, MSBFIRST, hardwareRow);
-        shiftOut(DataPin, CLKPin, MSBFIRST, NewPanelRowData[panel][row]);
 
+        // Reverse the order of the bits, by doing least significant bit first
+        // This means that B10000000 will light up the left most LED, instead of the right most one
+        shiftOut(DataPin, CLKPin, LSBFIRST, NewPanelRowData[panel][row]);
+
+        // Track the current output
         CurrentPanelRowData[panel][row] = NewPanelRowData[panel][row];
       }
       digitalWrite(CSPin, HIGH);
