@@ -1,8 +1,7 @@
 struct FacePanelConfig {
   MAX7219Control* Controller;
   int Address;
-  bool FlipX;
-  bool FlipY;
+  bool UpsideDown;
   bool Enabled;
 };
 
@@ -37,7 +36,7 @@ public:
     LEDControls = new MAX7219Control*[NumLEDControls];
 
     for (int i = 0; i < TOTAL_LED_PANELS; i++) {
-      PanelConfigs[i] = { .Controller = NULL, .Address = 0, .FlipX = false, .FlipY = false, .Enabled = false };
+      PanelConfigs[i] = { .Controller = NULL, .Address = 0, .UpsideDown = false, .Enabled = false };
     }
 
     // Set up all of the LED controllers
@@ -46,12 +45,12 @@ public:
       LEDControls[i] = new MAX7219Control(connection.PIN_DataIn, connection.PIN_CS, connection.PIN_CLK, connection.NumPanels);
 
       // Register all of the panel mappings
-      // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, FlipX: false, FlipY: True
+      // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, UpsideDown: false
       for (int p = 0; p < connection.NumPanels; p++) {
         auto panel = connection.Panels[p];
         if (panel.PanelType < 0) continue;
 
-        PanelConfigs[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .FlipX = panel.FlipX, .FlipY = panel.FlipY, .Enabled = true };
+        PanelConfigs[panel.PanelType] = { .Controller = LEDControls[i], .Address = p, .UpsideDown = panel.UpsideDown, .Enabled = true };
       }
     }
   }
@@ -81,12 +80,12 @@ public:
     }
 
     auto panelConfig = PanelConfigs[panelType];
-    bool flipX = mirror ? !panelConfig.FlipX : panelConfig.FlipX;
+    bool flipX = mirror ? !panelConfig.UpsideDown : panelConfig.UpsideDown;
 
     if (!panelConfig.Enabled) return;  // Skip disabled panels
 
     for (int row = 0; row < 8; row++) {
-      int rowDataIndex = (panelConfig.FlipY ? (7 - row) : row) + offsetY;
+      int rowDataIndex = (panelConfig.UpsideDown ? (7 - row) : row) + offsetY;
 
       // If the offset has pushed us beyond the available data, render it as empty
       byte rowData = 0;

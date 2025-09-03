@@ -17,8 +17,7 @@
 
 struct PanelConfig {
   int PanelType;
-  bool FlipX;
-  bool FlipY;
+  bool UpsideDown;
 };
 
 struct FaceLEDConnection {
