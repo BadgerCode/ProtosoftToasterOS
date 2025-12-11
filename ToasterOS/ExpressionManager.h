@@ -19,6 +19,17 @@ public:
     RemoteMenu = remoteMenu;
   }
 
+  void SetExpression(FaceExpression* expression) {
+    InNeutralState = false;
+    CurrentExpression = expression;
+  }
+
+  void ResetToNeutral() {
+    InNeutralState = true;
+    CurrentExpression = &Face_Neutral;
+    NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
+  }
+
   struct FaceExpression GetExpression(bool forceRandomExpression) {
     unsigned long curTime = millis();
 
@@ -53,14 +64,13 @@ public:
 
 
     // Remote control
-    if (RemoteMenu->ButtonWasHeld(BUTTON_A)) {
-      InNeutralState = true;
-      CurrentExpression = &Face_Neutral;
-      NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
-    } else {
-      bool expressionChanged = CheckForMenuSelection();
-      if (expressionChanged) InNeutralState = false;
-    }
+    CheckForMenuSelection();
+    // if (RemoteMenu->ButtonWasHeld(BUTTON_A)) {
+    //   ResetToNeutral();
+    // } else {
+    //   bool expressionChanged = CheckForMenuSelection();
+    //   if (expressionChanged) InNeutralState = false;
+    // }
 
     if (InNeutralState) {
       // Time for a different expression?
@@ -98,76 +108,107 @@ private:
     }
   }
 
+
+
+
+  // Button press sequence
+  static const int MaxButtonSequenceLength = 3;
+  int NumPressedButtons = 0;
+  int PressedButtons[MaxButtonSequenceLength] = { 0 };  // Track consecutive presses
+
+  // Button sequence timeout
   const int MaxButtonPressWaitMs = 3000;
   unsigned long LastButtonPressTime = 0;
-  int LastButtonPressed = -1;
 
-  bool CheckForMenuSelection() {
-    int pressedButton = GetPressedButton();
-    if (pressedButton == -1) return false;
-
-    // Reset last button press if its been too long
-    if (timeSince(LastButtonPressTime) >= MaxButtonPressWaitMs) {
-      LastButtonPressTime = 0;
-      LastButtonPressed = -1;
-    }
-
-    bool expressionChanged = false;
-
-    if (LastButtonPressed == -1) {
-      if (pressedButton == BUTTON_A) {
-        CurrentExpression = &Face_Blep;
-        expressionChanged = true;
-      } else if (pressedButton == BUTTON_B) {
-        // B = Feeling Bad emotions
-      } else if (pressedButton == BUTTON_C) {
-        CurrentExpression = &Face_Smirk;
-        expressionChanged = true;
-      } else if (pressedButton == BUTTON_D) {
-        CurrentExpression = &Face_Spiral;
-        expressionChanged = true;
-      }
-    } else {
-      if (LastButtonPressed == BUTTON_B) {
-        if (pressedButton == BUTTON_A) {
-          // A for angry
-          CurrentExpression = &Face_Angry;
-          expressionChanged = true;
-        } else if (pressedButton == BUTTON_B) {
-          // B for bored
-          CurrentExpression = &Face_Bored;
-          expressionChanged = true;
-        } else if (pressedButton == BUTTON_D) {
-          // D for dead
-          CurrentExpression = &Face_X_X;
-          expressionChanged = true;
-        }
-      }
-    }
-
-    // If they've made a selection, reset the menu
-    if (expressionChanged) {
-      LastButtonPressTime = 0;
-      LastButtonPressed = -1;
-    } else {
-      LastButtonPressed = pressedButton;
-      LastButtonPressTime = millis();
-    }
-
-    return expressionChanged;
+  void ResetMenuSelection() {
+    NumPressedButtons = 0;
+    memset(PressedButtons, 0, sizeof(PressedButtons));
+    LastButtonPressTime = 0;
   }
 
-  int GetPressedButton() {
-    if (RemoteMenu->ButtonWasTapped(BUTTON_A)) {
-      return BUTTON_A;
-    } else if (RemoteMenu->ButtonWasTapped(BUTTON_B)) {
-      return BUTTON_B;
-    } else if (RemoteMenu->ButtonWasTapped(BUTTON_C)) {
-      return BUTTON_C;
-    } else if (RemoteMenu->ButtonWasTapped(BUTTON_D)) {
-      return BUTTON_D;
+  void CheckForMenuSelection() {
+    // Reset button presses if its been too long
+    if (NumPressedButtons > 0 && timeSince(LastButtonPressTime) >= MaxButtonPressWaitMs)
+      ResetMenuSelection();
+
+    // Get pressed button
+    int pressedButton = RemoteMenu->GetOnPressButtons();
+
+    // Do nothing if a button hasn't been pressed this frame
+    if (pressedButton == 0) return false;
+
+    // If they've pressed too many buttons, reset
+    if (NumPressedButtons >= MaxButtonSequenceLength)
+      ResetMenuSelection();
+
+    // Track the button press
+    PressedButtons[NumPressedButtons++] = pressedButton;
+    LastButtonPressTime = millis();
+
+    // MENU: A
+    if (PressedButtons[0] == BUTTON_A) {
+      // Wait for 2 button presses
+      if (NumPressedButtons < 2) return;
+
+      // MENU: AA
+      if (PressedButtons[1] == BUTTON_A) {
+        // Wait for 3 button presses
+        if (NumPressedButtons < 3) return;
+
+        // MENU: AAA - Reset to neutral
+        if (PressedButtons[2] == BUTTON_A) {
+          ResetToNeutral();
+        }
+      }
+
+      // MENU: AB - BLEP
+      if (PressedButtons[1] == BUTTON_B) {
+        SetExpression(&Face_Blep);
+      }
     }
 
-    return -1;
+    // MENU: B
+    else if (PressedButtons[0] == BUTTON_B) {
+      // Wait for 2 button presses
+      if (NumPressedButtons < 2) return;
+
+      // MENU: BA - ANGRY
+      if (PressedButtons[1] == BUTTON_A) {
+        SetExpression(&Face_Angry);
+      }
+
+      // MENU: BB - BORED
+      if (PressedButtons[1] == BUTTON_B) {
+        SetExpression(&Face_Bored);
+      }
+
+      // MENU: BD - DEAD
+      if (PressedButtons[1] == BUTTON_D) {
+        SetExpression(&Face_X_X);
+      }
+    }
+
+    // MENU: C - SMIRK
+    else if (PressedButtons[0] == BUTTON_C) {
+      // Wait for 2 button presses
+      if (NumPressedButtons < 2) return;
+
+      // MENU: CC - SMIRK
+      if (PressedButtons[1] == BUTTON_C) {
+        SetExpression(&Face_Smirk);
+      }
+
+      // MENU: CD - DAZED/SPIRALS
+      if (PressedButtons[1] == BUTTON_D) {
+        SetExpression(&Face_Spiral);
+      }
+    }
+
+    // MENU: D
+    else if (PressedButtons[0] == BUTTON_D) {
+    }
+
+    // If we didn't return early to wait for more button presses, reset
+    ResetMenuSelection();
   }
 };

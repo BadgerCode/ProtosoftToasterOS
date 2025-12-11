@@ -18,7 +18,7 @@
 
 
 // Additional defines
-#define DEBUG_MODE 0  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
+#define DEBUG_MODE 4  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
 #define BOOPS_FOR_GAME 15
 
 

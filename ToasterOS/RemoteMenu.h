@@ -1,96 +1,46 @@
-#define BUTTON_A 0
-#define BUTTON_B 1
-#define BUTTON_C 2
-#define BUTTON_D 3
+#define BUTTON_A 1
+#define BUTTON_B 2
+#define BUTTON_C 4
+#define BUTTON_D 8
 
 
 class RemoteMenuClass {
 private:
-  // Button press tracking
-  bool PressedButtons[4] = { 0, 0, 0, 0 };
-  bool ShortPressButtons[4] = { 0, 0, 0, 0 };
-  int ShortPressSingleButton = -1;
-  bool LongPressButtons[4] = { 0, 0, 0, 0 };
-  unsigned long ButtonPressStart = 0;
-  const int HoldDurationMs = 3000;
+  // Buttons currently down (bitwise)
+  int ButtonPressState = 0;
+
+  // Buttons that have been pressed this frame (bitwise)
+  int NewPressedButtonsState = 0;
 
 public:
-  bool ButtonIsDown(int button) {
-    return PressedButtons[button];
+  bool IsButtonDown(int button) {
+    return ButtonPressState & button;
   }
 
-  bool ButtonWasTapped(int button) {
-    return ShortPressButtons[button];
-  }
-
-  bool ButtonWasHeld(int button) {
-    return LongPressButtons[button];
+  // Returns a number representing all of the buttons that have been pressed this frame
+  // Returns 0 if no buttons have been pressed this frame
+  // If multiple buttons have been pressed, then multiple bits will be set
+  // E.g. 3 = BUTTON_A (1) and BUTTON_B (2)
+  int GetOnPressButtons() {
+    return NewPressedButtonsState;
   }
 
   void Update() {
-    UpdateButtonPressState();
-  }
+    int buttonsPressed = 0;
+    if (digitalRead(PIN_REMOTE_BUTTON_A)) buttonsPressed += 1;
+    if (digitalRead(PIN_REMOTE_BUTTON_B)) buttonsPressed += 2;
+    if (digitalRead(PIN_REMOTE_BUTTON_C)) buttonsPressed += 4;
+    if (digitalRead(PIN_REMOTE_BUTTON_D)) buttonsPressed += 8;
 
-private:
-  void UpdateButtonPressState() {
-    // Reset press state
-    ShortPressSingleButton = -1;
-    for (int i = 0; i < 4; i++) {
-      ShortPressButtons[i] = 0;
-      LongPressButtons[i] = 0;
+    // If no buttons were down but buttons are now down, they're new
+    if (ButtonPressState == 0 && buttonsPressed != 0) {
+      NewPressedButtonsState = buttonsPressed;
+    } else {
+      // No new buttons have been pressed
+      NewPressedButtonsState = 0;
     }
 
-    bool newPressedButtons[4] = {
-      digitalRead(PIN_REMOTE_BUTTON_A),
-      digitalRead(PIN_REMOTE_BUTTON_B),
-      digitalRead(PIN_REMOTE_BUTTON_C),
-      digitalRead(PIN_REMOTE_BUTTON_D)
-    };
-
-    bool anyButtonsAlreadyPressed = PressedButtons[0] || PressedButtons[1] || PressedButtons[2] || PressedButtons[3];
-    bool anyButtonsNowPressed = newPressedButtons[0] || newPressedButtons[1] || newPressedButtons[2] || newPressedButtons[3];
-
-    // Nothing happening
-    if (!anyButtonsAlreadyPressed && !anyButtonsNowPressed) return;
-
-    // Buttons just started being pressed
-    if (!anyButtonsAlreadyPressed && anyButtonsNowPressed) ButtonPressStart = millis();
-
-    // Buttons just released
-    if (anyButtonsAlreadyPressed && !anyButtonsNowPressed) {
-      bool isLongPress = timeSince(ButtonPressStart) >= HoldDurationMs;
-      ButtonPressStart = 0;
-
-      if (isLongPress) {
-        LongPressButtons[0] = PressedButtons[0];
-        LongPressButtons[1] = PressedButtons[1];
-        LongPressButtons[2] = PressedButtons[2];
-        LongPressButtons[3] = PressedButtons[3];
-      } else {
-        ShortPressButtons[0] = PressedButtons[0];
-        ShortPressButtons[1] = PressedButtons[1];
-        ShortPressButtons[2] = PressedButtons[2];
-        ShortPressButtons[3] = PressedButtons[3];
-
-        // Find if a single button was short pressed
-        for (int i = 0; i < 4; i++) {
-          if (!ShortPressButtons[i]) continue;
-
-          // Multiple buttons were short pressed
-          if (ShortPressSingleButton != -1) {
-            ShortPressSingleButton = -1;
-            break;
-          }
-
-          ShortPressSingleButton = i;
-        }
-      }
-    }
-
-    // Update pressed state
-    PressedButtons[0] = newPressedButtons[0];
-    PressedButtons[1] = newPressedButtons[1];
-    PressedButtons[2] = newPressedButtons[2];
-    PressedButtons[3] = newPressedButtons[3];
+    // Update state
+    ButtonPressState = buttonsPressed;
   }
 };
