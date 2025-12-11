@@ -4,7 +4,7 @@
 #define BUTTON_D 8
 
 
-class RemoteMenuClass {
+class RemoteControl {
 private:
   // Buttons currently down (bitwise)
   int ButtonPressState = 0;
@@ -13,6 +13,13 @@ private:
   int NewPressedButtonsState = 0;
 
 public:
+  Initialise() {
+    pinMode(PIN_REMOTE_BUTTON_A, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_B, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_C, INPUT);
+    pinMode(PIN_REMOTE_BUTTON_D, INPUT);
+  }
+
   bool IsButtonDown(int button) {
     return ButtonPressState & button;
   }

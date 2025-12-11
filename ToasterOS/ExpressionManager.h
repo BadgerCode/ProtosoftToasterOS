@@ -12,10 +12,10 @@ private:
   FaceExpression* CurrentExpression = &Face_Neutral;
 
   // Dependencies
-  RemoteMenuClass* RemoteMenu;
+  RemoteControl* RemoteMenu;
 
 public:
-  ExpressionManager(RemoteMenuClass* remoteMenu) {
+  ExpressionManager(RemoteControl* remoteMenu) {
     RemoteMenu = remoteMenu;
   }
 

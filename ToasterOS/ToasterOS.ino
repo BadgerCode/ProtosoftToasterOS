@@ -13,7 +13,7 @@
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "BoopState.h"
-#include "RemoteMenu.h"
+#include "RemoteControl.h"
 #include "ExpressionManager.h"
 #include "Game.h"
 
@@ -27,8 +27,8 @@ LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 // State managers
 BoopStateHandler* BoopState = new BoopStateHandler(PIN_ANALOG_BOOP_SENSOR);
-RemoteMenuClass* RemoteMenu = new RemoteMenuClass();
-ExpressionManager* Expression = new ExpressionManager(RemoteMenu);
+RemoteControl* RemoteControlState = new RemoteControl();
+ExpressionManager* Expression = new ExpressionManager(RemoteControlState);
 
 
 // Secret game
@@ -54,10 +54,7 @@ void setup() {
 
   // Remote control
   if (ENABLE_REMOTE_CONTROL) {
-    pinMode(PIN_REMOTE_BUTTON_A, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_B, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_C, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_D, INPUT);
+    RemoteControlState->Initialise();
   }
 }
 
@@ -101,7 +98,7 @@ void loop() {
 
   // Update states
   BoopState->Update();
-  RemoteMenu->Update();
+  RemoteControlState->Update();
 
   if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
 
