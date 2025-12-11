@@ -24,6 +24,7 @@
 
 // Configure the pins and layout of the face LED panels
 // See README for more info
+#define FACE_BRIGHTNESS 7 // 0-15
 FaceConfig::FaceConfig() {
   // Separate left and right connection
   NumConnections = 2;

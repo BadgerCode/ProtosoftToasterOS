@@ -8,7 +8,7 @@ struct FacePanelConfig {
 
 class FaceRender {
 private:
-  const int Brightness = 15;  // 0 - 15
+  const int Brightness = FACE_BRIGHTNESS;  // 0 - 15
   byte EmptyPanel[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   // Face LED state
