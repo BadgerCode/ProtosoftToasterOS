@@ -10,6 +10,9 @@ private:
   unsigned long NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
   int SpecialFaceDurationMs = 5000;
 
+  // Face movement
+  int FaceMovementDelay = 200;
+
 public:
   ExpressionManager() {}
 
@@ -22,6 +25,14 @@ public:
     InNeutralState = true;
     CurrentExpression = &Face_Neutral;
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
+  }
+
+  int GetMovementDelay() {
+    // Make the face move slower for these expressions
+    if (CurrentExpression == &Face_Sleepy) return FaceMovementDelay * 3;
+
+    // Default delay
+    return FaceMovementDelay;
   }
 
   struct FaceExpression GetExpression(bool forceRandomExpression) {

@@ -125,7 +125,7 @@ private:
 
       // MENU: AC - CLOSED EYES
       if (PressedButtons[1] == BUTTON_C) {
-        SetExpression(&Face_Happy_Closed_eyes);
+        SetExpression(&Face_Sleepy);
       }
     }
 

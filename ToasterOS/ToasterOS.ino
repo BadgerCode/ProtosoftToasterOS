@@ -65,8 +65,7 @@ void setup() {
 // Face movement
 int Face_OffsetY = 0;
 int Face_OffsetY_Dir = 1;
-int OffsetDelay = 200;
-unsigned long NextOffsetShift = millis() + OffsetDelay;
+unsigned long NextOffsetShift = millis();
 
 // Blinking
 int MinBlinkWait = 10000;
@@ -115,11 +114,11 @@ void loop() {
 
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
-      int adjustedDelay = OffsetDelay;
+      int adjustedDelay = ExpressionState->GetMovementDelay();
 
       // Make the face move slower when being booped/face rubbed
       if (ShouldShowBoopExpression()) {
-        adjustedDelay = BoopState->ConsecutiveShortBoops < 6 ? OffsetDelay * 1.5 : OffsetDelay * 2.25;
+        adjustedDelay = BoopState->ConsecutiveShortBoops < 6 ? adjustedDelay * 1.5 : adjustedDelay * 2.25; // TODO: Move into expression manager?
       }
 
       // Update state
