@@ -38,11 +38,15 @@ public:
 struct ProtoConfigStruct {
   // General config
   int Brightness;
+  int DebugMode;
 
   // Boop sensor config
   bool EnableBoopSensor;
   int PinAnalogBoopSensor;
   int NumBoopsToActivateGame;
+
+  // LED Strip config
+  bool EnableSideLEDs;
 
   // Remote control config
   bool EnableRemoteControl;

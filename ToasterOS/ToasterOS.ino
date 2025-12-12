@@ -37,7 +37,7 @@ CubeGame* CubeGameRunner = new CubeGame();
 
 
 void setup() {
-  if (DEBUG_MODE) {
+  if (ProtoConfig.DebugMode) {
     // Debug output on serial port; Used for Serial.println("blah blah");
     Serial.begin(9600);
   }
@@ -49,9 +49,8 @@ void setup() {
   ProtoFaceRenderer->SetBrightness(ProtoConfig.Brightness);
 
   // LED strips
-  if (ENABLE_SIDE_LEDS) {
-    FastLED.addLeds<NEOPIXEL, PIN_LEFT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
-    FastLED.addLeds<NEOPIXEL, PIN_RIGHT_LEDSTRIP_DATA>(LEDStripRenderer->LED_Data, LEDSTRIP_NUM_LEDS);
+  if (ProtoConfig.EnableSideLEDs) {
+    LEDStripRenderer->Initialise();
   }
 
   // Remote control
@@ -174,13 +173,13 @@ void loop() {
       }
 
       NextLEDStripUpdate = curTime + 15;
-      LEDStripRenderer->Render();
+      if (ProtoConfig.EnableSideLEDs) LEDStripRenderer->Render();
     }
   }
 
 
   // Debug print code
-  if (DEBUG_MODE == 1) {
+  if (ProtoConfig.DebugMode == 1) {
     // Count FPS
     FPSCOUNT_Iterations++;
 
@@ -191,7 +190,7 @@ void loop() {
       Serial.println(FPSCOUNT_Iterations);
       FPSCOUNT_Iterations = 0;
     }
-  } else if (DEBUG_MODE == 2) {
+  } else if (ProtoConfig.DebugMode == 2) {
     // Display max frame duration
     unsigned int duration = millis() - curTime;
     if (duration > FrameDuration_MaxDuration) FrameDuration_MaxDuration = duration;

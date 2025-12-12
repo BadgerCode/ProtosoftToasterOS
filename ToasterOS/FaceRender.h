@@ -79,7 +79,7 @@ public:
   }
 
   void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
-    if (DEBUG_MODE == 3) {
+    if (ProtoConfig.DebugMode == 3) {
       mirror = false;
       data = Numbers_ASCII[7];
     }

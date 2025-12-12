@@ -148,7 +148,7 @@ public:
     }
 
     faceRenderer->ProcessRenderQueue();
-    ledStripRenderer->Render();
+    if (ProtoConfig.EnableSideLEDs) ledStripRenderer->Render();
     return true;
   }
 

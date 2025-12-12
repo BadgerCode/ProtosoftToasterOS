@@ -1,22 +1,23 @@
-// PINS: LED STRIPS
-#define ENABLE_SIDE_LEDS 1
+// CONSTANT CONFIG
+// PINS: LED STRIPS (have to be constant)
 #define PIN_LEFT_LEDSTRIP_DATA 9
 #define PIN_RIGHT_LEDSTRIP_DATA 10
 #define LEDSTRIP_NUM_LEDS 15
 
 
-// Additional defines
-#define DEBUG_MODE 4  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
-
 // Config
-ProtoConfigStruct ProtoConfig {
+static ProtoConfigStruct ProtoConfig {
   // General config
   .Brightness = 7, // 0 - 15
+  .DebugMode = 0, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
 
   // Boop sensor config
   .EnableBoopSensor = true,
   .PinAnalogBoopSensor = 0,
   .NumBoopsToActivateGame = 15,
+
+  // LED Strip config
+  .EnableSideLEDs = true,
 
   // Remote control config
   .EnableRemoteControl = true,
