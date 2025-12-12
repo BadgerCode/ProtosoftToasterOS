@@ -213,10 +213,7 @@ bool ShouldShowBoopExpression() {
 
 FaceExpression DetermineBoopExpression() {
   if (BoopState->IsFaceRub()) {
-    // Simulate beating heart, by changing between the small & big heart
-    // Big (800 ms), Small (400 ms), Big (800 ms)
-    bool showSmallHeart = ((BoopState->TimeSinceBoopStart() / 400) % 3 == 1);
-    return showSmallHeart ? Face_Heart_Small : Face_Heart;
+    return ExpressionState->GetHeartFrame();
   }
 
   if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;

@@ -43,11 +43,14 @@ public:
     else if (CurrentExpression == &Face_Spiral) {
       return GetSpiralFrame();
     }
+    // Animate hearts
+    else if (CurrentExpression == &Face_Heart) {
+      return GetHeartFrame();
+    }
 
     return *CurrentExpression;
   }
 
-private:
   FaceExpression GetSpiralFrame() {
     // Rotate the eye 90 degrees every 200ms
     int eyeRotation = (millis() / 200) % 4;
@@ -61,5 +64,13 @@ private:
     } else if (eyeRotation == 3) {
       return Face_Spiral4;
     }
+  }
+
+  FaceExpression GetHeartFrame() {
+    // Simulate beating heart, by changing between the small & big heart
+    // Big (800 ms), Small (400 ms), Big (800 ms)
+    bool showSmallHeart = (millis() / 400) % 3 == 1;
+
+    return showSmallHeart ? Face_Heart_Small : Face_Heart;
   }
 };

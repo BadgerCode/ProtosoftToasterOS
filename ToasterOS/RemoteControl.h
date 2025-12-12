@@ -148,6 +148,11 @@ private:
       // Wait for 2 button presses
       if (NumPressedButtons < 2) return;
 
+      // MENU: CA - HEARTS
+      if (PressedButtons[1] == BUTTON_A) {
+        ExpressionState->SetExpression(&Face_Heart);
+      }
+
       // MENU: CC - SMIRK
       if (PressedButtons[1] == BUTTON_C) {
         ExpressionState->SetExpression(&Face_Smirk);
