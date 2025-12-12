@@ -4,6 +4,9 @@
 #define PIN_RIGHT_LEDSTRIP_DATA 10
 #define LEDSTRIP_NUM_LEDS 15
 
+// PINS: Remote control
+#define PIN_REMOTECONTROL_OUTPUT 11
+
 
 // Config
 static ProtoConfigStruct ProtoConfig {
@@ -25,6 +28,7 @@ static ProtoConfigStruct ProtoConfig {
   .PinRemoteButtonB = 17,
   .PinRemoteButtonC = 16,
   .PinRemoteButtonD = 15,
+  .EnableRemoteControlOutputLEDs = true,
 };
 
 

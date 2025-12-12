@@ -17,6 +17,10 @@ private:
   FaceRender* FaceRenderer;
   BoopStateHandler* BoopState;
 
+  // Output
+  static const int OutputNumLEDs = 2;
+  CRGB OutputLEDData[OutputNumLEDs];
+
 public:
   RemoteControl(ExpressionManager* expressionState, FaceRender* faceRenderer, BoopStateHandler* boopState) {
     ExpressionState = expressionState;
@@ -29,6 +33,10 @@ public:
     pinMode(ProtoConfig.PinRemoteButtonB, INPUT);
     pinMode(ProtoConfig.PinRemoteButtonC, INPUT);
     pinMode(ProtoConfig.PinRemoteButtonD, INPUT);
+
+    if (ProtoConfig.EnableRemoteControlOutputLEDs) {
+      FastLED.addLeds<NEOPIXEL, PIN_REMOTECONTROL_OUTPUT>(OutputLEDData, OutputNumLEDs);
+    }
   }
 
   bool IsButtonDown(int button) {
@@ -64,18 +72,49 @@ public:
 
     // Update menu state
     UpdateMenuState();
+
+    // Update menu output LEDs
+    if (ProtoConfig.EnableRemoteControlOutputLEDs) {
+      bool outputPressedButtons = PressedButtons[0] != 0;
+      OutputLEDData[0] = ButtonToColour(outputPressedButtons ? PressedButtons[0] : CurrentExpressionPressedButtons[0]);
+      OutputLEDData[1] = ButtonToColour(outputPressedButtons ? PressedButtons[1] : CurrentExpressionPressedButtons[1]);
+    }
   }
 
-  // Menu stuff
 private:
+  // Menu stuff
   // Button press sequence
-  static const int MaxButtonSequenceLength = 3;
+  static const int MaxButtonSequenceLength = 2;
   int NumPressedButtons = 0;
   int PressedButtons[MaxButtonSequenceLength] = { 0 };  // Track consecutive presses
+
+  // Current expression
+  int CurrentExpressionPressedButtons[2] = { BUTTON_A, BUTTON_A };
 
   // Button sequence timeout
   const int MaxButtonPressWaitMs = 3000;
   unsigned long LastButtonPressTime = 0;
+
+  void SetExpression(FaceExpression* expression) {
+    ExpressionState->SetExpression(expression);
+    BoopState->StopBoop();
+    RecordSelectedExpression();
+  }
+
+  void RecordSelectedExpression() {
+    CurrentExpressionPressedButtons[0] = PressedButtons[0];
+    CurrentExpressionPressedButtons[1] = PressedButtons[1];
+  }
+
+  CHSV ButtonToColour(int button) {
+    switch (button) {
+      case BUTTON_A: return CHSV(91, 255, 5);
+      case BUTTON_B: return CHSV(0, 255, 5);
+      case BUTTON_C: return CHSV(211, 255, 5);
+      case BUTTON_D: return CHSV(37, 255, 5);
+      default: return CHSV(0, 0, 0);
+    }
+  }
 
   void ResetMenuSelection() {
     NumPressedButtons = 0;
@@ -110,6 +149,7 @@ private:
       // MENU: AA - Reset to neutral
       if (PressedButtons[1] == BUTTON_A) {
         ExpressionState->ResetToNeutral();
+        RecordSelectedExpression();
       }
 
       // MENU: AB - BLEP
@@ -208,10 +248,5 @@ private:
 
     // If we didn't return early to wait for more button presses, reset
     ResetMenuSelection();
-  }
-
-  void SetExpression(FaceExpression* expression) {
-    ExpressionState->SetExpression(expression);
-    BoopState->StopBoop();
   }
 };

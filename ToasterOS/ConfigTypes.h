@@ -54,4 +54,5 @@ struct ProtoConfigStruct {
   int PinRemoteButtonB;
   int PinRemoteButtonC;
   int PinRemoteButtonD;
+  bool EnableRemoteControlOutputLEDs;
 };

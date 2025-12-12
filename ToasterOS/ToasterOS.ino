@@ -104,7 +104,7 @@ void loop() {
     ProtoFaceRenderer->ProcessRenderQueue();
 
     // LED strips
-    if (NextLEDStripUpdate <= curTime) {
+    if (ProtoConfig.EnableSideLEDs && NextLEDStripUpdate <= curTime) {
       if (BoopState->BoopActive) {
         // RGB scrolling
         for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
@@ -130,9 +130,11 @@ void loop() {
       }
 
       NextLEDStripUpdate = curTime + 15;
-      if (ProtoConfig.EnableSideLEDs) LEDStripRenderer->Render();
     }
   }
+
+  // Send out any LED strip updates
+  LEDStripRender::Render();
 
 
   // Debug print code
