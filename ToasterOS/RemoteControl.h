@@ -107,15 +107,9 @@ private:
       // Wait for 2 button presses
       if (NumPressedButtons < 2) return;
 
-      // MENU: AA
+      // MENU: AA - Reset to neutral
       if (PressedButtons[1] == BUTTON_A) {
-        // Wait for 3 button presses
-        if (NumPressedButtons < 3) return;
-
-        // MENU: AAA - Reset to neutral
-        if (PressedButtons[2] == BUTTON_A) {
-          ExpressionState->ResetToNeutral();
-        }
+        ExpressionState->ResetToNeutral();
       }
 
       // MENU: AB - BLEP
@@ -168,6 +162,11 @@ private:
       // MENU: CA - HEARTS
       if (PressedButtons[1] == BUTTON_A) {
         SetExpression(&Face_Heart);
+      }
+
+      // MENU: CB - BOY KISSER
+      if (PressedButtons[1] == BUTTON_B) {
+        SetExpression(&Face_BoyKisser);
       }
 
       // MENU: CC - SMIRK
