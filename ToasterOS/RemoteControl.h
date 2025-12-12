@@ -23,10 +23,10 @@ public:
   }
 
   Initialise() {
-    pinMode(PIN_REMOTE_BUTTON_A, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_B, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_C, INPUT);
-    pinMode(PIN_REMOTE_BUTTON_D, INPUT);
+    pinMode(ProtoConfig.PinRemoteButtonA, INPUT);
+    pinMode(ProtoConfig.PinRemoteButtonB, INPUT);
+    pinMode(ProtoConfig.PinRemoteButtonC, INPUT);
+    pinMode(ProtoConfig.PinRemoteButtonD, INPUT);
   }
 
   bool IsButtonDown(int button) {
@@ -44,10 +44,10 @@ public:
   // Update state
   void Update() {
     int buttonsPressed = 0;
-    if (digitalRead(PIN_REMOTE_BUTTON_A)) buttonsPressed += 1;
-    if (digitalRead(PIN_REMOTE_BUTTON_B)) buttonsPressed += 2;
-    if (digitalRead(PIN_REMOTE_BUTTON_C)) buttonsPressed += 4;
-    if (digitalRead(PIN_REMOTE_BUTTON_D)) buttonsPressed += 8;
+    if (digitalRead(ProtoConfig.PinRemoteButtonA)) buttonsPressed += 1;
+    if (digitalRead(ProtoConfig.PinRemoteButtonB)) buttonsPressed += 2;
+    if (digitalRead(ProtoConfig.PinRemoteButtonC)) buttonsPressed += 4;
+    if (digitalRead(ProtoConfig.PinRemoteButtonD)) buttonsPressed += 8;
 
     // If no buttons were down but buttons are now down, they're new
     if (ButtonPressState == 0 && buttonsPressed != 0) {

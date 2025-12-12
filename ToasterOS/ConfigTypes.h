@@ -36,6 +36,17 @@ public:
 };
 
 struct ProtoConfigStruct {
+  // General config
   int Brightness;
+
+  // Boop sensor config
   bool EnableBoopSensor;
+  int NumBoopsToActivateGame;
+
+  // Remote control config
+  bool EnableRemoteControl;
+  int PinRemoteButtonA;
+  int PinRemoteButtonB;
+  int PinRemoteButtonC;
+  int PinRemoteButtonD;
 };

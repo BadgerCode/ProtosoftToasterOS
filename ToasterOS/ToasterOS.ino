@@ -55,7 +55,7 @@ void setup() {
   }
 
   // Remote control
-  if (ENABLE_REMOTE_CONTROL) {
+  if (ProtoConfig.EnableRemoteControl) {
     RemoteControlState->Initialise();
   }
 }
@@ -98,11 +98,14 @@ void loop() {
     NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
   }
 
-  // Update states
+  // UPDATE STATE- BOOP SENSOR
   if (ProtoConfig.EnableBoopSensor) BoopState->Update();
-  RemoteControlState->Update();
 
-  if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
+  // UPDATE STATE- REMOTE CONTROL
+  if (ProtoConfig.EnableRemoteControl) RemoteControlState->Update();
+
+  // UPDATE STATE- GAME TRIGGER
+  if (BoopState->ConsecutiveShortBoops >= ProtoConfig.NumBoopsToActivateGame) EnableGame = true;
 
 
 

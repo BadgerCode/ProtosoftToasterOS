@@ -8,28 +8,29 @@
 #define LEDSTRIP_NUM_LEDS 15
 
 
-// Remote control
-#define ENABLE_REMOTE_CONTROL 1
-#define PIN_REMOTE_BUTTON_A 18
-#define PIN_REMOTE_BUTTON_B 17
-#define PIN_REMOTE_BUTTON_C 16
-#define PIN_REMOTE_BUTTON_D 15
-
-
 // Additional defines
 #define DEBUG_MODE 4  // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
-#define BOOPS_FOR_GAME 15
+
+// Config
+ProtoConfigStruct ProtoConfig {
+  // General config
+  .Brightness = 7, // 0 - 15
+
+  // Boop sensor config
+  .EnableBoopSensor = true,
+  .NumBoopsToActivateGame = 15,
+
+  // Remote control config
+  .EnableRemoteControl = true,
+  .PinRemoteButtonA = 18,
+  .PinRemoteButtonB = 17,
+  .PinRemoteButtonC = 16,
+  .PinRemoteButtonD = 15,
+};
 
 
 // Configure the pins and layout of the face LED panels
 // See README for more info
-#define FACE_BRIGHTNESS 7 // 0-15
-
-ProtoConfigStruct ProtoConfig {
-  .Brightness = 7, // 0 - 15
-  .EnableBoopSensor = true,
-};
-
 FaceConfig::FaceConfig() {
   // Separate left and right connection
   NumConnections = 2;
