@@ -46,10 +46,10 @@ public:
   // Update state
   void Update() {
     int buttonsPressed = 0;
-    if (digitalRead(ProtoConfig.PinRemoteButtonA)) buttonsPressed += 1;
-    if (digitalRead(ProtoConfig.PinRemoteButtonB)) buttonsPressed += 2;
-    if (digitalRead(ProtoConfig.PinRemoteButtonC)) buttonsPressed += 4;
-    if (digitalRead(ProtoConfig.PinRemoteButtonD)) buttonsPressed += 8;
+    if (digitalRead(ProtoConfig.PinRemoteButtonA)) buttonsPressed += BUTTON_A;
+    if (digitalRead(ProtoConfig.PinRemoteButtonB)) buttonsPressed += BUTTON_B;
+    if (digitalRead(ProtoConfig.PinRemoteButtonC)) buttonsPressed += BUTTON_C;
+    if (digitalRead(ProtoConfig.PinRemoteButtonD)) buttonsPressed += BUTTON_D;
 
     // If no buttons were down but buttons are now down, they're new
     if (ButtonPressState == 0 && buttonsPressed != 0) {
