@@ -127,6 +127,11 @@ private:
       if (PressedButtons[1] == BUTTON_C) {
         SetExpression(&Face_Sleepy);
       }
+
+      // MENU: AD - EXCITED
+      if (PressedButtons[1] == BUTTON_D) {
+        SetExpression(&Face_Excited);
+      }
     }
 
     // MENU: B - BAD EMOTIONS
