@@ -34,10 +34,13 @@ public:
 
   int GetMovementDelay() {
     // Make the face move slower for these expressions
-    if (CurrentExpression == &Face_Sleepy) return FaceMovementDelay * 3;
-
-    // Different speeds when being boops
+    // Booping
     if (ShouldShowBoopExpression()) return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
+    // Slow
+    if (CurrentExpression == &Face_Heart || CurrentExpression == &Face_AmongUs) return FaceMovementDelay * 1.5;
+    // Very slow
+    if (CurrentExpression == &Face_Sleepy || CurrentExpression == &Face_X_X) return FaceMovementDelay * 3;
+
 
     // Default delay
     return FaceMovementDelay;
