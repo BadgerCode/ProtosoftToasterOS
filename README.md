@@ -2,7 +2,7 @@
 
 Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices.
 
-![Protogen preview](https://i.imgur.com/5MpisuR.png)
+![Protogen preview](/Docs/Images/protogen_head.jpg)
 
 <br><br>
 
@@ -13,6 +13,7 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 - Nose "boop" detection & animation
 - Blinking animations
 - Different expressions, with simple animations
+- Remote control support
 
 <br><br>
 
