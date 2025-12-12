@@ -39,7 +39,7 @@ public:
   // Returns 0 if no buttons have been pressed this frame
   // If multiple buttons have been pressed, then multiple bits will be set
   // E.g. 3 = BUTTON_A (1) and BUTTON_B (2)
-  int GetOnPressButtons() {
+  int GetNewPressedButtons() {
     return NewPressedButtonsState;
   }
 
@@ -89,10 +89,10 @@ private:
       ResetMenuSelection();
 
     // Get pressed button
-    int pressedButton = GetOnPressButtons();
+    int pressedButton = GetNewPressedButtons();
 
     // Do nothing if a button hasn't been pressed this frame
-    if (pressedButton == 0) return false;
+    if (pressedButton == 0) return;
 
     // If they've pressed too many buttons, reset
     if (NumPressedButtons >= MaxButtonSequenceLength)
