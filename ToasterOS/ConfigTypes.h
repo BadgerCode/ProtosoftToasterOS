@@ -34,3 +34,8 @@ public:
   FaceLEDConnection* Connections;
   FaceConfig();
 };
+
+struct ProtoConfigStruct {
+  int Brightness;
+  bool EnableBoopSensor;
+};

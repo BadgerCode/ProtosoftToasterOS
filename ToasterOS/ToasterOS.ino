@@ -13,8 +13,8 @@
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "BoopState.h"
-#include "RemoteControl.h"
 #include "ExpressionManager.h"
+#include "RemoteControl.h"
 #include "Game.h"
 
 
@@ -27,9 +27,10 @@ LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 // State managers
 BoopStateHandler* BoopState = new BoopStateHandler(PIN_ANALOG_BOOP_SENSOR);
-RemoteControl* RemoteControlState = new RemoteControl();
-ExpressionManager* Expression = new ExpressionManager(RemoteControlState);
+ExpressionManager* ExpressionState = new ExpressionManager();
 
+// Remote control
+RemoteControl* RemoteControlState = new RemoteControl(ExpressionState, ProtoFaceRenderer);
 
 // Secret game
 CubeGame* CubeGameRunner = new CubeGame();
@@ -45,6 +46,7 @@ void setup() {
 
   // LED Face
   ProtoFaceRenderer->Initialise();
+  ProtoFaceRenderer->SetBrightness(ProtoConfig.Brightness);
 
   // LED strips
   if (ENABLE_SIDE_LEDS) {
@@ -97,7 +99,7 @@ void loop() {
   }
 
   // Update states
-  BoopState->Update();
+  if (ProtoConfig.EnableBoopSensor) BoopState->Update();
   RemoteControlState->Update();
 
   if (BoopState->ConsecutiveShortBoops >= BOOPS_FOR_GAME) EnableGame = true;
@@ -133,7 +135,7 @@ void loop() {
     // Determine expression (boop overrides expression)
     struct FaceExpression facialExpression = ShouldShowBoopExpression()
                                                ? DetermineBoopExpression()
-                                               : Expression->GetExpression(forceRandomExpression);
+                                               : ExpressionState->GetExpression(forceRandomExpression);
 
 
     bool shouldBlink = (curTime >= NextBlink);

@@ -1,5 +1,4 @@
 // PINS: Input
-#define ENABLE_BOOP_SENSOR 1
 #define PIN_ANALOG_BOOP_SENSOR 0
 
 // PINS: LED STRIPS
@@ -25,6 +24,12 @@
 // Configure the pins and layout of the face LED panels
 // See README for more info
 #define FACE_BRIGHTNESS 7 // 0-15
+
+ProtoConfigStruct ProtoConfig {
+  .Brightness = 7, // 0 - 15
+  .EnableBoopSensor = true,
+};
+
 FaceConfig::FaceConfig() {
   // Separate left and right connection
   NumConnections = 2;
