@@ -173,6 +173,11 @@ private:
         // Update brightness
         FaceRenderer->SetBrightness(ProtoConfig.Brightness);
       }
+
+      // MENU: DB - TOGGLE BOOP SENSOR
+      if (PressedButtons[1] == BUTTON_B) {
+        ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
+      }
     }
 
     // If we didn't return early to wait for more button presses, reset

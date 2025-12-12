@@ -26,7 +26,7 @@ FaceRender* ProtoFaceRenderer = new FaceRender(new FaceConfig());
 LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 // State managers
-BoopStateHandler* BoopState = new BoopStateHandler(PIN_ANALOG_BOOP_SENSOR);
+BoopStateHandler* BoopState = new BoopStateHandler(ProtoConfig.PinAnalogBoopSensor);
 ExpressionManager* ExpressionState = new ExpressionManager();
 
 // Remote control
@@ -209,7 +209,7 @@ void loop() {
 
 
 bool ShouldShowBoopExpression() {
-  return BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0;
+  return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
 }
 
 FaceExpression DetermineBoopExpression() {

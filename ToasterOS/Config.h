@@ -1,6 +1,3 @@
-// PINS: Input
-#define PIN_ANALOG_BOOP_SENSOR 0
-
 // PINS: LED STRIPS
 #define ENABLE_SIDE_LEDS 1
 #define PIN_LEFT_LEDSTRIP_DATA 9
@@ -18,6 +15,7 @@ ProtoConfigStruct ProtoConfig {
 
   // Boop sensor config
   .EnableBoopSensor = true,
+  .PinAnalogBoopSensor = 0,
   .NumBoopsToActivateGame = 15,
 
   // Remote control config

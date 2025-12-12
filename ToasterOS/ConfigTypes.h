@@ -41,6 +41,7 @@ struct ProtoConfigStruct {
 
   // Boop sensor config
   bool EnableBoopSensor;
+  int PinAnalogBoopSensor;
   int NumBoopsToActivateGame;
 
   // Remote control config
