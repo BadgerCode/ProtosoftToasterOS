@@ -21,7 +21,6 @@ private:
   // Private state
   unsigned long BoopHoldStarted = 0;
   unsigned long BoopLastDetected = 0;
-  unsigned long LastBoopDuration = 0;
   unsigned long LastBoopStart = 0;
   unsigned long LastBoopEnded = 0;
 
@@ -29,6 +28,18 @@ private:
 public:
   BoopStateHandler(int boopSensorPin) {
     BoopSensorPin = boopSensorPin;
+  }
+
+  void StopBoop() {
+    BoopSensorTouched = false;
+    BoopActive = false;
+    BoopJustEnded = false;
+    ConsecutiveShortBoops = 0;
+
+    BoopHoldStarted = 0;
+    BoopLastDetected = 0;
+    LastBoopStart = 0;
+    LastBoopEnded = 0;
   }
 
   void Update() {
@@ -62,7 +73,6 @@ public:
     // Record the duration of a boop
     if (BoopJustEnded) {
       LastBoopEnded = millis();
-      LastBoopDuration = LastBoopEnded - LastBoopStart;
     }
 
     // Reset consecutive boops upon face rub or after a period of no boops

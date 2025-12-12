@@ -30,7 +30,7 @@ BoopStateHandler* BoopState = new BoopStateHandler(ProtoConfig.PinAnalogBoopSens
 ExpressionManager* ExpressionState = new ExpressionManager();
 
 // Remote control
-RemoteControl* RemoteControlState = new RemoteControl(ExpressionState, ProtoFaceRenderer);
+RemoteControl* RemoteControlState = new RemoteControl(ExpressionState, ProtoFaceRenderer, BoopState);
 
 // Secret game
 CubeGame* CubeGameRunner = new CubeGame();

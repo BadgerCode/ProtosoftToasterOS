@@ -15,11 +15,13 @@ private:
   // Dependencies
   ExpressionManager* ExpressionState;
   FaceRender* FaceRenderer;
+  BoopStateHandler* BoopState;
 
 public:
-  RemoteControl(ExpressionManager* expressionState, FaceRender* faceRenderer) {
+  RemoteControl(ExpressionManager* expressionState, FaceRender* faceRenderer, BoopStateHandler* boopState) {
     ExpressionState = expressionState;
     FaceRenderer = faceRenderer;
+    BoopState = boopState;
   }
 
   Initialise() {
@@ -100,7 +102,7 @@ private:
     PressedButtons[NumPressedButtons++] = pressedButton;
     LastButtonPressTime = millis();
 
-    // MENU: A
+    // MENU: A - HAPPY
     if (PressedButtons[0] == BUTTON_A) {
       // Wait for 2 button presses
       if (NumPressedButtons < 2) return;
@@ -118,49 +120,59 @@ private:
 
       // MENU: AB - BLEP
       if (PressedButtons[1] == BUTTON_B) {
-        ExpressionState->SetExpression(&Face_Blep);
+        SetExpression(&Face_Blep);
+      }
+
+      // MENU: AC - CLOSED EYES
+      if (PressedButtons[1] == BUTTON_C) {
+        SetExpression(&Face_Happy_Closed_eyes);
       }
     }
 
-    // MENU: B
+    // MENU: B - BAD EMOTIONS
     else if (PressedButtons[0] == BUTTON_B) {
       // Wait for 2 button presses
       if (NumPressedButtons < 2) return;
 
       // MENU: BA - ANGRY
       if (PressedButtons[1] == BUTTON_A) {
-        ExpressionState->SetExpression(&Face_Angry);
+        SetExpression(&Face_Angry);
       }
 
       // MENU: BB - BORED
       if (PressedButtons[1] == BUTTON_B) {
-        ExpressionState->SetExpression(&Face_Bored);
+        SetExpression(&Face_Bored);
+      }
+
+      // MENU: BC - SHOCKED
+      if (PressedButtons[1] == BUTTON_C) {
+        SetExpression(&Face_Surprised);
       }
 
       // MENU: BD - DEAD
       if (PressedButtons[1] == BUTTON_D) {
-        ExpressionState->SetExpression(&Face_X_X);
+        SetExpression(&Face_X_X);
       }
     }
 
-    // MENU: C - SMIRK
+    // MENU: C - SAUCY
     else if (PressedButtons[0] == BUTTON_C) {
       // Wait for 2 button presses
       if (NumPressedButtons < 2) return;
 
       // MENU: CA - HEARTS
       if (PressedButtons[1] == BUTTON_A) {
-        ExpressionState->SetExpression(&Face_Heart);
+        SetExpression(&Face_Heart);
       }
 
       // MENU: CC - SMIRK
       if (PressedButtons[1] == BUTTON_C) {
-        ExpressionState->SetExpression(&Face_Smirk);
+        SetExpression(&Face_Smirk);
       }
 
       // MENU: CD - DAZED/SPIRALS
       if (PressedButtons[1] == BUTTON_D) {
-        ExpressionState->SetExpression(&Face_Spiral);
+        SetExpression(&Face_Spiral);
       }
     }
 
@@ -183,9 +195,19 @@ private:
       if (PressedButtons[1] == BUTTON_B) {
         ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
       }
+
+      // MENU: DD - AMONG US
+      if (PressedButtons[1] == BUTTON_D) {
+        SetExpression(&Face_AmongUs);
+      }
     }
 
     // If we didn't return early to wait for more button presses, reset
     ResetMenuSelection();
+  }
+
+  void SetExpression(FaceExpression* expression) {
+    ExpressionState->SetExpression(expression);
+    BoopState->StopBoop();
   }
 };
