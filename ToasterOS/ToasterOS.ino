@@ -27,7 +27,7 @@ LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 // State managers
 BoopStateHandler* BoopState = new BoopStateHandler(ProtoConfig.PinAnalogBoopSensor);
-ExpressionManager* ExpressionState = new ExpressionManager();
+ExpressionManager* ExpressionState = new ExpressionManager(BoopState);
 
 // Remote control
 RemoteControl* RemoteControlState = new RemoteControl(ExpressionState, ProtoFaceRenderer, BoopState);
@@ -114,15 +114,8 @@ void loop() {
 
     // Make the face bounce up and down
     if (curTime >= NextOffsetShift) {
-      int adjustedDelay = ExpressionState->GetMovementDelay();
-
-      // Make the face move slower when being booped/face rubbed
-      if (ShouldShowBoopExpression()) {
-        adjustedDelay = BoopState->ConsecutiveShortBoops < 6 ? adjustedDelay * 1.5 : adjustedDelay * 2.25; // TODO: Move into expression manager?
-      }
-
       // Update state
-      NextOffsetShift = curTime + adjustedDelay;
+      NextOffsetShift = curTime + ExpressionState->GetMovementDelay();
       Face_OffsetY += Face_OffsetY_Dir;
 
       // Check if it's time to reverse direction
@@ -131,12 +124,8 @@ void loop() {
 
 
 
-    bool forceRandomExpression = BoopState->BoopJustEnded;  // Force change to a special face if a boop just ended
-
     // Determine expression (boop overrides expression)
-    struct FaceExpression facialExpression = ShouldShowBoopExpression()
-                                               ? DetermineBoopExpression()
-                                               : ExpressionState->GetExpression(forceRandomExpression);
+    struct FaceExpression facialExpression = ExpressionState->GetExpression();
 
 
     bool shouldBlink = (curTime >= NextBlink);
@@ -202,22 +191,6 @@ void loop() {
       FrameDuration_MaxDuration = 0;
     }
   }
-}
-
-
-
-bool ShouldShowBoopExpression() {
-  return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
-}
-
-FaceExpression DetermineBoopExpression() {
-  if (BoopState->IsFaceRub()) {
-    return ExpressionState->GetHeartFrame();
-  }
-
-  if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
-  if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
-  return Face_X_X;
 }
 
 

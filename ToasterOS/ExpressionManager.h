@@ -13,8 +13,24 @@ private:
   // Face movement
   int FaceMovementDelay = 200;
 
+  // Dependencies
+  BoopStateHandler* BoopState;
+
 public:
-  ExpressionManager() {}
+  ExpressionManager(BoopStateHandler* boopState) {
+    BoopState = boopState;
+  }
+
+  int GetMovementDelay() {
+    // Make the face move slower for these expressions
+    if (CurrentExpression == &Face_Sleepy) return FaceMovementDelay * 3;
+
+    // Different speeds when being boops
+    if (ShouldShowBoopExpression()) return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
+
+    // Default delay
+    return FaceMovementDelay;
+  }
 
   void SetExpression(FaceExpression* expression) {
     InNeutralState = false;
@@ -27,20 +43,25 @@ public:
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
   }
 
-  int GetMovementDelay() {
-    // Make the face move slower for these expressions
-    if (CurrentExpression == &Face_Sleepy) return FaceMovementDelay * 3;
-
-    // Default delay
-    return FaceMovementDelay;
-  }
-
-  struct FaceExpression GetExpression(bool forceRandomExpression) {
+  struct FaceExpression GetExpression() {
     unsigned long curTime = millis();
 
+    // Show boop faces
+    if (ShouldShowBoopExpression()) {
+      if (BoopState->IsFaceRub()) {
+        return GetHeartFrame();
+      }
+
+      if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
+      if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
+      return Face_X_X;
+    }
+
+    // Show neutral/happy faces
     if (InNeutralState) {
       // Time for a different expression?
-      if (forceRandomExpression || (CurrentExpression == &Face_Neutral && curTime >= NextSpecialFace)) {
+      // Force change to a special face if a boop just ended
+      if (BoopState->BoopJustEnded || (CurrentExpression == &Face_Neutral && curTime >= NextSpecialFace)) {
         CurrentExpression = HappyExpressions[random(0, NumHappyExpressions)];
         NextSpecialFace = millis();
       }
@@ -83,5 +104,10 @@ public:
     bool showSmallHeart = (millis() / 400) % 3 == 1;
 
     return showSmallHeart ? Face_Heart_Small : Face_Heart;
+  }
+
+private:
+  bool ShouldShowBoopExpression() {
+    return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
   }
 };
