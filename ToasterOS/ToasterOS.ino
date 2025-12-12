@@ -27,7 +27,7 @@ LEDStripRender* LEDStripRenderer = new LEDStripRender();
 
 // State managers
 BoopStateHandler* BoopState = new BoopStateHandler(ProtoConfig.PinAnalogBoopSensor);
-ExpressionManager* ExpressionState = new ExpressionManager(BoopState);
+ExpressionManager* ExpressionState = new ExpressionManager(BoopState, ProtoFaceRenderer);
 
 // Remote control
 RemoteControl* RemoteControlState = new RemoteControl(ExpressionState, ProtoFaceRenderer, BoopState);
@@ -62,17 +62,6 @@ void setup() {
 
 
 // PROTOGEN STATE
-// Face movement
-int Face_OffsetY = 0;
-int Face_OffsetY_Dir = 1;
-unsigned long NextOffsetShift = millis();
-
-// Blinking
-int MinBlinkWait = 10000;
-int MaxBlinkRandomDelay = 5000;
-unsigned long NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
-int BlinkDurationMs = 200;
-
 // LED Strips
 bool HueShiftForward = true;
 uint8_t LEDStripAnimationOffset = 0;
@@ -91,11 +80,6 @@ unsigned int FPSCOUNT_Iterations = 0;
 void loop() {
   unsigned long curTime = millis();
 
-  // Time to stop blinking
-  if (timeSince(NextBlink) >= BlinkDurationMs) {
-    NextBlink = millis() + random(MaxBlinkRandomDelay) + MinBlinkWait;
-  }
-
   // UPDATE STATE- BOOP SENSOR
   if (ProtoConfig.EnableBoopSensor) BoopState->Update();
 
@@ -105,6 +89,9 @@ void loop() {
   // UPDATE STATE- GAME TRIGGER
   if (BoopState->ConsecutiveShortBoops >= ProtoConfig.NumBoopsToActivateGame) EnableGame = true;
 
+  // UPDATE STATE- EXPRESSIONS
+  ExpressionState->Update();
+
 
 
   // Main logic
@@ -112,26 +99,8 @@ void loop() {
     EnableGame = CubeGameRunner->GameLoop(ProtoFaceRenderer, LEDStripRenderer, BoopState->BoopSensorTouched);
   } else {
 
-    // Make the face bounce up and down
-    if (curTime >= NextOffsetShift) {
-      // Update state
-      NextOffsetShift = curTime + ExpressionState->GetMovementDelay();
-      Face_OffsetY += Face_OffsetY_Dir;
-
-      // Check if it's time to reverse direction
-      if (abs(Face_OffsetY) >= 1) Face_OffsetY_Dir *= -1;
-    }
-
-
-
-    // Determine expression (boop overrides expression)
-    struct FaceExpression facialExpression = ExpressionState->GetExpression();
-
-
-    bool shouldBlink = (curTime >= NextBlink);
-
     // Render the face
-    RenderFaceExpression(facialExpression, shouldBlink, Face_OffsetY);
+    ExpressionState->Render();
     ProtoFaceRenderer->ProcessRenderQueue();
 
     // LED strips
@@ -191,33 +160,4 @@ void loop() {
       FrameDuration_MaxDuration = 0;
     }
   }
-}
-
-
-void RenderFaceExpression(FaceExpression facialExpression, bool shouldBlink, int offsetY) {
-  bool mirrorLeft = true;
-  bool mirrorRight = false;
-
-  // Mouth
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
-
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
-
-  // Nose
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
-  ProtoFaceRenderer->UpdatePanel(PANEL_SINGLE_NOSE, Face_Nose_Single, 0, false);
-
-  // Eyes
-  EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
-  ProtoFaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
 }
