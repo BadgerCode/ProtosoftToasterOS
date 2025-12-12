@@ -32,28 +32,16 @@ public:
     FaceRenderer = faceRenderer;
   }
 
-  int GetMovementDelay() {
-    // Make the face move slower for these expressions
-    // Booping
-    if (ShouldShowBoopExpression()) return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
-    // Slow
-    if (CurrentExpression == &Face_Heart || CurrentExpression == &Face_AmongUs) return FaceMovementDelay * 1.5;
-    // Very slow
-    if (CurrentExpression == &Face_Sleepy || CurrentExpression == &Face_X_X) return FaceMovementDelay * 3;
-
-
-    // Default delay
-    return FaceMovementDelay;
-  }
-
   void SetExpression(FaceExpression* expression) {
     InNeutralState = false;
     CurrentExpression = expression;
+    NextOffsetShift = millis() + GetMovementDelay();
   }
 
   void ResetToNeutral() {
     InNeutralState = true;
     CurrentExpression = &Face_Neutral;
+    NextOffsetShift = millis() + GetMovementDelay();
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
   }
 
@@ -123,7 +111,54 @@ public:
     FaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorRight);
   }
 
+private:
+  bool ShouldShowBoopExpression() {
+    return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
+  }
 
+  int GetMovementDelay() {
+    // Booping
+    if (ShouldShowBoopExpression()) {
+      return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
+    }
+
+    // Slow
+    if (CurrentExpression == &Face_Heart || CurrentExpression == &Face_AmongUs || CurrentExpression == &Face_Smirk || CurrentExpression == &Face_Spiral) {
+      return FaceMovementDelay * 1.5;
+    }
+
+    // Very slow
+    if (CurrentExpression == &Face_Sleepy || CurrentExpression == &Face_X_X) {
+      return FaceMovementDelay * 3;
+    }
+
+    // Default delay
+    return FaceMovementDelay;
+  }
+
+  struct FaceExpression DetermineExpression() {
+    // Show boop faces
+    if (ShouldShowBoopExpression()) {
+      if (BoopState->IsFaceRub()) {
+        return GetHeartFrame();
+      }
+
+      if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
+      if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
+      return Face_X_X;
+    }
+
+    // Animate spirals
+    if (CurrentExpression == &Face_Spiral) {
+      return GetSpiralFrame();
+    }
+    // Animate hearts
+    else if (CurrentExpression == &Face_Heart) {
+      return GetHeartFrame();
+    }
+
+    return *CurrentExpression;
+  }
 
 
   // Animated expressions helpers
@@ -150,34 +185,5 @@ public:
     bool showSmallHeart = (millis() / 400) % 3 == 1;
 
     return showSmallHeart ? Face_Heart_Small : Face_Heart;
-  }
-
-private:
-  bool ShouldShowBoopExpression() {
-    return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
-  }
-
-  struct FaceExpression DetermineExpression() {
-    // Show boop faces
-    if (ShouldShowBoopExpression()) {
-      if (BoopState->IsFaceRub()) {
-        return GetHeartFrame();
-      }
-
-      if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
-      if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
-      return Face_X_X;
-    }
-
-    // Animate spirals
-    if (CurrentExpression == &Face_Spiral) {
-      return GetSpiralFrame();
-    }
-    // Animate hearts
-    else if (CurrentExpression == &Face_Heart) {
-      return GetHeartFrame();
-    }
-
-    return *CurrentExpression;
   }
 };
