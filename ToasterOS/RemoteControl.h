@@ -238,6 +238,8 @@ private:
       // MENU: DB - TOGGLE BOOP SENSOR
       if (PressedButtons[1] == BUTTON_B) {
         ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
+
+        if(!ProtoConfig.EnableBoopSensor) BoopState->StopBoop();
       }
 
       // MENU: DD - AMONG US
