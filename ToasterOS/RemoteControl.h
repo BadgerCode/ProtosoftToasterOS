@@ -78,6 +78,8 @@ public:
       bool outputPressedButtons = PressedButtons[0] != 0;
       OutputLEDData[0] = ButtonToColour(outputPressedButtons ? PressedButtons[0] : CurrentExpressionPressedButtons[0]);
       OutputLEDData[1] = ButtonToColour(outputPressedButtons ? PressedButtons[1] : CurrentExpressionPressedButtons[1]);
+
+      fadeToBlackBy(&OutputLEDData[0], 2, 250);
     }
   }
 
@@ -108,10 +110,10 @@ private:
 
   CHSV ButtonToColour(int button) {
     switch (button) {
-      case BUTTON_A: return CHSV(91, 255, 5);
-      case BUTTON_B: return CHSV(0, 255, 5);
-      case BUTTON_C: return CHSV(211, 255, 5);
-      case BUTTON_D: return CHSV(37, 255, 5);
+      case BUTTON_A: return CHSV(91, 255, 255);
+      case BUTTON_B: return CHSV(0, 255, 255);
+      case BUTTON_C: return CHSV(211, 255, 255);
+      case BUTTON_D: return CHSV(37, 255, 255);
       default: return CHSV(0, 0, 0);
     }
   }
@@ -239,7 +241,7 @@ private:
       if (PressedButtons[1] == BUTTON_B) {
         ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
 
-        if(!ProtoConfig.EnableBoopSensor) BoopState->StopBoop();
+        if (!ProtoConfig.EnableBoopSensor) BoopState->StopBoop();
       }
 
       // MENU: DD - AMONG US
