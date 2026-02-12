@@ -34,7 +34,7 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 - For both sides of the head
    - A strip of 15 RGB LEDs (5V, 3-pin)
 - Boop sensor
-   - A 3-pin 5V IR proximity distance sensor
+   - A 3-pin 5V IR obstacle detection sensor
 - A 5V Noctua fan (40x40x10mm) for ventilation (not connected to the arduino)
 - A USB cable and voltage + ground splitters to power everything via a USB battery pack
 

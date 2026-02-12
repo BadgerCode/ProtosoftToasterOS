@@ -10,8 +10,8 @@ public:
 
 private:
   // Config
-  const int MinBoopHoldForTriggerMs = 300;
-  const int MaxBoopRetainAfterStopMs = 1000;
+  const int MinBoopHoldForTriggerMs = 50;
+  const int MaxBoopRetainAfterStopMs = 500;
   const int ShortBoopMaxDuration = 1700;
   const int FirstShortBoopResetDuration = 4000;
   const int ShortBoopResetDuration = 7000;
@@ -43,7 +43,7 @@ public:
   }
 
   void Update() {
-    BoopSensorTouched = GetSensorDistance() < 500;
+    BoopSensorTouched = IsBoopSensorActive();
     if (BoopSensorTouched) {
       // If a boop hasn't already started, track the start time
       if (BoopHoldStarted == 0 && !BoopActive) BoopHoldStarted = millis();
@@ -90,7 +90,20 @@ public:
   }
 
 private:
-  int GetSensorDistance() {
-    return 1023 - analogRead(BoopSensorPin);  // Higher value = further away
+
+  int Threshold = 100;
+  int NextReadingIndex = 0;
+  int PreviousReadings[5] = { 1023, 1023, 1023, 1023, 1023 };  // LOW when ACTIVE
+
+  int IsBoopSensorActive() {
+    // Update readings
+    PreviousReadings[NextReadingIndex++] = analogRead(BoopSensorPin);
+    if (NextReadingIndex >= 5) NextReadingIndex = 0;
+
+    int sum = 0;
+    for (int i = 0; i < 5; i++)
+      sum += PreviousReadings[i];
+
+    return (sum / 5) <= Threshold;
   }
 };
