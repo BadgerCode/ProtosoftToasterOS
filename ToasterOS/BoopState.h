@@ -89,6 +89,10 @@ public:
     return BoopActive ? timeSince(LastBoopStart) : -1;
   }
 
+  bool ShouldShowBoopExpression() {
+    return ProtoConfig.EnableBoopSensor && (BoopActive || ConsecutiveShortBoops > 0);
+  }
+
 private:
 
   int Threshold = 100;

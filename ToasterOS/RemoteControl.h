@@ -75,10 +75,22 @@ public:
 
     // Update menu output LEDs
     if (ProtoConfig.EnableRemoteControlOutputLEDs) {
-      bool outputPressedButtons = PressedButtons[0] != 0;
-      // Reverse order, first LED should be the sub-expression
-      OutputLEDData[0] = ButtonToColour(outputPressedButtons ? PressedButtons[1] : CurrentExpressionPressedButtons[1]);
-      OutputLEDData[1] = ButtonToColour(outputPressedButtons ? PressedButtons[0] : CurrentExpressionPressedButtons[0]);
+      // Show the pressed button
+      if (PressedButtons[0] != 0) {
+        OutputLEDData[0] = ButtonToColour(PressedButtons[1]);
+        OutputLEDData[1] = ButtonToColour(PressedButtons[0]);
+      }
+      // Show boop status
+      else if (BoopState->ShouldShowBoopExpression()) {
+        OutputLEDData[0] = CRGB::Blue;  //CHSV(180, 255, 255);
+        OutputLEDData[1] = CRGB::Blue;  //CHSV(180, 255, 255);
+      }
+      // Show expression
+      else {
+        // Reverse order, first LED should be the sub-expression
+        OutputLEDData[0] = ButtonToColour(CurrentExpressionPressedButtons[1]);
+        OutputLEDData[1] = ButtonToColour(CurrentExpressionPressedButtons[0]);
+      }
 
       fadeToBlackBy(&OutputLEDData[0], 2, 250);
     }
@@ -111,10 +123,10 @@ private:
 
   CHSV ButtonToColour(int button) {
     switch (button) {
-      case BUTTON_A: return CHSV(91, 255, 255);
-      case BUTTON_B: return CHSV(0, 255, 255);
-      case BUTTON_C: return CHSV(211, 255, 255);
-      case BUTTON_D: return CHSV(37, 255, 255);
+      case BUTTON_A: return CHSV(91, 255, 255);   // Green
+      case BUTTON_B: return CHSV(0, 255, 255);    // Red
+      case BUTTON_C: return CHSV(211, 255, 255);  // Purple
+      case BUTTON_D: return CHSV(37, 255, 255);   // Yellow
       default: return CHSV(0, 0, 0);
     }
   }

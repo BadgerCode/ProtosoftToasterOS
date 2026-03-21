@@ -112,13 +112,9 @@ public:
   }
 
 private:
-  bool ShouldShowBoopExpression() {
-    return ProtoConfig.EnableBoopSensor && (BoopState->BoopActive || BoopState->ConsecutiveShortBoops > 0);
-  }
-
   int GetMovementDelay() {
     // Booping
-    if (ShouldShowBoopExpression()) {
+    if (BoopState->ShouldShowBoopExpression()) {
       return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
     }
 
@@ -138,7 +134,8 @@ private:
 
   struct FaceExpression DetermineExpression() {
     // Show boop faces
-    if (ShouldShowBoopExpression()) {
+
+    if (BoopState->ShouldShowBoopExpression()) {
       if (BoopState->IsFaceRub()) {
         return GetHeartFrame();
       }
