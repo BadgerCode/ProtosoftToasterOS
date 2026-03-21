@@ -37,7 +37,7 @@ public:
 
 struct ProtoConfigStruct {
   // General config
-  int Brightness;
+  float Brightness; // Percentage. E.g. 0.25 = 25%
   int DebugMode;
 
   // Boop sensor config

@@ -61,10 +61,11 @@ public:
     }
   }
 
-  void SetBrightness(int brightness) {
+  void SetBrightness(float brightness) {
+    int convertedBrightness = brightness * 15;  // 0-15
     for (int c = 0; c < NumLEDControls; c++) {
       auto controller = LEDControls[c];
-      controller->SetBrightness(brightness);
+      controller->SetBrightness(convertedBrightness);
     }
   }
 

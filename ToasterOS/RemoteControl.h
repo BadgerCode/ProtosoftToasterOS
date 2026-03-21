@@ -242,25 +242,16 @@ private:
 
       // MENU: DA - CYCLE BRIGHTNESS
       if (PressedButtons[1] == BUTTON_A) {
-        // Cycle between values 0, 3, 7, 15
-        int currentBrightness = ProtoConfig.Brightness;
-        switch (currentBrightness) {
-          case 0:
-            ProtoConfig.Brightness = 3;
-            break;
-          case 3:
-            ProtoConfig.Brightness = 7;
-            break;
-          case 7:
-            ProtoConfig.Brightness = 15;
-            break;
-          case 15:
-            ProtoConfig.Brightness = 0;
-            break;
-          default:
-            ProtoConfig.Brightness = 7;
-            break;
-        }
+        // Cycle between values 0%, 25%, 50%, 100%
+        float currentBrightness = ProtoConfig.Brightness;
+        if (currentBrightness <= 0.0)
+          ProtoConfig.Brightness = 0.25;
+        else if (currentBrightness <= 0.25)
+          ProtoConfig.Brightness = 0.5;
+        else if (currentBrightness <= 0.5)
+          ProtoConfig.Brightness = 1.0;
+        else
+          ProtoConfig.Brightness = 0.0;
 
         // Update brightness
         FaceRenderer->SetBrightness(ProtoConfig.Brightness);

@@ -3,6 +3,12 @@ private:
   // LED strip data
   CRGB LED_Data[LEDSTRIP_NUM_LEDS];
 
+  CRGB AdjustForBrightness(CRGB colour) {
+    // Match brightness of main screens
+    colour.fadeToBlackBy(240 - (ProtoConfig.Brightness * 240));
+    return colour;
+  }
+
 public:
   void Initialise() {
     // TODO: Allow passing in pin and number of LEDs
@@ -12,12 +18,12 @@ public:
   }
 
   void SetLED(int index, CRGB value) {
-    LED_Data[index] = value;
+    LED_Data[index] = AdjustForBrightness(value);
   }
 
   void SetAllLEDs(CRGB value) {
     for (int i = 0; i < LEDSTRIP_NUM_LEDS; i++) {
-      LED_Data[i] = value;
+      LED_Data[i] = AdjustForBrightness(value);
     }
   }
 
