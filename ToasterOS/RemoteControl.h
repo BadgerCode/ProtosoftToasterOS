@@ -76,8 +76,9 @@ public:
     // Update menu output LEDs
     if (ProtoConfig.EnableRemoteControlOutputLEDs) {
       bool outputPressedButtons = PressedButtons[0] != 0;
-      OutputLEDData[0] = ButtonToColour(outputPressedButtons ? PressedButtons[0] : CurrentExpressionPressedButtons[0]);
-      OutputLEDData[1] = ButtonToColour(outputPressedButtons ? PressedButtons[1] : CurrentExpressionPressedButtons[1]);
+      // Reverse order, first LED should be the sub-expression
+      OutputLEDData[0] = ButtonToColour(outputPressedButtons ? PressedButtons[1] : CurrentExpressionPressedButtons[1]);
+      OutputLEDData[1] = ButtonToColour(outputPressedButtons ? PressedButtons[0] : CurrentExpressionPressedButtons[0]);
 
       fadeToBlackBy(&OutputLEDData[0], 2, 250);
     }
