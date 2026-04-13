@@ -116,9 +116,13 @@
         <div class="row">
           <div>Tools</div>
 
-          <button @click="brushState.activeTool = 'brush'" :class="{ active: brushState.activeTool == 'brush' }">
-            Brush
-          </button>
+          <div>
+            <button @click="brushState.activeTool = 'brush'" :class="{ active: brushState.activeTool == 'brush' }">
+              Brush
+            </button>
+
+            <div class="subtext">Hold alt to erase</div>
+          </div>
 
           <button @click="brushState.activeTool = 'eraser'" :class="{ active: brushState.activeTool == 'eraser' }">
             Eraser
@@ -128,7 +132,7 @@
         <div class="row">
           <div>Options</div>
           <div>
-            <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo</button>
+            <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo ({{undoStack.length}})</button>
             <div class="subtext">{{latestChange}}</div>
           </div>
 
@@ -268,23 +272,32 @@
         HandleCanvasBrush(event) {
           if (!(event.buttons & 1)) return;
 
-          const rect = faceCanvas.getBoundingClientRect()
-          const x = event.clientX - rect.left;
-          const y = event.clientY - rect.top;
+          // brush and eraser logic
+          if (this.brushState.activeTool == "brush" || this.brushState.activeTool == "eraser") {
 
-          let dotX = Math.floor((x + dotSize / 2) / dotSize);
-          let dotY = Math.floor((y + dotSize / 2) / dotSize);
+            // Allow pressing alt to erase
+            let shouldErase = this.brushState.eraser == "brush" || event.altKey;
 
-          let dot = clickableLights[`${dotX},${dotY}`];
-          if (dot) {
+            const rect = faceCanvas.getBoundingClientRect()
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            let dotX = Math.floor((x + dotSize / 2) / dotSize);
+            let dotY = Math.floor((y + dotSize / 2) / dotSize);
+
+            let dot = clickableLights[`${dotX},${dotY}`];
+            if (!dot) return;
+
             // Only push to the undo stack at the start of a brush stroke
             if (!this.brushState.inProgressBrushStroke)
               this.PushUndoStack("Pixel brush");
 
             this.brushState.inProgressBrushStroke = true;
 
-            dot.panel[dot.row][dot.column] = this.brushState.activeTool == "brush" ? 1 : 0;
+            dot.panel[dot.row][dot.column] = shouldErase ? 0 : 1;
             this.drawFace();
+
+            return;
           }
         },
 
