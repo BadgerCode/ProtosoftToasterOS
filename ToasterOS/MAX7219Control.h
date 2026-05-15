@@ -1,3 +1,28 @@
+/*
+For guides and info, see
+https://github.com/BadgerCode/MAX7219Control
+
+// Setup the controller
+LedController = new MAX7219Control(DATAPIN, CSPIN, CLKPIN, NUMPANELS);
+LedController->Initialise();
+LedController->SetBrightness(7); // 0-15
+
+// Clear panels
+LedController->ClearAllPanels();
+LedController->ClearPanel(panelNumber);
+
+// Update panels
+LedController->SetRow(panelNumber, row, B11001100);
+LedController->SetPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
+
+// Update upside down panels
+LedController->SetFlippedRow(panelNumber, row, B11001100);
+LedController->SetFlippedPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
+
+// Render any changes (at the end of every loop iteration)
+LedController->RenderDisplays();
+*/
+
 class MAX7219Control {
 private:
   int DataPin;
@@ -72,6 +97,28 @@ public:
   }
 
   /**
+  * Renders rows of data to a panel, top to bottom
+  * panelNumber - Which panel the row is on. Starting from 0.
+  * rowsData - one byte of data per row
+  */
+  SetPanel(int panelNumber, byte* rowsData) {
+    for (int i = 0; i < NumRows; i++) {
+      SetRow(panelNumber, i, rowsData[i]);
+    }
+  }
+
+  /**
+  * Renders rows of data to a panel, rotated 180 degrees
+  * panelNumber - Which panel the row is on. Starting from 0.
+  * rowsData - one byte of data per row
+  */
+  SetFlippedPanel(int panelNumber, byte* rowsData) {
+    for (int i = 0; i < NumRows; i++) {
+      SetRow(panelNumber, i, Reverse(rowsData[NumRows - 1 - i]));
+    }
+  }
+
+  /**
   * panelNumber - Which panel the row is on. Starting from 0.
   * rowNumber - 0-7, from top to bottom
   * value - 8 bits to turn LEDs on/off, from left to right (0, 1, 2, 4, ...)
@@ -82,8 +129,25 @@ public:
 
     NewPanelRowData[panelNumber][rowNumber] = value;
 
-    if (CurrentPanelRowData[panelNumber][rowNumber] != value)
+    if (CurrentPanelRowData[panelNumber][rowNumber] != NewPanelRowData[panelNumber][rowNumber])
       RowsRequiringUpdate[rowNumber] = true;
+  }
+
+  /**
+  * panelNumber - Which panel the row is on. Starting from 0.
+  * rowNumber - 0-7, from bottom to top
+  * value - 8 bits to turn LEDs on/off, from left to right (0, 1, 2, 4, ...)
+  */
+  SetFlippedRow(int panelNumber, int rowNumber, byte value) {
+    SetRow(panelNumber, NumRows - 1 - rowNumber, Reverse(value));
+  }
+
+
+  byte Reverse(byte b) {
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+    return b;
   }
 
 
@@ -109,7 +173,6 @@ public:
         // This means that B10000000 will light up the left most LED, instead of the right most one
         shiftOut(DataPin, CLKPin, LSBFIRST, NewPanelRowData[panel][row]);
 
-        // Track the current output
         CurrentPanelRowData[panel][row] = NewPanelRowData[panel][row];
       }
       digitalWrite(CSPin, HIGH);
