@@ -3,25 +3,29 @@ For guides and info, see
 https://github.com/BadgerCode/MAX7219Control
 
 // Setup the controller
-LedController = new MAX7219Control(DATAPIN, CSPIN, CLKPIN, NUMPANELS);
-LedController->Initialise();
-LedController->SetBrightness(7); // 0-15
+LEDPanels = new MAX7219Control(DATAPIN, CSPIN, CLKPIN, NUMPANELS);
+LEDPanels->Initialise();
+LEDPanels->SetBrightness(7); // 0-15
+
+// Use this if your panels sometimes get stuck because of a loose connection
+LEDPanels->SetRapidAutoRecovery(true);
 
 // Clear panels
-LedController->ClearAllPanels();
-LedController->ClearPanel(panelNumber);
+LEDPanels->ClearAllPanels();
+LEDPanels->ClearPanel(panelNumber);
 
 // Update panels
-LedController->SetRow(panelNumber, row, B11001100);
-LedController->SetPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
+LEDPanels->SetRow(panelNumber, row, B11001100);
+LEDPanels->SetPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
 
 // Update upside down panels
-LedController->SetFlippedRow(panelNumber, row, B11001100);
-LedController->SetFlippedPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
+LEDPanels->SetFlippedRow(panelNumber, row, B11001100);
+LEDPanels->SetFlippedPanel(panel, new byte[8]{ B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 });
 
 // Render any changes (at the end of every loop iteration)
-LedController->RenderDisplays();
+LEDPanels->RenderDisplays();
 */
+
 
 class MAX7219Control {
 private:
@@ -32,9 +36,16 @@ private:
   int NumPanels;
   int NumRows = 8;
 
+  byte Brightness = 7;  // 0-15
+
   bool* RowsRequiringUpdate;
   byte** NewPanelRowData;
   byte** CurrentPanelRowData;
+
+  bool EnableRapidAutoRecovery = false;
+  unsigned long LastAutoRecovery = 0;
+  const int NormalAutoRecoveryDelay = 30000; // ms
+  const int RapidAutoRecoveryDelay = 3000; // ms
 
 
 public:
@@ -70,10 +81,7 @@ public:
     pinMode(DataPin, OUTPUT);
 
     // Initialise all panels
-    SetValueForAllPanels(9, 0);             // Decode mode (always 0)
-    SetValueForAllPanels(11, NumRows - 1);  // 8 rows
-    SetValueForAllPanels(12, 1);            // Shutdown mode (set to normal)
-    SetValueForAllPanels(15, 0);            // Disable test mode
+    InitialisePanelState();
 
     // Force all rows to clear, bypassing caching
     for (int row = 1; row <= NumRows; row++) {
@@ -81,9 +89,23 @@ public:
     }
   }
 
+  /**
+    Enables/Disables rapid auto-recovery (disabled by default).
+
+    Every minute, the panels will re-initialise and re-render.
+    This allows panels that get stuck/broken from a loose connection to recover and start working again.
+
+    Enabling rapid auto-recovery will make this process happen every 5 seconds.
+    This slightly reduce performance.
+  */
+  SetRapidAutoRecovery(bool enabled) {
+    EnableRapidAutoRecovery = enabled;
+  }
+
   // Value between 0-15
   SetBrightness(byte value) {
-    SetValueForAllPanels(10, value);
+    Brightness = value;
+    SetValueForAllPanels(10, Brightness);
   }
 
   ClearAllPanels() {
@@ -152,10 +174,19 @@ public:
 
 
   RenderDisplays() {
+    bool ignoreCache = false;
+    // Auto-recovery for loose connections
+    int autoRecoveryDelay = EnableRapidAutoRecovery ? RapidAutoRecoveryDelay : NormalAutoRecoveryDelay;
+    if (millis() - LastAutoRecovery > autoRecoveryDelay) {
+      // Re-initialise panels, incase of loose connections
+      InitialisePanelState();
+      ignoreCache = true;
+    }
+
     // Render one row at a time for all of the panels (e.g. the first row for all panels)
     for (int row = 0; row < NumRows; row++) {
       // Only render a row if there are changes
-      if (!RowsRequiringUpdate[row]) continue;
+      if (!RowsRequiringUpdate[row] && !ignoreCache) continue;
       RowsRequiringUpdate[row] = false;
 
       // Flip row order - the hardware orders row bottom to top; we want top to bottom
@@ -180,6 +211,16 @@ public:
   }
 
 private:
+  InitialisePanelState() {
+    SetValueForAllPanels(9, 0);  // Decode mode (always 0)
+    SetValueForAllPanels(10, Brightness);
+    SetValueForAllPanels(11, NumRows - 1);  // 8 rows
+    SetValueForAllPanels(12, 1);            // Shutdown mode (set to normal)
+    SetValueForAllPanels(15, 0);            // Disable test mode
+
+    LastAutoRecovery = millis();
+  }
+
   /**
   0 = do nothing
   1-8 = set output for rows 1-8
