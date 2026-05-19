@@ -152,6 +152,7 @@ public:
       for (int p = 0; p < numPanelTypes; p++) {
         int panelType = panelTypes[p];
         auto panelConfig = PanelConfigs[panelType];
+        if (!panelConfig.Enabled || panelConfig.Controller == NULL) continue;
 
         for (int row = 0; row < 8; row++) {
           if (!FaceLEDRowRequiresRendering[panelType][row] && !hasJustBooted) continue;
