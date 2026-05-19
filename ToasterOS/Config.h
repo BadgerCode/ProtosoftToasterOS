@@ -8,6 +8,11 @@
 #define PIN_REMOTECONTROL_OUTPUT 11
 
 
+// Panel auto-recovery
+// Automatically fixes panels with loose connections, at the slight cost to performance
+// 1 to enable. 0 to disable
+#define RAPID_PANEL_AUTORECOVERY 1 
+
 // Config
 static ProtoConfigStruct ProtoConfig {
   // General config

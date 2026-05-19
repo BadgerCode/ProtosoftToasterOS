@@ -43,6 +43,9 @@ public:
       auto connection = faceConfig->Connections[i];
       LEDControls[i] = new MAX7219Control(connection.PIN_DataIn, connection.PIN_CS, connection.PIN_CLK, connection.NumPanels);
 
+      if (RAPID_PANEL_AUTORECOVERY)
+        LEDControls[i]->SetRapidAutoRecovery(true);
+
       // Register all of the panel mappings
       // E.g. PANEL_LEFT_MOUTH_BACK -> Controller 0, Address 0, UpsideDown: false
       for (int p = 0; p < connection.NumPanels; p++) {
