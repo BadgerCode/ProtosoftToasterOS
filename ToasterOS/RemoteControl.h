@@ -193,9 +193,9 @@ private:
         SetExpression(&Face_Angry);
       }
 
-      // MENU: BB - BORED
+      // MENU: BB - Bad (sad)
       if (PressedButtons[1] == BUTTON_B) {
-        SetExpression(&Face_Bored);
+        SetExpression(&Face_Sad);
       }
 
       // MENU: BC - SHOCKED
