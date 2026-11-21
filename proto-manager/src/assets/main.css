@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Highlight colour – change here to re-theme the whole app */
+  --color-accent: var(--color-blue-500);
+  --color-accent-hover: var(--color-blue-400);
+  --color-accent-muted: var(--color-blue-950);
+
+  /* Surfaces */
+  --color-page: var(--color-slate-950);
+  --color-surface: var(--color-slate-900);
+  --color-border: var(--color-slate-800);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply min-h-screen bg-page text-white antialiased;
+  }
+}

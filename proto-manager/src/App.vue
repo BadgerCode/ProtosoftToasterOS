@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { appStore } from '@/state/app-state';
-
+import { RouterView } from 'vue-router'
+import NavBar from '@/components/NavBar.vue'
 </script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-
-  <p>{{appStore.example }}</p>
+  <div class="flex min-h-screen flex-col">
+    <NavBar />
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+      <RouterView />
+    </main>
+  </div>
 </template>
-
-<style scoped></style>
