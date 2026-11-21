@@ -42,10 +42,10 @@ const tabs = [
     >
       <div v-if="hasUndownloadedChanges" class="sticky bottom-4 z-10 mt-8">
         <div
-          class="flex flex-col gap-3 rounded-lg border border-amber-500/40 bg-slate-900/95 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+          class="flex flex-col gap-3 rounded-lg border border-gold-500/40 bg-slate-900/95 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
         >
-          <p class="flex items-center gap-3 text-sm text-amber-200">
-            <span class="size-2.5 shrink-0 rounded-full bg-amber-400" />
+          <p class="flex items-center gap-3 text-sm text-gold-200">
+            <span class="size-2.5 shrink-0 rounded-full bg-gold-400" />
             Your config has changed. Download Config.h again to update your Arduino project.
           </p>
           <DownloadConfigButton size="md" class="shrink-0" />

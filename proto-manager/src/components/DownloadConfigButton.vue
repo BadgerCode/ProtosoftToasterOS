@@ -59,9 +59,9 @@ onBeforeUnmount(() => clearTimeout(resetTimer))
     <!-- Pulsing "changes" badge -->
     <span v-if="hasUndownloadedChanges" class="absolute -top-1 -right-1 flex size-3">
       <span
-        class="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75"
+        class="absolute inline-flex size-full motion-safe:animate-ping rounded-full bg-gold-400 opacity-75"
       />
-      <span class="relative inline-flex size-3 rounded-full bg-amber-400" />
+      <span class="relative inline-flex size-3 rounded-full bg-gold-400" />
     </span>
   </button>
 </template>

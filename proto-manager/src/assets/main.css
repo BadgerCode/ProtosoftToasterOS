@@ -1,15 +1,49 @@
 @import 'tailwindcss';
 
+/*
+  Protogen theme, taken from the real head:
+  smoked plum visor, blue MAX7219 LEDs, white shell, gold horns.
+*/
 @theme {
-  /* Highlight colour – change here to re-theme the whole app */
-  --color-accent: var(--color-blue-500);
-  --color-accent-hover: var(--color-blue-400);
-  --color-accent-muted: var(--color-blue-950);
+  --font-sans: 'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Dot-matrix display face, like the 8x8 panels. Titles only. */
+  --font-display: 'Doto Variable', ui-monospace, monospace;
 
-  /* Surfaces */
-  --color-page: var(--color-slate-950);
-  --color-surface: var(--color-slate-900);
-  --color-border: var(--color-slate-800);
+  /* LED blue: the highlight colour */
+  --color-led: #3d8bff;
+  --color-led-off: #2a2338;
+  --color-accent: var(--color-led);
+  --color-accent-hover: #6aa6ff;
+  --color-accent-muted: #1a2448;
+
+  /* Smoked visor surfaces */
+  --color-visor-glass: #0c0912;
+  --color-page: #120e1a;
+  --color-surface: #1c1726;
+  --color-border: #2e2939;
+
+  /* Shell white text */
+  --color-white: #f1f2f6;
+
+  /* Horn gold: anything that needs your attention */
+  --color-gold-200: #f3dfae;
+  --color-gold-300: #e9c67c;
+  --color-gold-400: #d9ae57;
+  --color-gold-500: #c29440;
+  --color-gold-950: #2a2010;
+
+  /* Greys tinted towards the visor's plum */
+  --color-slate-50: #f6f5f9;
+  --color-slate-100: #eceaf1;
+  --color-slate-200: #dad6e3;
+  --color-slate-300: #bdb7ca;
+  --color-slate-400: #9a93aa;
+  --color-slate-500: #7b748d;
+  --color-slate-600: #5a546b;
+  --color-slate-700: #3f3a4d;
+  --color-slate-800: #2e2939;
+  --color-slate-900: #1c1726;
+  --color-slate-950: #120e1a;
 }
 
 @layer base {
@@ -18,21 +52,46 @@
   }
 
   body {
-    @apply min-h-screen bg-page text-white antialiased;
+    @apply min-h-screen bg-page font-sans text-white antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-led) 45%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-led);
+    outline-offset: 2px;
+  }
+
+  input[type='number'] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
+  /* Page titles, set in the dot-matrix face with a faint LED glow */
+  .display-title {
+    font-family: var(--font-display);
+    font-variation-settings: 'ROND' 100;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--color-white);
+    text-shadow: 0 0 18px color-mix(in oklab, var(--color-led) 55%, transparent);
+  }
+
   .form-input {
     @apply w-full rounded-md border border-border bg-page px-3 py-1.5 text-sm text-white transition-colors focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none disabled:opacity-50;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-primary {
     @apply bg-accent text-white hover:bg-accent-hover;
+    box-shadow: 0 0 20px -6px var(--color-led);
   }
 
   .btn-secondary {

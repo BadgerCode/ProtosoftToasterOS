@@ -5,10 +5,13 @@ import {
   EMPTY_PANEL,
   MAX_PANELS_PER_CONNECTION,
   PANEL_TYPES,
+  PanelType,
   panelTypeName,
   type FaceLEDConnection,
   type PanelTypeInfo,
 } from '@/state/config-types'
+import { FACE_NEUTRAL, expressionToPanels } from '@/faces/faces'
+import VisorDisplay, { type PanelMarker } from '@/components/VisorDisplay.vue'
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
 import PinConflictWarning from '@/components/PinConflictWarning.vue'
@@ -37,12 +40,59 @@ const duplicatePanels = computed(() =>
   PANEL_TYPES.filter((p) => (usageCounts.value.get(p.id) ?? 0) > 1),
 )
 
-function statusClass(id: number) {
-  const count = usageCounts.value.get(id) ?? 0
-  if (count > 1) return 'border-red-500/60 bg-red-950/50 text-red-300'
-  if (count === 1) return 'border-accent bg-accent-muted text-white'
-  return 'border-border text-slate-500'
-}
+// Visor map: lights each assigned panel with its part of the neutral face
+const neutralFace = expressionToPanels(FACE_NEUTRAL)
+
+const mapPanelIds = computed(() => {
+  const usesSideNose =
+    usageCounts.value.has(PanelType.LEFT_NOSE) || usageCounts.value.has(PanelType.RIGHT_NOSE)
+  const showSingleNose = usageCounts.value.has(PanelType.SINGLE_NOSE) || !usesSideNose
+  return PANEL_TYPES.map((p) => p.id).filter((id) => id !== PanelType.SINGLE_NOSE || showSingleNose)
+})
+
+const mapBitmaps = computed(() =>
+  Object.fromEntries(
+    Object.entries(neutralFace).filter(([id]) => usageCounts.value.has(Number(id))),
+  ),
+)
+
+const mapMarkers = computed(() => {
+  const positions = new Map<number, { connection: number; position: number }[]>()
+  face.connections.forEach((connection, ci) =>
+    connection.panels.forEach((panel, pi) => {
+      if (panel.panelType === EMPTY_PANEL) return
+      positions.set(panel.panelType, [
+        ...(positions.get(panel.panelType) ?? []),
+        { connection: ci + 1, position: pi + 1 },
+      ])
+    }),
+  )
+
+  const describe = (p: { connection: number; position: number }) =>
+    `C${p.connection} #${p.position}`
+
+  const markers: Record<number, PanelMarker> = {}
+  for (const type of PANEL_TYPES) {
+    const uses = positions.get(type.id) ?? []
+    const name = panelTypeName(type.id)
+    if (uses.length === 0) {
+      markers[type.id] = { state: 'unused', title: `${name}: not in use` }
+    } else if (uses.length === 1) {
+      markers[type.id] = {
+        state: 'used',
+        label: describe(uses[0]!),
+        title: `${name}: connection ${uses[0]!.connection}, panel ${uses[0]!.position}`,
+      }
+    } else {
+      markers[type.id] = {
+        state: 'attention',
+        label: `Used ${uses.length}×`,
+        title: `${name}: used more than once (${uses.map(describe).join(', ')})`,
+      }
+    }
+  }
+  return markers
+})
 
 function addConnection() {
   face.connections.push({ pinDataIn: 0, pinCS: 0, pinCLK: 0, panels: [] })
@@ -78,26 +128,31 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
       title="Panels in use"
       description="Every face panel and whether it's been assigned to a connection. Unused panels are simply not rendered."
     >
-      <div class="grid gap-4 md:grid-cols-[1fr_auto_1fr]">
-        <div v-for="g in panelTypesByGroup" :key="g.group">
-          <h3 class="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">
-            {{ g.group }}
-          </h3>
-          <ul class="flex flex-wrap gap-2">
-            <li
-              v-for="type in g.types"
-              :key="type.id"
-              class="rounded-md border px-2.5 py-1 text-xs font-medium"
-              :class="statusClass(type.id)"
-              :title="type.define"
-            >
-              {{ type.label }}
-            </li>
-          </ul>
-        </div>
+      <div class="mx-auto max-w-3xl">
+        <VisorDisplay :bitmaps="mapBitmaps" :panel-ids="mapPanelIds" :markers="mapMarkers" />
       </div>
 
-      <p v-if="duplicatePanels.length" class="mt-4 text-sm text-red-300">
+      <p class="mt-4 text-sm text-slate-300">
+        <span class="rounded bg-page px-1.5 py-0.5 font-semibold text-white">C1 #3</span>
+        means the 3rd panel on Connection 1.
+      </p>
+
+      <ul class="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
+        <li class="flex items-center gap-2">
+          <span class="size-3 rounded-sm border border-slate-500 bg-led/30" />
+          In use
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="size-3 rounded-sm border border-dashed border-slate-600" />
+          Not in use
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="size-3 rounded-sm border border-gold-400 bg-gold-400/30" />
+          Used more than once
+        </li>
+      </ul>
+
+      <p v-if="duplicatePanels.length" class="mt-4 text-sm text-gold-300">
         Used more than once: {{ duplicatePanels.map((p) => panelTypeName(p.id)).join(', ') }}
       </p>
     </SettingsCard>
@@ -106,7 +161,7 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
     <SettingsCard
       v-for="(connection, ci) in face.connections"
       :key="ci"
-      :title="`Connection ${ci + 1}`"
+      :title="`Connection ${ci + 1} (C${ci + 1})`"
       description="A chain of MAX7219 panels wired to the same three pins."
     >
       <template #actions>
@@ -139,7 +194,7 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
             class="text-xs"
             :class="
               connection.panels.length > MAX_PANELS_PER_CONNECTION
-                ? 'text-red-300'
+                ? 'text-gold-300'
                 : 'text-slate-500'
             "
           >

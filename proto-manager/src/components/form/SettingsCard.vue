@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="rounded-lg border border-border bg-surface">
+  <div class="rounded-xl border border-border bg-surface">
     <div class="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
       <div>
         <h2 class="text-lg font-semibold text-white">{{ title }}</h2>
