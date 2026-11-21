@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-const links = [{ to: '/', label: 'Home' }]
+const links = [
+  { to: '/', label: 'Home', exact: true },
+  { to: '/configure', label: 'Configure', exact: false },
+]
 </script>
 
 <template>
@@ -16,7 +19,8 @@ const links = [{ to: '/', label: 'Home' }]
           <RouterLink
             :to="link.to"
             class="rounded-md px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-accent-muted hover:text-white"
-            exact-active-class="!bg-accent !text-white"
+            :exact-active-class="link.exact ? '!bg-accent !text-white' : ''"
+            :active-class="link.exact ? '' : '!bg-accent !text-white'"
           >
             {{ link.label }}
           </RouterLink>

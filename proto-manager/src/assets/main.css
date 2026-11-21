@@ -21,3 +21,29 @@
     @apply min-h-screen bg-page text-white antialiased;
   }
 }
+
+@layer components {
+  .form-input {
+    @apply w-full rounded-md border border-border bg-page px-3 py-1.5 text-sm text-white transition-colors focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none disabled:opacity-50;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply border border-border bg-surface text-slate-200 hover:border-accent hover:text-white;
+  }
+
+  .btn-icon {
+    @apply size-8 p-0 text-slate-400 hover:bg-accent-muted hover:text-white disabled:hover:bg-transparent;
+  }
+
+  .btn-danger-icon {
+    @apply size-8 p-0 text-slate-400 hover:bg-red-950 hover:text-red-400;
+  }
+}
