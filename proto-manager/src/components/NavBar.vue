@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { hasUndownloadedChanges } from '@/state/config-download'
 
 const links = [
-  { to: '/', label: 'Home', exact: true },
-  { to: '/configure', label: 'Configure', exact: false },
+  { to: '/', label: 'Home', exact: true, showChanges: false },
+  { to: '/configure', label: 'Configure', exact: false, showChanges: true },
 ]
 </script>
 
@@ -18,11 +19,16 @@ const links = [
         <li v-for="link in links" :key="link.to">
           <RouterLink
             :to="link.to"
-            class="rounded-md px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-accent-muted hover:text-white"
+            class="relative rounded-md px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-accent-muted hover:text-white"
             :exact-active-class="link.exact ? '!bg-accent !text-white' : ''"
             :active-class="link.exact ? '' : '!bg-accent !text-white'"
           >
             {{ link.label }}
+            <span
+              v-if="link.showChanges && hasUndownloadedChanges"
+              class="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-amber-400 ring-2 ring-surface"
+              title="Config has changed since last download"
+            />
           </RouterLink>
         </li>
       </ul>
