@@ -35,7 +35,6 @@ src/
   assets/
     main.css                Theme tokens + small component classes (.btn, .form-input, .kbd, .display-title)
     Protogen_Faces.h        COPY of ../ToasterOS/Protogen_Faces.h, parsed at build time for the preset expressions
-    Config.h                Copy of ../ToasterOS/Config.h, for reference only (not imported)
   state/
     app-state.ts            appStore: faceConfig, featureConfig, expressions. findExpression(name)
     config-types.ts         TS mirror of ../ToasterOS/ConfigTypes.h (panel type ids, structs)
