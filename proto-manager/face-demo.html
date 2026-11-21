@@ -1,0 +1,924 @@
+<!doctype html>
+<html>
+
+<head>
+  <style>
+    body {
+      background: #1b161e;
+      color: white;
+      font-family: Inter, SF Pro, Segoe UI, Roboto, Oxygen, Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .subtext {
+      font-size: 12px;
+    }
+
+    #face {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #outputArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #output {
+      flex: 1;
+      width: 100%;
+      background-color: #1e1e1e;
+      color: white;
+      border: 1px solid black;
+      margin-top: 10px;
+    }
+
+    select {
+      background: #14161a;
+      color: white;
+      border: 1px solid #353a46;
+      padding: 5px 15px;
+    }
+
+    button {
+      background: #14161a;
+      color: white;
+      cursor: pointer;
+      border: 1px solid #353a46;
+      padding: 5px 15px;
+      height: 2.5em;
+    }
+
+    button:hover {
+      background: #1f2229;
+    }
+
+    button.active {
+      background: #0152bb;
+      color: white;
+    }
+
+    button.active:hover {
+      background: #1c6cd3;
+    }
+
+    button:disabled,
+    button:disabled:hover {
+      background: #14161a;
+      color: #737373;
+      cursor: initial;
+    }
+
+    #loadButton {
+      font-size: 32px;
+      padding: 10px 20px;
+    }
+
+    #loadedFacesSelect {
+      width: 250px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="face">
+      <canvas id="faceCanvas" width="1000" height="600" style="border:1px solid #000000;" @mousemove="HandleCanvasBrush"
+        @mouseup="ResetBrush" @mousedown="e => { ResetBrush(); HandleCanvasBrush(e); }"></canvas>
+
+      <div id="outputArea">
+        <div class="row">
+          <div>Expression</div>
+          <select id="loadedFacesSelect" v-model="currentExpressionName" @change="e => switchFace(e.target.value)">
+            <option v-for="name in Object.keys(expressions)">{{name}}</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div>Blink options</div>
+
+          <button :disabled="!currentExpression.hasBlink" @click="ToggleBlink">
+            {{showBlink ? "Hide" : "Show"}}
+          </button>
+
+          <button @click="AddOrRemoveBlink">
+            {{currentExpression.hasBlink ? "Remove Blink" : "Add Blink"}}
+          </button>
+        </div>
+
+        <div class="row">
+          <div>Tools</div>
+
+          <div>
+            <button @click="brushState.activeTool = 'brush'" :class="{ active: brushState.activeTool == 'brush' }">
+              Brush
+            </button>
+
+            <div class="subtext">Hold alt to erase</div>
+          </div>
+
+          <button @click="brushState.activeTool = 'eraser'" :class="{ active: brushState.activeTool == 'eraser' }">
+            Eraser
+          </button>
+        </div>
+
+        <div class="row">
+          <div>Options</div>
+          <div>
+            <button @click="PopUndoStack" :disabled="undoStack.length == 0">Undo ({{undoStack.length}})</button>
+            <div class="subtext">{{latestChange}}</div>
+          </div>
+
+          <button @click="PopRedoStack" :disabled="redoStack.length == 0">Redo</button>
+        </div>
+
+        <textarea id="output" v-model="output"></textarea>
+
+        <button @click="parseWholeFace(output)">Load</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script type="module">
+    import { createApp, ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+    const dotSize = 20;
+    let clickableLights = {};
+
+    // Current loaded expression
+    // Saved expressions
+    createApp({
+      setup() {
+        return {
+          currentExpressionName: ref("Face_Name"),
+          expressions: ref({}),
+          showBlink: ref(false),
+          output: ref(""),
+          redoStack: ref([]),
+          undoStack: ref([]),
+          brushState: ref({
+            activeTool: "brush",
+            inProgressBrushStroke: false
+          })
+        }
+      },
+      mounted() {
+        // Load default faces and set initial face
+        for (const face of defaultFaces) {
+          this.parseWholeFace(face);
+        }
+
+        // Clear undo stack
+        this.undoStack.splice(0);
+
+        this.switchFace(defaultSelectedFace);
+      },
+      computed: {
+        currentExpression() {
+          return this.expressions[this.currentExpressionName] || {};
+        },
+        latestChange() {
+          if (this.undoStack.length == 0) return "";
+          return this.undoStack[this.undoStack.length - 1].description;
+        }
+      },
+      methods: {
+        // FACE SWITCHER
+        switchFace(facename) {
+          this.currentExpressionName = facename;
+
+          this.showBlink = false;
+
+          this.drawFace();
+        },
+
+        ToggleBlink() {
+          this.showBlink = !this.showBlink;
+          this.drawFace();
+        },
+
+        PushUndoStack(description, keepRedoStack) {
+          this.undoStack.push({
+            currentExpressionName: this.currentExpressionName,
+            expressions: JSON.parse(JSON.stringify(this.expressions)),
+            description: description
+          });
+
+          if (!keepRedoStack)
+            this.redoStack.splice(0);
+        },
+
+        PopUndoStack() {
+          if (this.undoStack.length == 0) return;
+
+          let previousState = this.undoStack.pop();
+
+          this.redoStack.push({
+            currentExpressionName: this.currentExpressionName,
+            expressions: JSON.parse(JSON.stringify(this.expressions)),
+            description: previousState.description
+          });
+
+          this.currentExpressionName = previousState.currentExpressionName;
+          this.expressions = previousState.expressions;
+          this.drawFace();
+        },
+
+        PopRedoStack() {
+          if (this.redoStack.length == 0) return;
+
+          let newState = this.redoStack.pop();
+
+          this.PushUndoStack(newState.description, true);
+
+          this.currentExpressionName = newState.currentExpressionName;
+          this.expressions = newState.expressions;
+          this.drawFace();
+        },
+
+        AddOrRemoveBlink() {
+          // If we're removing the blink
+          if (this.currentExpression.hasBlink) {
+            if (confirm("Are you sure you want to remove the blink? This can't be undone") == false) return;
+          }
+
+          this.PushUndoStack(this.currentExpression.hasBlink ? "Blink removed" : "Blink added");
+          this.currentExpression.hasBlink = !this.currentExpression.hasBlink;
+
+          this.currentExpression.eyeBlinkPatterns.splice(0);
+          if (this.currentExpression.hasBlink) {
+            // Deep copy the non-blink eye
+            this.currentExpression.eyeBlinkPatterns = this.currentExpression.eyePatterns.map(panel => panel.map(row => row.slice()));
+          }
+
+          // Stop showing or immediately show the new blink
+          this.showBlink = this.currentExpression.hasBlink;
+
+          this.drawFace();
+        },
+
+
+        // Canvas interaction
+        ResetBrush() {
+          this.brushState.inProgressBrushStroke = false;
+        },
+        HandleCanvasBrush(event) {
+          if (!(event.buttons & 1)) return;
+
+          // brush and eraser logic
+          if (this.brushState.activeTool == "brush" || this.brushState.activeTool == "eraser") {
+
+            // Allow pressing alt to erase
+            let shouldErase = this.brushState.eraser == "brush" || event.altKey;
+
+            const rect = faceCanvas.getBoundingClientRect()
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            let dotX = Math.floor((x + dotSize / 2) / dotSize);
+            let dotY = Math.floor((y + dotSize / 2) / dotSize);
+
+            let dot = clickableLights[`${dotX},${dotY}`];
+            if (!dot) return;
+
+            // Only push to the undo stack at the start of a brush stroke
+            if (!this.brushState.inProgressBrushStroke)
+              this.PushUndoStack("Pixel brush");
+
+            this.brushState.inProgressBrushStroke = true;
+
+            dot.panel[dot.row][dot.column] = shouldErase ? 0 : 1;
+            this.drawFace();
+
+            return;
+          }
+        },
+
+
+
+        // CODE OUTPUT
+        updateOutput() {
+          let blinkOutput = !this.currentExpression.hasBlink ? "{}" : `{
+    { ${this.panelToMatrixString(this.currentExpression.eyeBlinkPatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.eyeBlinkPatterns[1])} }   //
+  }`;
+
+          this.output = `struct FaceExpression ${this.currentExpressionName} = {
+  .Nose = {
+    { ${this.panelToMatrixString(this.currentExpression.nosePatterns[0])} }  //
+  },
+  .Eye = {
+    { ${this.panelToMatrixString(this.currentExpression.eyePatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.eyePatterns[1])} }   //
+  },
+  .HasBlink = ${this.currentExpression.hasBlink},
+  .Eye_Blink = ${blinkOutput},
+  .Mouth = {
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[0])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[1])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[2])} },  //
+    { ${this.panelToMatrixString(this.currentExpression.mouthPatterns[3])} }   //
+  }
+};`;
+        },
+
+        panelToMatrixString(panel) {
+          return panel.map(row => `B${row.join("")}`).join(", ");
+        },
+
+
+
+
+        // CODE INPUT
+
+
+        // Load a face & switch to it
+        parseWholeFace(input) {
+          let lines = input.trim().split("\n");
+          let newExpressionName = lines[0].replace(/.*FaceExpression ([^ =]+) =.*/, "$1");
+
+          try {
+
+            let panel = /\s+\{\s(.*)\s\},?\s+\/\//;
+
+            let nosePatterns = [
+              this.parseMatrixPanel(lines[2].replace(panel, "$1")),
+            ];
+
+            let eyePatterns = [
+              this.parseMatrixPanel(lines[5].replace(panel, "$1")),
+              this.parseMatrixPanel(lines[6].replace(panel, "$1")),
+            ];
+
+            let hasBlink = lines[8].includes("true");
+            let eyeBlinkPatterns = [];
+            if (hasBlink) {
+              eyeBlinkPatterns = [
+                this.parseMatrixPanel(lines[10].replace(panel, "$1")),
+                this.parseMatrixPanel(lines[11].replace(panel, "$1")),
+              ];
+            }
+
+            let offset = hasBlink ? 3 : 0;
+            let mouthPatterns = [
+              this.parseMatrixPanel(lines[11 + offset].replace(panel, "$1")),
+              this.parseMatrixPanel(lines[12 + offset].replace(panel, "$1")),
+              this.parseMatrixPanel(lines[13 + offset].replace(panel, "$1")),
+              this.parseMatrixPanel(lines[14 + offset].replace(panel, "$1")),
+            ];
+
+            this.PushUndoStack(`Loaded expression ${newExpressionName}`);
+            this.expressions[newExpressionName] = {
+              nosePatterns: nosePatterns,
+              eyePatterns: eyePatterns,
+              hasBlink: hasBlink,
+              eyeBlinkPatterns: eyeBlinkPatterns,
+              mouthPatterns: mouthPatterns
+            };
+
+            this.currentExpressionName = newExpressionName;
+
+            this.drawFace();
+
+          }
+          catch (error) {
+            console.error(`Failed to parse ${input}`, error);
+          }
+        },
+
+        parseMatrixPanel(panelString) {
+          return panelString.split(",")
+            .map(row =>
+              row.trim().replace("B", "")
+                .split("")
+                .map(bit => parseInt(bit))
+            );
+        },
+
+
+
+
+        // FACE RENDERING
+        drawFace() {
+          let face = this.currentExpression;
+          let ctx = faceCanvas.getContext("2d");
+          ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+
+          this.drawGrid(ctx, 40, 200, face.nosePatterns[0]);
+          this.drawPanelBox(ctx, 40, 200, 1);
+
+          this.drawGrid(ctx, 500, 40, (this.showBlink && face.hasBlink) ? face.eyeBlinkPatterns[0] : face.eyePatterns[0]);
+          this.drawGrid(ctx, 500 + (dotSize * 8), 40, (this.showBlink && face.hasBlink) ? face.eyeBlinkPatterns[1] : face.eyePatterns[1]);
+          this.drawPanelBox(ctx, 500, 40, 2);
+
+          this.drawGrid(ctx, 140, 400, face.mouthPatterns[0]);
+          this.drawGrid(ctx, 140 + (dotSize * 8), 400, face.mouthPatterns[1]);
+          this.drawGrid(ctx, 140 + (dotSize * 8) * 2, 400, face.mouthPatterns[2]);
+          this.drawGrid(ctx, 140 + (dotSize * 8) * 3, 400, face.mouthPatterns[3]);
+          this.drawPanelBox(ctx, 140, 400, 4);
+
+          this.updateOutput();
+        },
+
+        drawDot(ctx, x, y, size) {
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
+          ctx.fillStyle = "#0099FF";
+          ctx.fill();
+        },
+
+        drawPanelBox(ctx, x, y, numMatrices) {
+          ctx.beginPath();
+          ctx.rect(x - (dotSize / 2) - 1, y - (dotSize / 2) - 1, dotSize * 8 * numMatrices + 2, dotSize * 8 + 2);
+          ctx.strokeStyle = "#444";
+          ctx.stroke();
+
+          // Draw faint dividing lines between the matrices
+          for (let panel = 1; panel < numMatrices; panel++) {
+            let startX = x - (dotSize / 2) - 1 + (dotSize * 8 * panel);
+            let startY = y - (dotSize / 2) - 1;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + (dotSize * 8));
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+          }
+        },
+
+        drawGrid(ctx, startX, startY, panel) {
+          for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+              let x = startX + (j * dotSize);
+              let y = startY + (i * dotSize);
+
+              if (panel[i][j])
+                this.drawDot(ctx, x, y, dotSize);
+
+              let clickX = x / dotSize;
+              let clickY = y / dotSize;
+              clickableLights[`${clickX},${clickY}`] = { panel: panel, row: i, column: j };
+            }
+
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+
+  <script>
+    // Default faces
+    const defaultSelectedFace = "Face_Neutral";
+    let rawDefaultFaces =
+      `
+struct FaceExpression Face_Neutral = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
+  },
+  .HasBlink = true,
+  .Eye_Blink = {
+    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
+  },
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Heart = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000110, B00001111, B00011111, B00011111, B00001111, B00000111, B00000011, B00000001 },  //
+    { B11000000, B11100000, B11110000, B11110000, B11100000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B10000000, B11000000, B01110000, B00111110, B00001111, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00011111, B01111111, B11100000, B00000000 },  //
+    { B00000000, B00000010, B00001110, B01111100, B11100000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Heart_Small = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000110, B00001111, B00001111, B00000111, B00000011, B00000001, B00000000 },  //
+    { B00000000, B11000000, B11100000, B11100000, B11000000, B10000000, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B10000000, B11000000, B01110000, B00111110, B00001111, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00011111, B01111111, B11100000, B00000000 },  //
+    { B00000000, B00000010, B00001110, B01111100, B11100000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Happy_Closed_eyes = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000001, B00000111, B00011110, B00111100, B01110000, B11000000, B10000000 },  //
+    { B00000000, B11000000, B11110000, B00011100, B00001110, B00000011, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_OWO = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000001, B00000011, B00000110, B00001100, B00001100, B00000110, B00000011, B00000001 },  //
+    { B10000000, B11000000, B01100000, B00110000, B00110000, B01100000, B11000000, B10000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B10000000, B11000000, B01000000, B01100000, B00100000, B00110000, B00011001, B00001111 },  //
+    { B00011000, B00111100, B00100100, B01100110, B01000010, B11000011, B10000001, B00000000 },  //
+    { B00000001, B00000011, B00000010, B00000110, B00000100, B00001100, B10011000, B11110000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Smirk = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000000, B00111111, B00011111, B00001111, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B11111000, B11110000, B10000000, B00000000, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00001111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000001, B00001111, B11111111, B11111100, B00000000 },  //
+    { B00000000, B00000000, B00111000, B11110000, B11000000, B10000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Cute = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000000, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B10000000, B01110001, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00100000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Blep = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
+  },
+  .HasBlink = true,
+  .Eye_Blink = {
+    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
+  },
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B11000000, B01111111, B00001111, B00001110, B00000110, B00000011, B00000000 },  //
+    { B00000000, B00001111, B11111100, B11100000, B11100000, B11000000, B10000000, B00000000 },  //
+    { B00111100, B11110000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Spiral = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00001111, B00011001, B00110000, B00110010, B00100100, B00110110, B00110011, B00011000 },  //
+    { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Silly = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00000110, B00001100, B00011000, B00001100, B00000110, B00000011 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B01100000, B00110000, B00011001, B00001111, B00000000, B00000000 },  //
+    { B00000000, B00000000, B01111100, B11000111, B10000001, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B00001100, B10011000, B11110000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Sleepy = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000000, B01111100, B00001000, B00010000, B00100000, B01111100, B00000000 },  //
+    { B00000000, B00111110, B00000100, B00001000, B00010000, B00111110, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00011111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B01111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B00011100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Excited = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111110, B11111000, B11100000, B11000000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B00011110, B00000111, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000110, B00000111, B00000011, B00000001, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B11110000, B11111111, B11111111, B11111111, B01111111, B00011111 },  //
+    { B00000000, B00000000, B00000000, B00000001, B11111111, B11111111, B11111111, B11111110 },  //
+    { B00000000, B00000000, B00111111, B11111100, B11111000, B11110000, B11100000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_AmongUs = {
+  .Nose = {
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 },  //
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 },  //
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 },  //
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 },  //
+    { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Angry = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000001, B00000011, B00000111, B00001111, B00011111, B00111111, B00111100, B00011000 },  //
+    { B00000000, B10000000, B10000000, B10000000, B10000000, B00000000, B00000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000001, B00000011, B00000110, B00001100, B00000000 },  //
+    { B00000000, B00111000, B01111100, B11000110, B10000011, B00000001, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00001110, B00011111, B10110011, B11100001, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B10000000, B11000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Surprised = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000001, B00000011, B00000110, B00001100, B00001100, B00000110, B00000011, B00000001 },  //
+    { B10000000, B11000000, B01100000, B00110000, B00110000, B01100000, B11000000, B10000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000011, B01111111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_Binary = {
+  .Nose = {
+    { B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 }  //
+  },
+  .Eye = {
+    { B00000000, B00011000, B00011000, B00111000, B00011000, B00011000, B00011000, B01111110 },  //
+    { B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00011000, B00011000, B00111000, B00011000, B00011000, B00011000, B01111110 },  //
+    { B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 },  //
+    { B00000000, B00011000, B00011000, B00111000, B00011000, B00011000, B00011000, B01111110 },  //
+    { B00000000, B00111100, B01100110, B01101110, B01110110, B01100110, B01100110, B00111100 }   //
+  }
+};
+
+
+struct FaceExpression Face_Bored = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000000, B00011111, B00001111, B00000111, B00000011, B00000001, B00000000 },  //
+    { B00000000, B00000000, B11111000, B11110000, B11100000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B11000000, B01100000, B00111000, B00001100, B00000110, B00000011, B00000001, B00000000 },  //
+    { B00000000, B00000001, B00000011, B00000110, B00001100, B00011000, B10110000, B11100000 },  //
+    { B00000000, B11110000, B11000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_X_X = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00001100, B00000110, B00000011, B00000001, B00000011, B00000110, B00001100 },  //
+    { B00000000, B00110000, B01100000, B11000000, B10000000, B11000000, B01100000, B00110000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B01110101, B00011111, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_UWU = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B00000011, B00001111, B00111111, B01111111, B11111111, B11111110, B11100000 },  //
+    { B00000000, B11100000, B11111000, B11111100, B11111110, B11111111, B00000000, B00000000 }   //
+  },
+  .HasBlink = true,
+  .Eye_Blink = {
+    { B00000000, B00000000, B00000000, B00000111, B00001111, B00111111, B11100000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B11000000, B11100000, B11111111, B00000000, B00000000 }   //
+  },
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
+    { B00000000, B01100110, B01100110, B01100110, B01100110, B01111110, B01111110, B00000000 },  //
+    { B00000000, B10000001, B10000001, B10000001, B01011010, B01011010, B00111100, B00000000 },  //
+    { B00000000, B01100110, B01100110, B01100110, B01100110, B01111110, B01111110, B00000000 }   //
+  }
+};
+
+
+struct FaceExpression Face_BoyKisser = {
+  .Nose = {
+    { B00000000, B00000000, B11100000, B11100000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000000, B11111111, B01111100, B01111100, B01111100, B01111100, B00111000, B00000000 },  //
+    { B00000000, B11111000, B00010000, B00010000, B00010000, B00010000, B00100000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B11000000, B01111000, B00011100, B00000111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000011, B11111110, B00000000 },  //
+    { B00000000, B00000000, B00011000, B00110000, B11100000, B10000000, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00111110, B00001100, B00111110, B00000000, B00000000, B00000000 }   //
+  }
+};
+
+
+
+
+struct FaceExpression Face_Spiral2 = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00011111, B00111011, B00100000, B00001100, B00011010, B00010000, B00011001, B00001111 },  //
+    { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Spiral3 = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00000001, B00011100, B00110110, B00100010, B00100100, B00110000, B00011001, B00001111 },  //
+    { B10000000, B11000000, B11000000, B01000000, B11000000, B11000000, B10000000, B00000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+
+struct FaceExpression Face_Spiral4 = {
+  .Nose = {
+    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
+  },
+  .Eye = {
+    { B00001111, B00011001, B00110000, B00100101, B00100011, B00110000, B00011101, B00001111 },  //
+    { B00000000, B10000000, B10000000, B10000000, B00000000, B01000000, B11000000, B10000000 }   //
+  },
+  .HasBlink = false,
+  .Eye_Blink = {},
+  .Mouth = {
+    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
+    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
+    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
+  }
+};
+      `
+    let defaultFaces = rawDefaultFaces.split(";").map(raw => raw.trim() + ";").filter(raw => raw != ";").sort();
+  </script>
+</body>
+
+</html>
