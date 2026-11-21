@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { appStore } from '@/state/app-state'
+import { appStore, findExpression } from '@/state/app-state'
 import {
   EMPTY_PANEL,
   MAX_PANELS_PER_CONNECTION,
@@ -10,7 +10,7 @@ import {
   type FaceLEDConnection,
   type PanelTypeInfo,
 } from '@/state/config-types'
-import { FACE_NEUTRAL, expressionToPanels } from '@/faces/faces'
+import { expressionToPanels } from '@/faces/faces'
 import VisorDisplay, { type PanelMarker } from '@/components/VisorDisplay.vue'
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
@@ -41,7 +41,7 @@ const duplicatePanels = computed(() =>
 )
 
 // Visor map: lights each assigned panel with its part of the neutral face
-const neutralFace = expressionToPanels(FACE_NEUTRAL)
+const neutralFace = computed(() => expressionToPanels(findExpression('Neutral')))
 
 const mapPanelIds = computed(() => {
   const usesSideNose =
@@ -52,7 +52,7 @@ const mapPanelIds = computed(() => {
 
 const mapBitmaps = computed(() =>
   Object.fromEntries(
-    Object.entries(neutralFace).filter(([id]) => usageCounts.value.has(Number(id))),
+    Object.entries(neutralFace.value).filter(([id]) => usageCounts.value.has(Number(id))),
   ),
 )
 

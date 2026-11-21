@@ -1,21 +1,33 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import PageHeading from '@/components/PageHeading.vue'
 import DownloadConfigButton from '@/components/DownloadConfigButton.vue'
-import { hasUndownloadedChanges } from '@/state/config-download'
+import { DOWNLOADS, changedDownloads, hasUndownloadedChanges } from '@/state/config-download'
 
 const tabs = [
   { to: '/configure/panels', label: 'Panel layout' },
   { to: '/configure/expressions', label: 'Expressions' },
   { to: '/configure/features', label: 'Features' },
 ]
+
+// The download for the tab you're on gets the blue button
+const route = useRoute()
+const onExpressions = computed(() => route.name === 'configure-expressions')
+
+const changedSummary = computed(() =>
+  changedDownloads.value.map((kind) => `${DOWNLOADS[kind].label}`).join(' and '),
+)
 </script>
 
 <template>
   <section>
     <PageHeading title="Configure" subtitle="Set up the hardware and behaviour of your protogen.">
       <template #actions>
-        <DownloadConfigButton />
+        <div class="flex flex-wrap gap-3">
+          <DownloadConfigButton kind="config" :primary="!onExpressions" />
+          <DownloadConfigButton kind="expressions" :primary="onExpressions" />
+        </div>
       </template>
     </PageHeading>
 
@@ -46,9 +58,20 @@ const tabs = [
         >
           <p class="flex items-center gap-3 text-sm text-gold-200">
             <span class="size-2.5 shrink-0 rounded-full bg-gold-400" />
-            Your config has changed. Download Config.h again to update your Arduino project.
+            <span>
+              Your {{ changedSummary }} {{ changedDownloads.length > 1 ? 'have' : 'has' }} changed.
+              Download again and copy the {{ changedDownloads.length > 1 ? 'files' : 'file' }} into
+              your ToasterOS folder.
+            </span>
           </p>
-          <DownloadConfigButton size="md" class="shrink-0" />
+          <div class="flex shrink-0 flex-wrap gap-2">
+            <DownloadConfigButton
+              v-for="kind in changedDownloads"
+              :key="kind"
+              :kind="kind"
+              size="md"
+            />
+          </div>
         </div>
       </div>
     </Transition>

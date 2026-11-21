@@ -1,0 +1,66 @@
+import type { FaceExpressionData, PanelBitmap } from './faces'
+
+// Reads expressions out of the firmware's Protogen_Faces.h, e.g.
+//
+// struct FaceExpression Face_Neutral = {
+//   .Nose = { { B00110000, ... }  // },
+//   .Eye = { {...}, {...} },
+//   .HasBlink = true,
+//   .Eye_Blink = { {...}, {...} },
+//   .Mouth = { {...}, {...}, {...}, {...} }
+// };
+
+export interface ParsedExpression extends FaceExpressionData {
+  /** Name without the Face_ prefix, e.g. Happy_Closed_eyes */
+  name: string
+}
+
+const EXPRESSION_PATTERN = /struct FaceExpression Face_(\w+)\s*=\s*\{([\s\S]*?)\n\};/g
+const SECTION_PATTERN = /\.(Nose|Eye_Blink|Eye|Mouth)\s*=/g
+const PANEL_PATTERN = /\{\s*((?:B[01]{8}\s*,?\s*){8})\}/g
+
+export function parsePanel(text: string): PanelBitmap {
+  const rows = [...text.matchAll(/B([01]{8})/g)].map((m) => parseInt(m[1]!, 2))
+  if (rows.length !== 8) throw new Error(`Expected 8 rows in panel, found ${rows.length}`)
+  return rows
+}
+
+function parseExpressionBody(name: string, body: string): ParsedExpression {
+  const sections = [...body.matchAll(SECTION_PATTERN)].map((m) => ({
+    key: m[1]!,
+    index: m.index!,
+  }))
+
+  const panels: Record<string, PanelBitmap[]> = { Nose: [], Eye: [], Eye_Blink: [], Mouth: [] }
+  for (const match of body.matchAll(PANEL_PATTERN)) {
+    const section = sections.filter((s) => s.index < match.index!).at(-1)
+    if (!section) continue
+    panels[section.key]!.push(parsePanel(match[1]!))
+  }
+
+  const hasBlink = /\.HasBlink\s*=\s*true/.test(body)
+  const { Nose: nose, Eye: eye, Eye_Blink: eyeBlink, Mouth: mouth } = panels
+  if (nose!.length !== 1 || eye!.length !== 2 || mouth!.length !== 4) {
+    throw new Error(`Face_${name} doesn't have 1 nose, 2 eye and 4 mouth panels`)
+  }
+
+  return {
+    name,
+    nose: nose![0]!,
+    eye: eye as [PanelBitmap, PanelBitmap],
+    eyeBlink: hasBlink && eyeBlink!.length === 2 ? (eyeBlink as [PanelBitmap, PanelBitmap]) : null,
+    mouth: mouth as [PanelBitmap, PanelBitmap, PanelBitmap, PanelBitmap],
+  }
+}
+
+export function parseExpressions(header: string): ParsedExpression[] {
+  return [...header.matchAll(EXPRESSION_PATTERN)].map((m) => parseExpressionBody(m[1]!, m[2]!))
+}
+
+/** A top-level declaration copied as-is, e.g. `byte Numbers_ASCII[10][8] = { ... };` */
+export function extractDeclaration(header: string, startsWith: string): string {
+  const start = header.indexOf(startsWith)
+  if (start === -1) throw new Error(`Couldn't find "${startsWith}" in Protogen_Faces.h`)
+  const end = header.indexOf('};', start)
+  return header.slice(start, end + 2)
+}

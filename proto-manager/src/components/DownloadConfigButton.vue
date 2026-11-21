@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
-import { downloadConfigHeader, hasUndownloadedChanges } from '@/state/config-download'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { DOWNLOADS, downloadFile, hasChanged, type DownloadKind } from '@/state/config-download'
 
-withDefaults(defineProps<{ size?: 'md' | 'lg' }>(), { size: 'lg' })
+const props = withDefaults(
+  defineProps<{
+    kind: DownloadKind
+    size?: 'md' | 'lg'
+    /** Primary (blue) or secondary styling */
+    primary?: boolean
+  }>(),
+  { size: 'lg', primary: true },
+)
+
+const download = computed(() => DOWNLOADS[props.kind])
+const changed = computed(() => hasChanged(props.kind))
 
 const justDownloaded = ref(false)
 let resetTimer: ReturnType<typeof setTimeout> | undefined
 
-function download() {
-  downloadConfigHeader()
+function onClick() {
+  downloadFile(props.kind)
   justDownloaded.value = true
   clearTimeout(resetTimer)
   resetTimer = setTimeout(() => (justDownloaded.value = false), 2500)
@@ -20,18 +31,18 @@ onBeforeUnmount(() => clearTimeout(resetTimer))
 <template>
   <button
     type="button"
-    class="btn btn-primary relative"
+    class="btn relative"
     :class="[
+      primary ? 'btn-primary' : 'btn-secondary',
       size === 'lg' ? 'px-5 py-2.5 text-base' : 'px-4 py-2',
-      hasUndownloadedChanges
-        ? 'shadow-lg ring-2 shadow-accent/40 ring-accent/50 ring-offset-2 ring-offset-page'
-        : 'shadow-lg shadow-accent/20',
+      changed && primary && 'ring-2 ring-accent/50 ring-offset-2 ring-offset-page',
     ]"
-    @click="download"
+    :title="`Download ${download.fileName}`"
+    @click="onClick"
   >
     <!-- Check icon after downloading -->
     <svg
-      v-if="justDownloaded && !hasUndownloadedChanges"
+      v-if="justDownloaded && !changed"
       class="size-5"
       viewBox="0 0 20 20"
       fill="currentColor"
@@ -52,14 +63,18 @@ onBeforeUnmount(() => clearTimeout(resetTimer))
       />
     </svg>
 
-    <template v-if="justDownloaded && !hasUndownloadedChanges">Downloaded</template>
-    <template v-else-if="hasUndownloadedChanges">Download updated Config.h</template>
-    <template v-else>Download Config.h</template>
+    <span class="flex flex-col items-start leading-tight">
+      <span>
+        <template v-if="justDownloaded && !changed">Downloaded</template>
+        <template v-else>Download {{ download.label }}</template>
+      </span>
+      <span class="text-xs font-normal opacity-75">{{ download.fileName }}</span>
+    </span>
 
-    <!-- Pulsing "changes" badge -->
-    <span v-if="hasUndownloadedChanges" class="absolute -top-1 -right-1 flex size-3">
+    <!-- Pulsing "changed" badge -->
+    <span v-if="changed" class="absolute -top-1 -right-1 flex size-3">
       <span
-        class="absolute inline-flex size-full motion-safe:animate-ping rounded-full bg-gold-400 opacity-75"
+        class="absolute inline-flex size-full rounded-full bg-gold-400 opacity-75 motion-safe:animate-ping"
       />
       <span class="relative inline-flex size-3 rounded-full bg-gold-400" />
     </span>

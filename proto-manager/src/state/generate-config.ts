@@ -93,8 +93,7 @@ ${face.connections.map(generateConnection).join(',\n')}
 `
 }
 
-export function downloadTextFile(fileName: string, contents: string) {
-  const blob = new Blob([contents], { type: 'text/plain' })
+export function downloadBlob(fileName: string, blob: Blob) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
