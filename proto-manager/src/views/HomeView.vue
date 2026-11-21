@@ -14,7 +14,8 @@ const features = [
   },
   {
     title: 'Improved MAX7219 support',
-    description: '93% more efficient panel updates, auto-recovery for loose connections, up to 16 panels per chain.',
+    description:
+      '93% more efficient panel updates, auto-recovery for loose connections, up to 16 panels per chain.',
   },
   {
     title: 'Remote control',
@@ -26,7 +27,8 @@ const features = [
   },
   {
     title: 'Boop detection',
-    description: 'Detects nose boops with an IR sensor, showing different expressions for consecutive boops.',
+    description:
+      'Detects nose boops with an IR sensor, showing different expressions for consecutive boops.',
   },
 ]
 </script>
@@ -46,9 +48,7 @@ const features = [
           Beeeeeep! This project is for protogen fursuit heads which use MAX7219 8x8 LED panels.
         </p>
 
-        <p>
-          Use this page to configure the software &amp; manage your expressions :3
-        </p>
+        <p>Use this page to configure the software &amp; manage your expressions :3</p>
       </div>
 
       <a
@@ -69,7 +69,9 @@ const features = [
     <!-- Features -->
     <div>
       <h2 class="text-xl font-semibold text-white">Features</h2>
-      <p class="mt-1 text-slate-400">Features are configurable and can be disabled if you lack the hardware.</p>
+      <p class="mt-1 text-slate-400">
+        Features are configurable and can be disabled if you lack the hardware.
+      </p>
 
       <ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <li

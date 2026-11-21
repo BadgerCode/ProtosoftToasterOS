@@ -1,5 +1,5 @@
-import { reactive } from "vue";
+import { reactive } from 'vue'
 
 export const appStore = reactive({
-  example: "Example state" as string | null
-});
+  example: 'Example state' as string | null,
+})
