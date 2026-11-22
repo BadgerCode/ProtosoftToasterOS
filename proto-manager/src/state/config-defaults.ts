@@ -39,25 +39,25 @@ export function defaultFaceConfig(): FaceConfig {
 
 export function defaultFeatureConfig(): FeatureConfig {
   return {
-    brightness: 0.25,
+    brightness: 0.27,
     debugMode: 0,
     rapidPanelAutoRecovery: true,
 
-    enableBoopSensor: true,
+    enableBoopSensor: false,
     pinAnalogBoopSensor: 0,
     numBoopsToActivateGame: 15,
 
-    enableSideLEDs: true,
+    enableSideLEDs: false,
     pinLeftLEDStripData: 9,
     pinRightLEDStripData: 10,
     ledStripNumLEDs: 15,
 
-    enableRemoteControl: true,
+    enableRemoteControl: false,
     pinRemoteButtonA: 18,
     pinRemoteButtonB: 17,
     pinRemoteButtonC: 16,
     pinRemoteButtonD: 15,
-    enableRemoteControlOutputLEDs: true,
+    enableRemoteControlOutputLEDs: false,
     pinRemoteControlOutput: 11,
   }
 }
