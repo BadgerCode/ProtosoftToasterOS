@@ -15,6 +15,7 @@ import VisorDisplay, { type PanelMarker } from '@/components/VisorDisplay.vue'
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
 import PinConflictWarning from '@/components/PinConflictWarning.vue'
+import { FACE_LAYOUT_PRESETS, type FaceLayoutPreset } from '@/state/config-defaults'
 
 const face = appStore.faceConfig
 
@@ -94,6 +95,37 @@ const mapMarkers = computed(() => {
   return markers
 })
 
+// Presets
+const presets = computed(() =>
+  FACE_LAYOUT_PRESETS.map((preset) => {
+    const config = preset.build()
+    const ids = new Set(config.connections.flatMap((c) => c.panels.map((p) => p.panelType)))
+    return {
+      preset,
+      key: JSON.stringify(config.connections),
+      panelIds: PANEL_TYPES.map((p) => p.id).filter((id) => ids.has(id)),
+      bitmaps: Object.fromEntries(
+        Object.entries(neutralFace.value).filter(([id]) => ids.has(Number(id))),
+      ),
+    }
+  }),
+)
+
+const currentKey = computed(() => JSON.stringify(face.connections))
+const activePresetId = computed(
+  () => presets.value.find((p) => p.key === currentKey.value)?.preset.id ?? null,
+)
+
+function applyPreset(preset: FaceLayoutPreset) {
+  if (activePresetId.value === preset.id) return
+  if (
+    !activePresetId.value &&
+    !window.confirm('Replace your current panel layout and pins with this preset?')
+  )
+    return
+  face.connections.splice(0, face.connections.length, ...preset.build().connections)
+}
+
 function addConnection() {
   face.connections.push({ pinDataIn: 0, pinCS: 0, pinCLK: 0, panels: [] })
 }
@@ -122,6 +154,35 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
 <template>
   <div class="space-y-6">
     <PinConflictWarning />
+
+    <!-- Presets -->
+    <SettingsCard
+      title="Start from a preset"
+      collapsible
+      description="Pick the layout closest to your head, then adjust the pins and panels below to match your wiring."
+    >
+      <div class="grid gap-3 md:grid-cols-3">
+        <button
+          v-for="p in presets"
+          :key="p.preset.id"
+          type="button"
+          class="flex flex-col gap-3 rounded-lg border p-3 text-left transition-colors"
+          :class="
+            activePresetId === p.preset.id
+              ? 'border-led bg-led/10'
+              : 'border-border hover:border-slate-500'
+          "
+          :aria-pressed="activePresetId === p.preset.id"
+          @click="applyPreset(p.preset)"
+        >
+          <VisorDisplay :bitmaps="p.bitmaps" :panel-ids="p.panelIds" />
+          <span>
+            <span class="block font-medium text-white">{{ p.preset.name }}</span>
+            <span class="mt-0.5 block text-sm text-slate-400">{{ p.preset.description }}</span>
+          </span>
+        </button>
+      </div>
+    </SettingsCard>
 
     <!-- Panels in use -->
     <SettingsCard

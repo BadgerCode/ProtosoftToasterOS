@@ -1,8 +1,24 @@
-import { PanelType, type FaceConfig, type FeatureConfig } from './config-types'
+import { PanelType, type FaceConfig, type FeatureConfig, type PanelConfig } from './config-types'
 
 // Defaults match ToasterOS/Config.h
 
-export function defaultFaceConfig(): FaceConfig {
+export interface FaceLayoutPreset {
+  id: string
+  name: string
+  description: string
+  build: () => FaceConfig
+}
+
+const panel = (panelType: number, upsideDown = false): PanelConfig => ({ panelType, upsideDown })
+
+function oneConnection(panelTypes: number[]): FaceConfig {
+  return {
+    connections: [{ pinDataIn: 3, pinCS: 4, pinCLK: 5, panels: panelTypes.map((t) => panel(t)) }],
+  }
+}
+
+// Matches ToasterOS/Config.h and Docs/Images/panels_diagram_twocon.png
+function twoConnections(): FaceConfig {
   return {
     connections: [
       {
@@ -10,13 +26,13 @@ export function defaultFaceConfig(): FaceConfig {
         pinCS: 4,
         pinCLK: 5,
         panels: [
-          { panelType: PanelType.RIGHT_MOUTH_BACK, upsideDown: true },
-          { panelType: PanelType.RIGHT_MOUTH_MID_BACK, upsideDown: true },
-          { panelType: PanelType.RIGHT_MOUTH_MID_FRONT, upsideDown: true },
-          { panelType: PanelType.RIGHT_MOUTH_FRONT, upsideDown: true },
-          { panelType: PanelType.RIGHT_NOSE, upsideDown: false },
-          { panelType: PanelType.RIGHT_EYE_FRONT, upsideDown: false },
-          { panelType: PanelType.RIGHT_EYE_BACK, upsideDown: false },
+          panel(PanelType.RIGHT_MOUTH_BACK, true),
+          panel(PanelType.RIGHT_MOUTH_MID_BACK, true),
+          panel(PanelType.RIGHT_MOUTH_MID_FRONT, true),
+          panel(PanelType.RIGHT_MOUTH_FRONT, true),
+          panel(PanelType.RIGHT_NOSE),
+          panel(PanelType.RIGHT_EYE_FRONT),
+          panel(PanelType.RIGHT_EYE_BACK),
         ],
       },
       {
@@ -24,17 +40,76 @@ export function defaultFaceConfig(): FaceConfig {
         pinCS: 7,
         pinCLK: 8,
         panels: [
-          { panelType: PanelType.LEFT_MOUTH_BACK, upsideDown: false },
-          { panelType: PanelType.LEFT_MOUTH_MID_BACK, upsideDown: false },
-          { panelType: PanelType.LEFT_MOUTH_MID_FRONT, upsideDown: false },
-          { panelType: PanelType.LEFT_MOUTH_FRONT, upsideDown: false },
-          { panelType: PanelType.LEFT_NOSE, upsideDown: true },
-          { panelType: PanelType.LEFT_EYE_FRONT, upsideDown: true },
-          { panelType: PanelType.LEFT_EYE_BACK, upsideDown: true },
+          panel(PanelType.LEFT_MOUTH_BACK),
+          panel(PanelType.LEFT_MOUTH_MID_BACK),
+          panel(PanelType.LEFT_MOUTH_MID_FRONT),
+          panel(PanelType.LEFT_MOUTH_FRONT),
+          panel(PanelType.LEFT_NOSE, true),
+          panel(PanelType.LEFT_EYE_FRONT, true),
+          panel(PanelType.LEFT_EYE_BACK, true),
         ],
       },
     ],
   }
+}
+
+export const FACE_LAYOUT_PRESETS: FaceLayoutPreset[] = [
+  {
+    id: '14-two',
+    name: '14 panels, two connections',
+    description: 'Two nose panels. Left and right sides wired separately.',
+    build: twoConnections,
+  },
+  {
+    id: '14-one',
+    name: '14 panels, one connection',
+    description: 'Two nose panels. Every panel on one chain.',
+    // Right eye back -> front, right mouth back -> front, noses, left mouth front -> back,
+    // left eye front -> back
+    build: () =>
+      oneConnection([
+        PanelType.RIGHT_EYE_BACK,
+        PanelType.RIGHT_EYE_FRONT,
+        PanelType.RIGHT_MOUTH_BACK,
+        PanelType.RIGHT_MOUTH_MID_BACK,
+        PanelType.RIGHT_MOUTH_MID_FRONT,
+        PanelType.RIGHT_MOUTH_FRONT,
+        PanelType.RIGHT_NOSE,
+        PanelType.LEFT_NOSE,
+        PanelType.LEFT_MOUTH_FRONT,
+        PanelType.LEFT_MOUTH_MID_FRONT,
+        PanelType.LEFT_MOUTH_MID_BACK,
+        PanelType.LEFT_MOUTH_BACK,
+        PanelType.LEFT_EYE_FRONT,
+        PanelType.LEFT_EYE_BACK,
+      ]),
+  },
+  {
+    id: '13-one',
+    name: '13 panels, one connection',
+    description: 'One centre nose panel. Every panel on one chain.',
+    // Same order as the 14 panel preset, with one nose panel
+    build: () =>
+      oneConnection([
+        PanelType.RIGHT_EYE_BACK,
+        PanelType.RIGHT_EYE_FRONT,
+        PanelType.RIGHT_MOUTH_BACK,
+        PanelType.RIGHT_MOUTH_MID_BACK,
+        PanelType.RIGHT_MOUTH_MID_FRONT,
+        PanelType.RIGHT_MOUTH_FRONT,
+        PanelType.SINGLE_NOSE,
+        PanelType.LEFT_MOUTH_FRONT,
+        PanelType.LEFT_MOUTH_MID_FRONT,
+        PanelType.LEFT_MOUTH_MID_BACK,
+        PanelType.LEFT_MOUTH_BACK,
+        PanelType.LEFT_EYE_FRONT,
+        PanelType.LEFT_EYE_BACK,
+      ]),
+  },
+]
+
+export function defaultFaceConfig(): FaceConfig {
+  return twoConnections()
 }
 
 export function defaultFeatureConfig(): FeatureConfig {
