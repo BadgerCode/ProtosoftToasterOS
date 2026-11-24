@@ -42,6 +42,8 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 
 ## Configuring
 
+> Consider using the [Toaster Oven](https://toaster.badgercode.co.uk/) to easily configure your protogen!
+
 The configuration can be found in `ToasterOS/Config.h` <br>
 This file includes configuration for the face LEDs, the side lights, boop sensor and more.
 
@@ -245,3 +247,10 @@ If the face isn't rendering properly, there are some steps you can take
 ## Nano Every Pin out
 
 ![nano every pin layout](https://content.arduino.cc/assets/Pinout-NANOevery_latest.png)
+
+
+<br><br>
+
+# Additional
+For information on changing the config management website, see the [Toaster Oven README](./toaster-oven/README.md).
+
