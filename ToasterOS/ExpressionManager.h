@@ -63,12 +63,12 @@ public:
       if (abs(Face_OffsetY) >= 1) Face_OffsetY_Dir *= -1;
     }
 
-    // Show different neutral/happy faces
-    if (InNeutralState) {
+    // Show different neutral/happy faces, unless there are none to show
+    if (InNeutralState && NumExtraDefaultExpressions > 0) {
       // Time for a different expression?
       // Force change to a special face if a boop just ended
       if (BoopState->BoopJustEnded || (CurrentExpression == DEFAULT_FACE && curTime >= NextSpecialFace)) {
-        CurrentExpression = HappyExpressions[random(0, NumHappyExpressions)];
+        CurrentExpression = ExtraDefaultExpressions[random(0, NumExtraDefaultExpressions)];
         NextSpecialFace = curTime;
       }
       // Time to return to the neutral expression?

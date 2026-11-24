@@ -1,6 +1,6 @@
 // Expressions the firmware refers to by name. Removing or renaming one of these
 // would stop ToasterOS compiling, so they can be edited but not renamed or removed.
-// Keep in sync with ExpressionManager.h, Protogen_Face_Collections.h and RemoteControl.h.
+// Keep in sync with ExpressionManager.h, Protogen_Faces.h (ExtraDefaultExpressions) and RemoteControl.h.
 // The default expression (DEFAULT_FACE) isn't listed: it's chosen by the user and can't be
 // removed while it's the default, but it can be renamed.
 

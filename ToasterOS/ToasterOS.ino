@@ -9,7 +9,6 @@
 
 // Imports
 #include "Protogen_Faces.h"
-#include "Protogen_Face_Collections.h"
 #include "FaceRender.h"
 #include "LEDStripRender.h"
 #include "BoopState.h"
