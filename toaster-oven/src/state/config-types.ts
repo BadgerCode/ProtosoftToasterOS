@@ -79,7 +79,7 @@ export const DEBUG_MODES = [
   { value: 0, label: 'Off' },
   { value: 1, label: 'Log FPS' },
   { value: 2, label: 'Log max frame duration' },
-  { value: 3, label: 'Render 7s on all panels' },
+  { value: 3, label: 'Render numbers on all panels' },
 ]
 
 export interface FeatureConfig {

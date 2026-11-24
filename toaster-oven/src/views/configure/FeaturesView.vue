@@ -48,7 +48,10 @@ const remoteButtons = [
           description="Prevent panels with loose connections from getting stuck (and needing a reboot), at a slight cost to performance."
         />
 
-        <FormField label="Debug mode" hint="Use 'Render 7s' to check panel orientation.">
+        <FormField
+          label="Debug mode"
+          hint="Use 'Render numbers' to check panel order and orientation."
+        >
           <select v-model.number="config.debugMode" class="form-input sm:max-w-64">
             <option v-for="mode in DEBUG_MODES" :key="mode.value" :value="mode.value">
               {{ mode.label }}

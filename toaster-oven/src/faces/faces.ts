@@ -24,7 +24,6 @@ export const DEFAULT_EXPRESSIONS = parseExpressions(facesHeader)
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */
 export const NOSE_SINGLE_DECLARATION = extractDeclaration(facesHeader, 'byte Face_Nose_Single')
-export const NUMBERS_DECLARATION = extractDeclaration(facesHeader, 'byte Numbers_ASCII')
 
 export const NOSE_SINGLE: PanelBitmap = parsePanel(NOSE_SINGLE_DECLARATION)
 

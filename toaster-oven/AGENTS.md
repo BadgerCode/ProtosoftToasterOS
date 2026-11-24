@@ -77,7 +77,7 @@ src/
   - Only OWO, Binary, UWU and user-created expressions can be renamed or removed.
   - The owner plans to make this configurable.
 - **Generated files:**
-  - `Protogen_Faces.h` copies `Face_Nose_Single` and `Numbers_ASCII` from the parsed header as-is.
+  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is. The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
   - Expression names are C++ identifiers, saved as `Face_<name>`. The UI shows them with spaces instead of underscores.
 
 **Keep in sync with the firmware.** If `../ToasterOS/ConfigTypes.h`, `Config.h`, `Protogen_Faces.h` or the files that reference expressions change, update:

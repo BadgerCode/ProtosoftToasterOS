@@ -61,7 +61,7 @@ export function generateConfigHeader(face: FaceConfig, features: FeatureConfig):
 static ProtoConfigStruct ProtoConfig {
   // General config
   .Brightness = ${f.brightness}, // Percentage. E.g. 0.25 = 25%
-  .DebugMode = ${f.debugMode}, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
+  .DebugMode = ${f.debugMode}, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render numbers on all panels
 
   // Boop sensor config
   .EnableBoopSensor = ${f.enableBoopSensor},

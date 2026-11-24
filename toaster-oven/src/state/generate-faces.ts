@@ -1,4 +1,4 @@
-import { NOSE_SINGLE_DECLARATION, NUMBERS_DECLARATION, type PanelBitmap } from '@/faces/faces'
+import { NOSE_SINGLE_DECLARATION, type PanelBitmap } from '@/faces/faces'
 import type { Expression } from './expressions'
 
 // Generates ToasterOS/Protogen_Faces.h from the app's expressions.
@@ -56,9 +56,6 @@ struct FaceExpression {
 
 
 ${NOSE_SINGLE_DECLARATION}
-
-
-${NUMBERS_DECLARATION}
 
 
 // Expressions

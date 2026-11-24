@@ -57,7 +57,7 @@ export function parseExpressions(header: string): ParsedExpression[] {
   return [...header.matchAll(EXPRESSION_PATTERN)].map((m) => parseExpressionBody(m[1]!, m[2]!))
 }
 
-/** A top-level declaration copied as-is, e.g. `byte Numbers_ASCII[10][8] = { ... };` */
+/** A top-level declaration copied as-is, e.g. `byte Face_Nose_Single[8] = { ... };` */
 export function extractDeclaration(header: string, startsWith: string): string {
   const start = header.indexOf(startsWith)
   if (start === -1) throw new Error(`Couldn't find "${startsWith}" in Protogen_Faces.h`)
