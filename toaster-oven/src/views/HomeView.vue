@@ -98,9 +98,10 @@ onBeforeUnmount(() => {
 
         <div class="mt-6 max-w-prose space-y-3 text-lg leading-relaxed text-slate-300">
           <p>
-            Beeeeeep! This project is for protogen fursuit heads which use MAX7219 8x8 LED panels.
+            Beeeeeep!<br>
+            Use the Toaster Oven to prepare your protogen :3
           </p>
-          <p>Use this page to configure the software &amp; manage your expressions :3</p>
+          <p>Manage configuration and expressions for your MAX7219 Protogen fursuit head!</p>
         </div>
 
         <div class="mt-8 flex flex-wrap gap-3">
