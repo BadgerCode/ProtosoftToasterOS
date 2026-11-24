@@ -1,8 +1,8 @@
-# Proto Manager
+# Toaster Oven
 
 A Vue web app for building the configuration and face data files for **Protosoft Toaster OS**, the Arduino firmware for protogen fursuit heads that use MAX7219 8x8 LED panels. Users edit settings in the browser, then download C++ header files and copy them into the firmware folder.
 
-- This app lives in `proto-manager/`. The firmware is a sibling folder, `../ToasterOS/`, in the same git repo. `../README.md` explains the hardware and config, with panel diagrams in `../Docs/Images/`.
+- This app lives in `toaster-oven/`. The firmware is a sibling folder, `../ToasterOS/`, in the same git repo. `../README.md` explains the hardware and config, with panel diagrams in `../Docs/Images/`.
 - `../face-demo.html` is the original standalone expression editor. The Expressions tab replaces it.
 - The app outputs two files:
   - `Config.h`: pins, panel layout and optional features.

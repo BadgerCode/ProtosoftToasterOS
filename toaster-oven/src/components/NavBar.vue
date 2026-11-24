@@ -15,7 +15,7 @@ const links = [
       <RouterLink to="/" class="flex items-center gap-2.5 rounded-md">
         <LedEyeLogo />
         <span class="display-title text-xl whitespace-nowrap [text-shadow:none]"
-          >Proto Manager</span
+          >Toaster Oven</span
         >
       </RouterLink>
 
