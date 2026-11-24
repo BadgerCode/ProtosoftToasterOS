@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { appStore, findExpression } from '@/state/app-state'
+import { appStore, getDefaultExpression } from '@/state/app-state'
 import {
   EMPTY_PANEL,
   MAX_PANELS_PER_CONNECTION,
@@ -41,8 +41,8 @@ const duplicatePanels = computed(() =>
   PANEL_TYPES.filter((p) => (usageCounts.value.get(p.id) ?? 0) > 1),
 )
 
-// Visor map: lights each assigned panel with its part of the neutral face
-const neutralFace = computed(() => expressionToPanels(findExpression('Neutral')))
+// Visor map: lights each assigned panel with its part of the default expression
+const defaultFace = computed(() => expressionToPanels(getDefaultExpression()))
 
 const mapPanelIds = computed(() => {
   const usesSideNose =
@@ -53,7 +53,7 @@ const mapPanelIds = computed(() => {
 
 const mapBitmaps = computed(() =>
   Object.fromEntries(
-    Object.entries(neutralFace.value).filter(([id]) => usageCounts.value.has(Number(id))),
+    Object.entries(defaultFace.value).filter(([id]) => usageCounts.value.has(Number(id))),
   ),
 )
 
@@ -105,7 +105,7 @@ const presets = computed(() =>
       key: JSON.stringify(config.connections),
       panelIds: PANEL_TYPES.map((p) => p.id).filter((id) => ids.has(id)),
       bitmaps: Object.fromEntries(
-        Object.entries(neutralFace.value).filter(([id]) => ids.has(Number(id))),
+        Object.entries(defaultFace.value).filter(([id]) => ids.has(Number(id))),
       ),
     }
   }),

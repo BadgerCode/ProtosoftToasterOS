@@ -471,3 +471,12 @@ struct FaceExpression Face_Spiral4 = {
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
   }
 };
+
+
+
+
+// Face usage configuration
+FaceExpression* const DEFAULT_FACE = &Face_Neutral;
+
+
+

@@ -57,6 +57,11 @@ export function parseExpressions(header: string): ParsedExpression[] {
   return [...header.matchAll(EXPRESSION_PATTERN)].map((m) => parseExpressionBody(m[1]!, m[2]!))
 }
 
+/** The expression DEFAULT_FACE points at, without the Face_ prefix, or null if there isn't one */
+export function parseDefaultFace(header: string): string | null {
+  return header.match(/DEFAULT_FACE\s*=\s*&Face_(\w+)\s*;/)?.[1] ?? null
+}
+
 /** A top-level declaration copied as-is, e.g. `byte Face_Nose_Single[8] = { ... };` */
 export function extractDeclaration(header: string, startsWith: string): string {
   const start = header.indexOf(startsWith)

@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
-import { appStore } from './app-state'
+import { appStore, getDefaultExpression } from './app-state'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
+import { DEFAULT_FACE_NAME } from '@/faces/faces'
 import { defaultExpressions } from './expressions'
 import { downloadBlob, generateConfigHeader } from './generate-config'
 import { generateFacesHeader } from './generate-faces'
@@ -15,26 +16,37 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 2
+const FORMAT_VERSION = 3
 
 function generateFiles(
   face: typeof appStore.faceConfig,
   features: typeof appStore.featureConfig,
   expressions: typeof appStore.expressions,
+  defaultExpressionName: string,
 ): Record<DownloadKind, string> {
   return {
     config: generateConfigHeader(face, features),
-    expressions: generateFacesHeader(expressions),
+    expressions: generateFacesHeader(expressions, defaultExpressionName),
   }
 }
 
 /** Each file as of its last download. Starts as the ToasterOS defaults. */
 const lastDownloaded = ref(
-  generateFiles(defaultFaceConfig(), defaultFeatureConfig(), defaultExpressions()),
+  generateFiles(
+    defaultFaceConfig(),
+    defaultFeatureConfig(),
+    defaultExpressions(),
+    DEFAULT_FACE_NAME,
+  ),
 )
 
 const currentFiles = computed(() =>
-  generateFiles(appStore.faceConfig, appStore.featureConfig, appStore.expressions),
+  generateFiles(
+    appStore.faceConfig,
+    appStore.featureConfig,
+    appStore.expressions,
+    getDefaultExpression().name,
+  ),
 )
 
 /** Files that have changed since they were last downloaded */

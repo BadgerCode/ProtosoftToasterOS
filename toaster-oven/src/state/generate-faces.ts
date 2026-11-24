@@ -40,7 +40,7 @@ ${panels(e.mouth)}
 };`
 }
 
-export function generateFacesHeader(expressions: Expression[]): string {
+export function generateFacesHeader(expressions: Expression[], defaultName: string): string {
   return `// All of the faces and digits are designed to work on the right face & be flipped on the left face
 
 
@@ -60,5 +60,9 @@ ${NOSE_SINGLE_DECLARATION}
 
 // Expressions
 ${expressions.map(generateExpression).join('\n\n')}
+
+
+// Face usage configuration
+FaceExpression* const DEFAULT_FACE = &Face_${defaultName};
 `
 }

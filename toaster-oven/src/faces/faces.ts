@@ -5,7 +5,7 @@
 
 import facesHeader from '@/assets/Protogen_Faces.h?raw'
 import { PanelType } from '@/state/config-types'
-import { extractDeclaration, parseExpressions, parsePanel } from './parse-faces'
+import { extractDeclaration, parseDefaultFace, parseExpressions, parsePanel } from './parse-faces'
 
 export type PanelBitmap = number[]
 
@@ -22,6 +22,9 @@ export interface FaceExpressionData {
 /** The starting pack of expressions that ships with ToasterOS */
 export const DEFAULT_EXPRESSIONS = parseExpressions(facesHeader)
 
+/** The expression the head shows when idle (DEFAULT_FACE), without the Face_ prefix */
+export const DEFAULT_FACE_NAME = parseDefaultFace(facesHeader) ?? 'Neutral'
+
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */
 export const NOSE_SINGLE_DECLARATION = extractDeclaration(facesHeader, 'byte Face_Nose_Single')
 
@@ -32,8 +35,6 @@ export function defaultExpression(name: string): FaceExpressionData {
   if (!face) throw new Error(`No default expression called Face_${name}`)
   return face
 }
-
-export const FACE_NEUTRAL = defaultExpression('Neutral')
 
 export function emptyPanel(): PanelBitmap {
   return [0, 0, 0, 0, 0, 0, 0, 0]

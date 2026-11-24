@@ -1,5 +1,5 @@
-import { defaultExpression } from '@/faces/faces'
-import { parseExpressions } from '@/faces/parse-faces'
+import { DEFAULT_FACE_NAME, defaultExpression } from '@/faces/faces'
+import { parseDefaultFace, parseExpressions } from '@/faces/parse-faces'
 import { REQUIRED_EXPRESSIONS } from '@/faces/required-expressions'
 import { createExpression, displayName, type Expression } from '../expressions'
 
@@ -7,7 +7,21 @@ import { createExpression, displayName, type Expression } from '../expressions'
 // Expressions the firmware needs but the file doesn't have are added back from the defaults,
 // so the generated file still compiles.
 
-export function readFaces(text: string): { expressions: Expression[]; added: string[] } {
+export interface ReadFacesResult {
+  expressions: Expression[]
+  /** Display names of the expressions that were added back */
+  added: string[]
+  /** Id of the expression to use as the default (DEFAULT_FACE) */
+  defaultExpressionId: number
+  /**
+   * Set when the file didn't have a usable default expression and it fell back to
+   * DEFAULT_FACE_NAME, e.g. files downloaded before the default could be chosen.
+   * The name the file asked for, if it had one.
+   */
+  defaultFallback: { requested: string | null } | null
+}
+
+export function readFaces(text: string): ReadFacesResult {
   const parsed = parseExpressions(text)
   if (parsed.length === 0) throw new Error('No expressions found')
 
@@ -15,11 +29,26 @@ export function readFaces(text: string): { expressions: Expression[]; added: str
   const names = new Set(parsed.map((e) => e.name))
   const added: string[] = []
 
-  for (const name of Object.keys(REQUIRED_EXPRESSIONS)) {
-    if (names.has(name)) continue
+  function addBack(name: string) {
     expressions.push(createExpression(name, defaultExpression(name)))
+    names.add(name)
     added.push(displayName(name))
   }
 
-  return { expressions, added }
+  for (const name of Object.keys(REQUIRED_EXPRESSIONS)) {
+    if (!names.has(name)) addBack(name)
+  }
+
+  // Older files have no DEFAULT_FACE; the firmware used Face_Neutral back then
+  const requested = parseDefaultFace(text)
+  let defaultName = requested
+  let defaultFallback: ReadFacesResult['defaultFallback'] = null
+  if (!defaultName || !names.has(defaultName)) {
+    defaultName = DEFAULT_FACE_NAME
+    defaultFallback = { requested }
+    if (!names.has(defaultName)) addBack(defaultName)
+  }
+
+  const defaultExpressionId = expressions.find((e) => e.name === defaultName)!.id
+  return { expressions, added, defaultExpressionId, defaultFallback }
 }

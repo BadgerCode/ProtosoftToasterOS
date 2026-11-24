@@ -2,7 +2,7 @@
 class ExpressionManager {
 private:
   // Facial expression state
-  FaceExpression* CurrentExpression = &Face_Neutral;
+  FaceExpression* CurrentExpression = DEFAULT_FACE;
   bool InNeutralState = true;
 
   // Random face state
@@ -40,7 +40,7 @@ public:
 
   void ResetToNeutral() {
     InNeutralState = true;
-    CurrentExpression = &Face_Neutral;
+    CurrentExpression = DEFAULT_FACE;
     NextOffsetShift = millis() + GetMovementDelay();
     NextSpecialFace = millis() + random(4000) + MinSpecialFaceWait;
   }
@@ -67,13 +67,13 @@ public:
     if (InNeutralState) {
       // Time for a different expression?
       // Force change to a special face if a boop just ended
-      if (BoopState->BoopJustEnded || (CurrentExpression == &Face_Neutral && curTime >= NextSpecialFace)) {
+      if (BoopState->BoopJustEnded || (CurrentExpression == DEFAULT_FACE && curTime >= NextSpecialFace)) {
         CurrentExpression = HappyExpressions[random(0, NumHappyExpressions)];
         NextSpecialFace = curTime;
       }
       // Time to return to the neutral expression?
       else if (timeSince(NextSpecialFace) >= SpecialFaceDurationMs) {
-        CurrentExpression = &Face_Neutral;
+        CurrentExpression = DEFAULT_FACE;
         NextSpecialFace = curTime + random(4000) + MinSpecialFaceWait;
       }
     }

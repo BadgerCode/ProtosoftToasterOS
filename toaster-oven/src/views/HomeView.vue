@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import VisorDisplay from '@/components/VisorDisplay.vue'
 import { expressionToPanels } from '@/faces/faces'
-import { findExpression } from '@/state/app-state'
+import { findExpression, getDefaultExpression } from '@/state/app-state'
 import { PANEL_TYPES, PanelType } from '@/state/config-types'
 
 const repoUrl = 'https://github.com/BadgerCode/ProtosoftToasterOS'
@@ -47,7 +47,7 @@ let boopCount = 0
 
 const bitmaps = computed(() =>
   expressionToPanels(
-    findExpression(boopFace.value ?? 'Neutral'),
+    boopFace.value ? findExpression(boopFace.value) : getDefaultExpression(),
     blinking.value && !boopFace.value,
   ),
 )

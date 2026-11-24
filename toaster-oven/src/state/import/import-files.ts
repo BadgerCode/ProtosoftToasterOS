@@ -1,6 +1,8 @@
+import { DEFAULT_FACE_NAME } from '@/faces/faces'
 import { appStore } from '../app-state'
 import { hasChanged, markDownloaded, type DownloadKind } from '../config-download'
 import { resetEditor } from '../expression-editor'
+import { displayName } from '../expressions'
 import { readConfig } from './read-config'
 import { readFaces } from './read-faces'
 
@@ -84,11 +86,21 @@ export function importFiles(
       upToDate = r.result.defaulted.length === 0
     } else {
       appStore.expressions.splice(0, appStore.expressions.length, ...r.result.expressions)
+      appStore.defaultExpressionId = r.result.defaultExpressionId
       resetEditor()
       if (r.result.added.length) {
         notes.push(`Added missing expressions the firmware needs: ${r.result.added.join(', ')}`)
       }
-      upToDate = r.result.added.length === 0
+      const fallback = r.result.defaultFallback
+      if (fallback) {
+        const used = displayName(DEFAULT_FACE_NAME)
+        notes.push(
+          fallback.requested
+            ? `The default expression, ${displayName(fallback.requested)}, wasn't in ${r.name}, so it uses ${used}`
+            : `${r.name} didn't set a default expression, so it uses ${used}`,
+        )
+      }
+      upToDate = r.result.added.length === 0 && !fallback
     }
 
     // The user already has this file, unless something had to be filled in

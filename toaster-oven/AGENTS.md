@@ -72,12 +72,13 @@ src/
   - Each expression has 1 nose panel, 2 eye panels (front, back), an optional 2-panel blink frame, and 4 mouth panels (front → back).
   - A bitmap is 8 numbers, one per row. The most significant bit is the leftmost LED.
 - **Visor geometry:** units are LEDs. Panel positions are in `VisorDisplay.vue` and `expression-layout.ts`, laid out like `../Docs/Images/panels_diagram_twocon.png`.
-- **Required expressions:** `required-expressions.ts` lists the 20 expressions that `ExpressionManager.h`, `Protogen_Face_Collections.h` and `RemoteControl.h` refer to by name.
+- **Required expressions:** `required-expressions.ts` lists the 19 expressions that `ExpressionManager.h`, `Protogen_Face_Collections.h` and `RemoteControl.h` refer to by name.
   - The editor lets users change their LEDs, but blocks renaming and removing them, because either would break the firmware build.
-  - Only OWO, Binary, UWU and user-created expressions can be renamed or removed.
+  - Only OWO, Binary, UWU, Neutral and user-created expressions can be renamed or removed.
+- **Default expression:** the face shown when idle, `DEFAULT_FACE` at the end of `Protogen_Faces.h`. It's stored as `appStore.defaultExpressionId`, so renaming it is fine; it can't be removed while it's the default. `getDefaultExpression()` returns it, and the home page visor and panel map show it. Importing a file without a usable `DEFAULT_FACE` (downloaded before format 3) falls back to Neutral, adding Neutral back if needed.
   - The owner plans to make this configurable.
 - **Generated files:**
-  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is. The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
+  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `FaceExpression* const DEFAULT_FACE = &Face_<name>;`. The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
   - Expression names are C++ identifiers, saved as `Face_<name>`. The UI shows them with spaces instead of underscores.
 
 **Keep in sync with the firmware.** If `../ToasterOS/ConfigTypes.h`, `Config.h`, `Protogen_Faces.h` or the files that reference expressions change, update:

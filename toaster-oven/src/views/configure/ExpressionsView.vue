@@ -30,6 +30,13 @@ const selected = computed(
 )
 const selectedRequiredBy = computed(() => requiredBy(selected.value.name))
 
+// Default expression (DEFAULT_FACE): can be renamed, but not removed while it's the default
+const isDefault = computed(() => selected.value.id === appStore.defaultExpressionId)
+
+function setAsDefault() {
+  appStore.defaultExpressionId = selected.value.id
+}
+
 const tool = ref<'draw' | 'erase'>('draw')
 
 /** Shown in the undo/redo shortcut hints */
@@ -94,6 +101,7 @@ function duplicateExpression() {
 
 function removeExpression() {
   const expression = selected.value
+  if (isDefault.value) return
   if (!confirm(`Remove "${displayName(expression.name)}"? This can't be undone.`)) return
   const index = expressions.indexOf(expression)
   expressions.splice(index, 1)
@@ -161,6 +169,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
               class="h-6 w-9 shrink-0 rounded-sm bg-visor-glass p-0.5"
             />
             <span class="min-w-0 flex-1 truncate">{{ displayName(expression.name) }}</span>
+            <span
+              v-if="expression.id === appStore.defaultExpressionId"
+              class="shrink-0 rounded border border-border px-1.5 text-xs text-slate-400"
+            >
+              Default
+            </span>
             <svg
               v-if="requiredBy(expression.name)"
               class="size-3.5 shrink-0 text-slate-500"
@@ -214,14 +228,23 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
               Saved as <code class="text-slate-400">Face_{{ selected.name }}</code>
             </p>
           </template>
+          <p v-if="isDefault" class="mt-2 text-sm text-slate-400">
+            The default expression, shown when idle between random happy expressions.
+            <template v-if="!selectedRequiredBy">
+              To remove it, set another expression as the default first.
+            </template>
+          </p>
         </div>
 
-        <div class="flex shrink-0 gap-2">
+        <div class="flex shrink-0 flex-wrap gap-2">
+          <button v-if="!isDefault" type="button" class="btn btn-secondary" @click="setAsDefault">
+            Set as default
+          </button>
           <button type="button" class="btn btn-secondary" @click="duplicateExpression">
             Duplicate
           </button>
           <button
-            v-if="!selectedRequiredBy"
+            v-if="!selectedRequiredBy && !isDefault"
             type="button"
             class="btn btn-secondary hover:!border-red-400 hover:!text-red-300"
             @click="removeExpression"
