@@ -3,12 +3,14 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import PageHeading from '@/components/PageHeading.vue'
 import DownloadConfigButton from '@/components/DownloadConfigButton.vue'
+import ImportFilesButton from '@/components/ImportFilesButton.vue'
 import {
   DOWNLOADS,
   changedDownloads,
   downloadFile,
   hasUndownloadedChanges,
 } from '@/state/config-download'
+import type { ImportSummary } from '@/state/import/import-files'
 
 const tabs = [
   { to: '/configure/panels', label: 'Panel layout' },
@@ -29,6 +31,29 @@ const reminderHidden = ref(false)
 watch(hasUndownloadedChanges, (changed) => {
   if (!changed) reminderHidden.value = false
 })
+
+// What the last import did, until dismissed
+const importSummary = ref<(ImportSummary & { at: Date }) | null>(null)
+
+function onImported(summary: ImportSummary) {
+  importSummary.value = { ...summary, at: new Date() }
+}
+
+/** e.g. "24 Nov, 14:03:12", so an old summary is easy to tell apart from a new one */
+const importedAt = computed(() =>
+  importSummary.value?.at.toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }),
+)
+const importNeedsAttention = computed(
+  () =>
+    !!importSummary.value &&
+    (importSummary.value.notes.length > 0 || importSummary.value.errors.length > 0),
+)
 </script>
 
 <template>
@@ -36,6 +61,7 @@ watch(hasUndownloadedChanges, (changed) => {
     <PageHeading title="Configure" subtitle="Set up the hardware and behaviour of your protogen.">
       <template #actions>
         <div class="flex flex-wrap gap-3">
+          <ImportFilesButton @imported="onImported" />
           <DownloadConfigButton kind="config" :primary="!onExpressions" />
           <DownloadConfigButton kind="expressions" :primary="onExpressions" />
         </div>
@@ -53,6 +79,46 @@ watch(hasUndownloadedChanges, (changed) => {
         {{ tab.label }}
       </RouterLink>
     </nav>
+
+    <!-- What the last import did -->
+    <div
+      v-if="importSummary"
+      class="-mt-4 mb-8 flex items-start gap-3 rounded-lg border bg-surface py-3 pr-2 pl-4 text-sm"
+      :class="
+        importNeedsAttention ? 'border-gold-500/40 text-gold-200' : 'border-border text-slate-300'
+      "
+      role="status"
+    >
+      <div class="min-w-0 flex-1 space-y-1.5">
+        <p class="font-semibold">
+          <template v-if="importSummary.imported.length">
+            Imported {{ importSummary.imported.join(' and ') }}
+          </template>
+          <template v-else>Nothing was imported</template>
+          <span class="ml-2 font-normal text-slate-400">{{ importedAt }}</span>
+        </p>
+        <ul
+          v-if="importSummary.notes.length || importSummary.errors.length"
+          class="list-disc space-y-1 pl-5"
+        >
+          <li v-for="note in importSummary.notes" :key="note">{{ note }}</li>
+          <li v-for="error in importSummary.errors" :key="error">{{ error }}</li>
+        </ul>
+      </div>
+      <button
+        type="button"
+        class="btn btn-icon -my-1.5 shrink-0"
+        title="Dismiss"
+        aria-label="Dismiss import summary"
+        @click="importSummary = null"
+      >
+        <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path
+            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+          />
+        </svg>
+      </button>
+    </div>
 
     <RouterView />
 
