@@ -8,6 +8,7 @@ import { PanelType } from '@/state/config-types'
 import {
   extractDeclaration,
   parseDefaultFace,
+  parseBoopExpressions,
   parseExpressions,
   parseExtraDefaults,
   parsePanel,
@@ -40,6 +41,16 @@ export const EXTRA_DEFAULT_NAMES = parseExtraDefaults(facesHeader) ?? [
   'Cute',
   'Blep',
   'Silly',
+]
+
+/**
+ * Expressions shown when booped, by the minimum number of boops in a row (BoopExpressions).
+ * Also what older files without the list used, as the firmware had these hard-coded.
+ */
+export const BOOP_EXPRESSION_DEFAULTS = parseBoopExpressions(facesHeader) ?? [
+  { minBoops: 1, name: 'Surprised' },
+  { minBoops: 3, name: 'Angry' },
+  { minBoops: 6, name: 'X_X' },
 ]
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */

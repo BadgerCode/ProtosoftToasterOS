@@ -1,5 +1,16 @@
-import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES, defaultExpression } from '@/faces/faces'
-import { parseDefaultFace, parseExpressions, parseExtraDefaults } from '@/faces/parse-faces'
+import {
+  BOOP_EXPRESSION_DEFAULTS,
+  DEFAULT_FACE_NAME,
+  EXTRA_DEFAULT_NAMES,
+  defaultExpression,
+} from '@/faces/faces'
+import {
+  parseBoopExpressions,
+  parseDefaultFace,
+  parseExpressions,
+  parseExtraDefaults,
+} from '@/faces/parse-faces'
+import type { BoopExpression } from '../boop-expressions'
 import { REQUIRED_EXPRESSIONS } from '@/faces/required-expressions'
 import { createExpression, displayName, type Expression } from '../expressions'
 
@@ -25,6 +36,11 @@ export interface ReadFacesResult {
   extraDefaultsFallback: boolean
   /** Display names in ExtraDefaultExpressions that aren't expressions in the file */
   extraDefaultsSkipped: string[]
+  boopExpressions: BoopExpression[]
+  /** Set when the file had no BoopExpressions, so the defaults were used */
+  boopExpressionsFallback: boolean
+  /** Display names in BoopExpressions that aren't expressions in the file */
+  boopExpressionsSkipped: string[]
 }
 
 export function readFaces(text: string): ReadFacesResult {
@@ -67,6 +83,19 @@ export function readFaces(text: string): ReadFacesResult {
     .filter((name) => !names.has(name))
     .map(displayName)
 
+  // Older files have no BoopExpressions; the firmware had the defaults hard-coded
+  const requestedBoops = parseBoopExpressions(text)
+  const boopEntries = requestedBoops ?? BOOP_EXPRESSION_DEFAULTS
+  const boopExpressions = boopEntries
+    .filter((b) => names.has(b.name))
+    .map((b) => ({
+      minBoops: b.minBoops,
+      expressionId: expressions.find((e) => e.name === b.name)!.id,
+    }))
+  const boopExpressionsSkipped = boopEntries
+    .filter((b) => !names.has(b.name))
+    .map((b) => displayName(b.name))
+
   return {
     expressions,
     added,
@@ -75,5 +104,8 @@ export function readFaces(text: string): ReadFacesResult {
     extraDefaultExpressionIds,
     extraDefaultsFallback: requestedExtras === null,
     extraDefaultsSkipped,
+    boopExpressions,
+    boopExpressionsFallback: requestedBoops === null,
+    boopExpressionsSkipped,
   }
 }

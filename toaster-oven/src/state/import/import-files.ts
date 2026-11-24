@@ -92,6 +92,11 @@ export function importFiles(
         appStore.extraDefaultExpressionIds.length,
         ...r.result.extraDefaultExpressionIds,
       )
+      appStore.boopExpressions.splice(
+        0,
+        appStore.boopExpressions.length,
+        ...r.result.boopExpressions,
+      )
       resetEditor()
       if (r.result.added.length) {
         notes.push(`Added missing expressions the firmware needs: ${r.result.added.join(', ')}`)
@@ -113,7 +118,17 @@ export function importFiles(
           `Skipped extra default expressions that weren't in ${r.name}: ${r.result.extraDefaultsSkipped.join(', ')}`,
         )
       }
+      if (r.result.boopExpressionsFallback) {
+        notes.push(`${r.name} didn't list boop expressions, so it uses the usual ones`)
+      }
+      if (r.result.boopExpressionsSkipped.length) {
+        notes.push(
+          `Skipped boop expressions that weren't in ${r.name}: ${r.result.boopExpressionsSkipped.join(', ')}`,
+        )
+      }
       upToDate =
+        !r.result.boopExpressionsFallback &&
+        r.result.boopExpressionsSkipped.length === 0 &&
         r.result.added.length === 0 &&
         !fallback &&
         !r.result.extraDefaultsFallback &&

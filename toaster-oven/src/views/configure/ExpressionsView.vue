@@ -115,11 +115,18 @@ function duplicateExpression() {
 function removeExpression() {
   const expression = selected.value
   if (isDefault.value) return
-  if (!confirm(`Remove "${displayName(expression.name)}"? This can't be undone.`)) return
+  const usedForBoops = appStore.boopExpressions.some((b) => b.expressionId === expression.id)
+  const boopNote = usedForBoops ? ' It will also be removed from the boop expressions.' : ''
+  if (!confirm(`Remove "${displayName(expression.name)}"?${boopNote} This can't be undone.`)) return
   const index = expressions.indexOf(expression)
   expressions.splice(index, 1)
   const extraIndex = appStore.extraDefaultExpressionIds.indexOf(expression.id)
   if (extraIndex !== -1) appStore.extraDefaultExpressionIds.splice(extraIndex, 1)
+  for (let i = appStore.boopExpressions.length - 1; i >= 0; i--) {
+    if (appStore.boopExpressions[i]!.expressionId === expression.id) {
+      appStore.boopExpressions.splice(i, 1)
+    }
+  }
   selectedExpressionId.value = expressions[Math.min(index, expressions.length - 1)]!.id
 }
 

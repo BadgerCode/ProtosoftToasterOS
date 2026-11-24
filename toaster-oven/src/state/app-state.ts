@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
-import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import { BOOP_EXPRESSION_DEFAULTS, DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import type { BoopExpression } from './boop-expressions'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
 import { defaultExpressions } from './expressions'
 
@@ -19,6 +20,11 @@ export const appStore = reactive({
   extraDefaultExpressionIds: expressions
     .filter((e) => EXTRA_DEFAULT_NAMES.includes(e.name))
     .map((e) => e.id),
+  /** Expressions shown when booped (BoopExpressions in the firmware). Update in place. */
+  boopExpressions: BOOP_EXPRESSION_DEFAULTS.map((b): BoopExpression => ({
+    minBoops: b.minBoops,
+    expressionId: expressions.find((e) => e.name === b.name)!.id,
+  })),
 })
 
 /** The expression the head shows when idle, falling back to the first one */

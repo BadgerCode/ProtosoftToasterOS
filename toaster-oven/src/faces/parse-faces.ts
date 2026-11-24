@@ -72,6 +72,19 @@ export function parseExtraDefaults(header: string): string[] | null {
   return [...list.matchAll(/&Face_(\w+)/g)].map((m) => m[1]!)
 }
 
+/**
+ * The entries in BoopExpressions, e.g. `{ 3, &Face_Angry }`, or null if the list isn't there.
+ * An empty list ({}) gives [].
+ */
+export function parseBoopExpressions(header: string): { minBoops: number; name: string }[] | null {
+  const list = header.match(/BoopExpressions\[\]\s*=\s*\{([\s\S]*?)\};/)?.[1]
+  if (list === undefined) return null
+  return [...list.matchAll(/\{\s*(\d+)\s*,\s*&Face_(\w+)\s*\}/g)].map((m) => ({
+    minBoops: parseInt(m[1]!, 10),
+    name: m[2]!,
+  }))
+}
+
 /** A top-level declaration copied as-is, e.g. `byte Face_Nose_Single[8] = { ... };` */
 export function extractDeclaration(header: string, startsWith: string): string {
   const start = header.indexOf(startsWith)

@@ -45,6 +45,7 @@ src/
     expressions.ts          Expression type, defaults, naming/validation helpers
     expression-editor.ts    Selected expression + undo/redo stacks (module state, survives tab switches)
     pin-usage.ts            Detects digital pins assigned twice
+    boop-expressions.ts     Boop expression helpers, matching ExpressionManager::GetBoopExpression()
     import/
       read-config.ts        Config.h -> state. A list of readers per setting, newest format first
       read-faces.ts         Protogen_Faces.h -> expressions. Adds back missing required expressions
@@ -59,7 +60,7 @@ src/
     form/                   SettingsCard, FormField, ToggleSwitch
     DownloadConfigButton.vue  One button per file (kind="config" | "expressions")
   views/
-    HomeView.vue            Hero visor (blinks; click to boop: Surprised -> Angry -> X_X, like the firmware)
+    HomeView.vue            Hero visor (blinks; click to boop, using the boop expressions like the firmware)
     ConfigureView.vue       Heading, both download buttons, tabs, sticky "changed" reminder
     configure/              PanelLayoutView, ExpressionsView, FeaturesView
 ```
@@ -78,8 +79,9 @@ src/
   - The owner plans to make this configurable.
 - **Default expression:** the face shown when idle, `DEFAULT_FACE` at the end of `Protogen_Faces.h`. It's stored as `appStore.defaultExpressionId`, so renaming it is fine; it can't be removed while it's the default. `getDefaultExpression()` returns it, and the home page visor and panel map show it. Importing a file without a usable `DEFAULT_FACE` (downloaded before format 3) falls back to Neutral, adding Neutral back if needed.
 - **Extra default expressions:** `ExtraDefaultExpressions` in `Protogen_Faces.h`, shown now and then in place of the default expression (every 10–14 seconds for 5 seconds, and after a boop). An empty list turns this off. Stored as `appStore.extraDefaultExpressionIds` (update in place) and toggled per expression in the Expressions tab. `getExtraDefaultExpressions()` returns them in list order, leaving out the default expression, which the firmware would skip anyway. Removing an expression drops it from the list. Importing a file without the list (downloaded before format 4) uses the usual four: Happy Closed eyes, Cute, Blep and Silly.
+- **Boop expressions:** `BoopExpressions` in `Protogen_Faces.h`: `{ minBoops, &Face_X }` entries. The firmware shows the entry with the highest `minBoops` reached; with none reached, or an empty list, the current expression stays. Rubbing the nose always shows the hearts, which aren't configurable yet. Stored as `appStore.boopExpressions` (`{ minBoops, expressionId }`, update in place) and edited under Features → Boop sensor, though it's saved in `Protogen_Faces.h`, not `Config.h`. The generator sorts entries by `minBoops` and leaves out invalid ones, which the editor flags. Removing an expression drops its entries. Importing a file without the list (downloaded before format 5) uses Surprised (1), Angry (3) and X_X (6).
 - **Generated files:**
-  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE` and `ExtraDefaultExpressions` (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
+  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE`, `ExtraDefaultExpressions` and `BoopExpressions` (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
   - Expression names are C++ identifiers, saved as `Face_<name>`. The UI shows them with spaces instead of underscores.
 
 **Keep in sync with the firmware.** If `../ToasterOS/ConfigTypes.h`, `Config.h`, `Protogen_Faces.h` or the files that reference expressions change, update:
@@ -110,7 +112,7 @@ The theme comes from the owner's actual head: smoked plum visor, blue LEDs, whit
 - `page`, `surface`, `border` and `visor-glass` are the dark plum surfaces.
 - `led` / `accent` is the blue highlight. `white` is the shell white used for text.
 - Tailwind's **`slate` scale is overridden** with plum-tinted greys, so `text-slate-400` etc. match the theme.
-- **`gold-*` means "needs attention"**: unsaved changes, pin conflicts, duplicate panels, over 16 panels and invalid names. Use red only for destructive actions.
+- **`gold-*` means "needs attention"**: unsaved changes, pin conflicts, duplicate panels, over 16 panels, invalid names and boop expression problems. Use red only for destructive actions.
 
 Rules:
 

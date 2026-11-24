@@ -1,6 +1,12 @@
 import { NOSE_SINGLE_DECLARATION, type PanelBitmap } from '@/faces/faces'
 import type { Expression } from './expressions'
 
+/** A BoopExpressions entry, by expression name */
+export interface BoopExpressionEntry {
+  minBoops: number
+  name: string
+}
+
 // Generates ToasterOS/Protogen_Faces.h from the app's expressions.
 // Keep the layout in sync with the Protogen_Faces.h in the ToasterOS project.
 
@@ -46,10 +52,19 @@ function generateExtraDefaults(names: string[]): string {
 const int NumExtraDefaultExpressions = sizeof(ExtraDefaultExpressions) / sizeof(ExtraDefaultExpressions[0]);`
 }
 
+function generateBoopExpressions(entries: BoopExpressionEntry[]): string {
+  const list = entries.length
+    ? `{\n${entries.map((b) => `  { ${b.minBoops}, &Face_${b.name} }`).join(',\n')}\n}`
+    : '{}'
+  return `const BoopExpressionConfig BoopExpressions[] = ${list};
+const int NumBoopExpressions = sizeof(BoopExpressions) / sizeof(BoopExpressions[0]);`
+}
+
 export function generateFacesHeader(
   expressions: Expression[],
   defaultName: string,
   extraDefaultNames: string[],
+  boopExpressions: BoopExpressionEntry[],
 ): string {
   return `// All of the faces and digits are designed to work on the right face & be flipped on the left face
 
@@ -78,5 +93,10 @@ FaceExpression* const DEFAULT_FACE = &Face_${defaultName};
 // Additional Neutral/Happy expressions to randomly change to when the default expression is in use
 // Leave the list empty ({}) to always show the default expression
 ${generateExtraDefaults(extraDefaultNames)}
+
+// Expressions to show when booped, by the minimum number of boops in a row
+// The entry with the highest number that has been reached is shown. E.g. 4 boops shows Face_Angry
+// Leave the list empty ({}) to keep the current expression when booped
+${generateBoopExpressions(boopExpressions)}
 `
 }

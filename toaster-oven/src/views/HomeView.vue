@@ -3,7 +3,9 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import VisorDisplay from '@/components/VisorDisplay.vue'
 import { expressionToPanels } from '@/faces/faces'
-import { findExpression, getDefaultExpression } from '@/state/app-state'
+import { appStore, getDefaultExpression } from '@/state/app-state'
+import { boopExpressionFor } from '@/state/boop-expressions'
+import type { Expression } from '@/state/expressions'
 import { PANEL_TYPES, PanelType } from '@/state/config-types'
 
 const repoUrl = 'https://github.com/BadgerCode/ProtosoftToasterOS'
@@ -41,15 +43,12 @@ const features = [
 const visorPanels = PANEL_TYPES.map((p) => p.id).filter((id) => id !== PanelType.SINGLE_NOSE)
 
 const blinking = ref(false)
-/** Name of the boop expression being shown, if any. Uses your edited expressions. */
-const boopFace = ref<string | null>(null)
+/** The boop expression being shown, if any. Uses your edited expressions and boop settings. */
+const boopFace = ref<Expression | null>(null)
 let boopCount = 0
 
 const bitmaps = computed(() =>
-  expressionToPanels(
-    boopFace.value ? findExpression(boopFace.value) : getDefaultExpression(),
-    blinking.value && !boopFace.value,
-  ),
+  expressionToPanels(boopFace.value ?? getDefaultExpression(), blinking.value && !boopFace.value),
 )
 
 let blinkTimer: ReturnType<typeof setTimeout> | undefined
@@ -69,10 +68,10 @@ function scheduleBlink() {
   )
 }
 
-// Same escalation as ExpressionManager: surprised, then angry, then X_X
+// Same escalation as ExpressionManager, using the boop expressions from the Features tab
 function boop() {
   boopCount++
-  boopFace.value = boopCount < 3 ? 'Surprised' : boopCount < 6 ? 'Angry' : 'X_X'
+  boopFace.value = boopExpressionFor(boopCount, appStore.boopExpressions, appStore.expressions)
 
   clearTimeout(boopTimer)
   boopTimer = setTimeout(() => (boopFace.value = null), 1700)

@@ -1,10 +1,11 @@
 import { computed, ref } from 'vue'
 import { appStore, getDefaultExpression, getExtraDefaultExpressions } from './app-state'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
-import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import { BOOP_EXPRESSION_DEFAULTS, DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import { usableBoopExpressions } from './boop-expressions'
 import { defaultExpressions } from './expressions'
 import { downloadBlob, generateConfigHeader } from './generate-config'
-import { generateFacesHeader } from './generate-faces'
+import { generateFacesHeader, type BoopExpressionEntry } from './generate-faces'
 
 export type DownloadKind = 'config' | 'expressions'
 
@@ -16,7 +17,7 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 4
+const FORMAT_VERSION = 5
 
 function generateFiles(
   face: typeof appStore.faceConfig,
@@ -24,10 +25,16 @@ function generateFiles(
   expressions: typeof appStore.expressions,
   defaultExpressionName: string,
   extraDefaultNames: string[],
+  boopExpressions: BoopExpressionEntry[],
 ): Record<DownloadKind, string> {
   return {
     config: generateConfigHeader(face, features),
-    expressions: generateFacesHeader(expressions, defaultExpressionName, extraDefaultNames),
+    expressions: generateFacesHeader(
+      expressions,
+      defaultExpressionName,
+      extraDefaultNames,
+      boopExpressions,
+    ),
   }
 }
 
@@ -39,6 +46,7 @@ const lastDownloaded = ref(
     defaultExpressions(),
     DEFAULT_FACE_NAME,
     EXTRA_DEFAULT_NAMES.filter((name) => name !== DEFAULT_FACE_NAME),
+    BOOP_EXPRESSION_DEFAULTS,
   ),
 )
 
@@ -49,6 +57,10 @@ const currentFiles = computed(() =>
     appStore.expressions,
     getDefaultExpression().name,
     getExtraDefaultExpressions().map((e) => e.name),
+    usableBoopExpressions(appStore.boopExpressions, appStore.expressions).map((b) => ({
+      minBoops: b.minBoops,
+      name: b.expression.name,
+    })),
   ),
 )
 
