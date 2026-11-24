@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://toaster.badgercode.co.uk/sitemap.xml
