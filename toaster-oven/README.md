@@ -40,3 +40,26 @@ npm run dev
 ```sh
 npm run build
 ```
+
+# VS Code Setup
+In either the project root or the toaster-oven directory, create `.vscode/launch.json`
+
+```json
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "cwd": "${workspaceFolder}/toaster-oven",
+      "name": "Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": ["start"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    }
+  ]
+}
+```
