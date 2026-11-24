@@ -11,10 +11,21 @@ export interface FaceLayoutPreset {
 
 const panel = (panelType: number, upsideDown = false): PanelConfig => ({ panelType, upsideDown })
 
+// Panels that are upside down in the two-connection preset (and ToasterOS/Config.h).
+// The one-connection presets use the same orientation for each panel.
+const UPSIDE_DOWN_PANELS = new Set<number>([
+  PanelType.RIGHT_MOUTH_BACK,
+  PanelType.RIGHT_MOUTH_MID_BACK,
+  PanelType.RIGHT_MOUTH_MID_FRONT,
+  PanelType.RIGHT_MOUTH_FRONT,
+  PanelType.LEFT_NOSE,
+  PanelType.LEFT_EYE_FRONT,
+  PanelType.LEFT_EYE_BACK,
+])
+
 function oneConnection(panelTypes: number[]): FaceConfig {
-  return {
-    connections: [{ pinDataIn: 3, pinCS: 4, pinCLK: 5, panels: panelTypes.map((t) => panel(t)) }],
-  }
+  const panels = panelTypes.map((t) => panel(t, UPSIDE_DOWN_PANELS.has(t)))
+  return { connections: [{ pinDataIn: 3, pinCS: 4, pinCLK: 5, panels }] }
 }
 
 export const FACE_LAYOUT_PRESETS: FaceLayoutPreset[] = [
