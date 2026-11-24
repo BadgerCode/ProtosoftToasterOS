@@ -1,0 +1,7 @@
+# Normalise line endings: stored as LF in the repo, checked out as native (CRLF on Windows)
+* text=auto
+
+# Binary files
+*.png binary
+*.jpg binary
+*.xcf binary
