@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import LedEyeLogo from '@/components/LedEyeLogo.vue'
+import ToasterLogo from '@/components/ToasterLogo.vue'
 import { hasUndownloadedChanges } from '@/state/config-download'
 
 const links = [
@@ -13,10 +13,8 @@ const links = [
   <header class="sticky top-0 z-20 border-b border-border bg-page/85 backdrop-blur">
     <nav class="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:gap-8 sm:px-6">
       <RouterLink to="/" class="flex items-center gap-2.5 rounded-md">
-        <LedEyeLogo />
-        <span class="display-title text-xl whitespace-nowrap [text-shadow:none]"
-          >Toaster Oven</span
-        >
+        <ToasterLogo />
+        <span class="display-title text-xl whitespace-nowrap [text-shadow:none]">Toaster Oven</span>
       </RouterLink>
 
       <ul class="flex items-center gap-1">
