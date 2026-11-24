@@ -83,15 +83,27 @@ public:
   }
 
   void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
-    if (ProtoConfig.DebugMode == 3) {
-      mirror = false;
-      data = Numbers_ASCII[7];
-    }
-
     auto panelConfig = PanelConfigs[panelType];
-    bool flipX = mirror ? !panelConfig.UpsideDown : panelConfig.UpsideDown;
 
     if (!panelConfig.Enabled) return;  // Skip disabled panels
+
+    // Debug mode: Show numbers to identify panel order and setup issues
+    // A corner LED marks the top outer edge of each panel: top-right on the right side, and mirrored to top-left on the left side
+    byte debugPanel[8];
+    if (ProtoConfig.DebugMode == 3) {
+      memcpy(debugPanel, ASCIINumbers[panelConfig.Address % 16], 8);
+
+      // Left panels are normally mirrored, so they get the mirrored marker. Decided by panel type rather than the mirror
+      // argument, as some callers (e.g. ClearPanel) always pass false
+      bool isLeftPanel = panelType <= PANEL_LEFT_EYE_FRONT;
+      debugPanel[0] |= isLeftPanel ? B10000000 : B00000001;
+
+      data = debugPanel;
+      mirror = false;  // Keep the numbers readable on both sides
+    }
+
+    // When mirroring one side to the other, upside down panels will need to be rendered in reverse order
+    bool flipX = mirror ? !panelConfig.UpsideDown : panelConfig.UpsideDown;
 
     for (int row = 0; row < 8; row++) {
       int rowDataIndex = (panelConfig.UpsideDown ? (7 - row) : row) + offsetY;

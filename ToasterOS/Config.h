@@ -17,7 +17,7 @@
 static ProtoConfigStruct ProtoConfig {
   // General config
   .Brightness = 0.25, // Percentage. E.g. 0.25 = 25%
-  .DebugMode = 0, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render 7s on all panels
+  .DebugMode = 0, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render numbers on all panels
 
   // Boop sensor config
   .EnableBoopSensor = true,
