@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import PageHeading from '@/components/PageHeading.vue'
 import DownloadConfigButton from '@/components/DownloadConfigButton.vue'
-import { DOWNLOADS, changedDownloads, hasUndownloadedChanges } from '@/state/config-download'
+import {
+  DOWNLOADS,
+  changedDownloads,
+  downloadFile,
+  hasUndownloadedChanges,
+} from '@/state/config-download'
 
 const tabs = [
   { to: '/configure/panels', label: 'Panel layout' },
@@ -18,6 +23,12 @@ const onExpressions = computed(() => route.name === 'configure-expressions')
 const changedSummary = computed(() =>
   changedDownloads.value.map((kind) => `${DOWNLOADS[kind].label}`).join(' and '),
 )
+
+// Hiding the reminder lasts until everything has been downloaded
+const reminderHidden = ref(false)
+watch(hasUndownloadedChanges, (changed) => {
+  if (!changed) reminderHidden.value = false
+})
 </script>
 
 <template>
@@ -45,35 +56,44 @@ const changedSummary = computed(() =>
 
     <RouterView />
 
-    <!-- Sticky reminder while there are changes that haven't been downloaded -->
-    <Transition
-      enter-from-class="translate-y-4 opacity-0"
-      leave-to-class="translate-y-4 opacity-0"
-      enter-active-class="transition duration-200"
-      leave-active-class="transition duration-200"
+    <!-- Small sticky reminder while there are changes that haven't been downloaded -->
+    <div
+      v-if="hasUndownloadedChanges && !reminderHidden"
+      class="pointer-events-none sticky bottom-4 z-10 mt-8 flex justify-end"
     >
-      <div v-if="hasUndownloadedChanges" class="sticky bottom-4 z-10 mt-8">
-        <div
-          class="flex flex-col gap-3 rounded-lg border border-gold-500/40 bg-slate-900/95 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p class="flex items-center gap-3 text-sm text-gold-200">
-            <span class="size-2.5 shrink-0 rounded-full bg-gold-400" />
-            <span>
-              Your {{ changedSummary }} {{ changedDownloads.length > 1 ? 'have' : 'has' }} changed.
-              Download again and copy the {{ changedDownloads.length > 1 ? 'files' : 'file' }} into
-              your ToasterOS folder.
-            </span>
-          </p>
-          <div class="flex shrink-0 flex-wrap gap-2">
-            <DownloadConfigButton
-              v-for="kind in changedDownloads"
-              :key="kind"
-              :kind="kind"
-              size="md"
-            />
-          </div>
+      <div
+        class="pointer-events-auto flex flex-wrap items-center justify-end gap-2 rounded-lg border border-border bg-slate-900/95 py-1.5 pr-1.5 pl-3 shadow-lg shadow-black/30 backdrop-blur"
+      >
+        <p class="flex items-center gap-2 text-sm text-slate-300">
+          <span class="size-2 shrink-0 rounded-full bg-gold-400" />
+          Your {{ changedSummary }} {{ changedDownloads.length > 1 ? 'have' : 'has' }} changed
+        </p>
+        <div class="flex items-center gap-1">
+          <button
+            v-for="kind in changedDownloads"
+            :key="kind"
+            type="button"
+            class="btn btn-secondary whitespace-nowrap"
+            :title="`Download ${DOWNLOADS[kind].fileName}`"
+            @click="downloadFile(kind)"
+          >
+            Download {{ DOWNLOADS[kind].label }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-icon"
+            title="Hide until you download"
+            aria-label="Hide reminder"
+            @click="reminderHidden = true"
+          >
+            <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+              />
+            </svg>
+          </button>
         </div>
       </div>
-    </Transition>
+    </div>
   </section>
 </template>
