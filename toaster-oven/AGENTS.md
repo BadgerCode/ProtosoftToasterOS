@@ -38,7 +38,7 @@ src/
   state/
     app-state.ts            appStore: faceConfig, featureConfig, expressions. findExpression(name)
     config-types.ts         TS mirror of ../ToasterOS/ConfigTypes.h (panel type ids, structs)
-    config-defaults.ts      Defaults matching ../ToasterOS/Config.h
+    config-defaults.ts      Feature defaults matching ../ToasterOS/Config.h, plus the panel layout presets
     generate-config.ts      appStore -> Config.h text. Also downloadBlob()
     generate-faces.ts       expressions -> Protogen_Faces.h text
     config-download.ts      Per-file "changed since last download" tracking + downloadFile(kind)
@@ -84,7 +84,9 @@ src/
 - `required-expressions.ts`
 - the copy at `src/assets/Protogen_Faces.h`
 
-To check a generator, render the defaults and diff the output against the firmware file. `vite`'s `createServer` + `ssrLoadModule` can load the TS modules from a Node script.
+**Default panel layout differs on purpose.** The app starts with the first preset in `FACE_LAYOUT_PRESETS` (14 panels, one connection). `../ToasterOS/Config.h` keeps the two-connection layout, which is the `14-two` preset. Don't change either to match the other.
+
+To check a generator, render the defaults and diff the output against the firmware file. Expect the panel layout to differ unless you pick the `14-two` preset first. `vite`'s `createServer` + `ssrLoadModule` can load the TS modules from a Node script.
 
 ## State and downloads
 

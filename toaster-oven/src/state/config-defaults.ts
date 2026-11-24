@@ -17,49 +17,7 @@ function oneConnection(panelTypes: number[]): FaceConfig {
   }
 }
 
-// Matches ToasterOS/Config.h and Docs/Images/panels_diagram_twocon.png
-function twoConnections(): FaceConfig {
-  return {
-    connections: [
-      {
-        pinDataIn: 3,
-        pinCS: 4,
-        pinCLK: 5,
-        panels: [
-          panel(PanelType.RIGHT_MOUTH_BACK, true),
-          panel(PanelType.RIGHT_MOUTH_MID_BACK, true),
-          panel(PanelType.RIGHT_MOUTH_MID_FRONT, true),
-          panel(PanelType.RIGHT_MOUTH_FRONT, true),
-          panel(PanelType.RIGHT_NOSE),
-          panel(PanelType.RIGHT_EYE_FRONT),
-          panel(PanelType.RIGHT_EYE_BACK),
-        ],
-      },
-      {
-        pinDataIn: 6,
-        pinCS: 7,
-        pinCLK: 8,
-        panels: [
-          panel(PanelType.LEFT_MOUTH_BACK),
-          panel(PanelType.LEFT_MOUTH_MID_BACK),
-          panel(PanelType.LEFT_MOUTH_MID_FRONT),
-          panel(PanelType.LEFT_MOUTH_FRONT),
-          panel(PanelType.LEFT_NOSE, true),
-          panel(PanelType.LEFT_EYE_FRONT, true),
-          panel(PanelType.LEFT_EYE_BACK, true),
-        ],
-      },
-    ],
-  }
-}
-
 export const FACE_LAYOUT_PRESETS: FaceLayoutPreset[] = [
-  {
-    id: '14-two',
-    name: '14 panels, two connections',
-    description: 'Two nose panels. Left and right sides wired separately.',
-    build: twoConnections,
-  },
   {
     id: '14-one',
     name: '14 panels, one connection',
@@ -83,6 +41,45 @@ export const FACE_LAYOUT_PRESETS: FaceLayoutPreset[] = [
         PanelType.LEFT_EYE_FRONT,
         PanelType.LEFT_EYE_BACK,
       ]),
+  },
+  {
+    id: '14-two',
+    name: '14 panels, two connections',
+    description: 'Two nose panels. Left and right sides wired separately.',
+    build: () => {
+      return {
+        connections: [
+          {
+            pinDataIn: 3,
+            pinCS: 4,
+            pinCLK: 5,
+            panels: [
+              panel(PanelType.RIGHT_MOUTH_BACK, true),
+              panel(PanelType.RIGHT_MOUTH_MID_BACK, true),
+              panel(PanelType.RIGHT_MOUTH_MID_FRONT, true),
+              panel(PanelType.RIGHT_MOUTH_FRONT, true),
+              panel(PanelType.RIGHT_NOSE),
+              panel(PanelType.RIGHT_EYE_FRONT),
+              panel(PanelType.RIGHT_EYE_BACK),
+            ],
+          },
+          {
+            pinDataIn: 6,
+            pinCS: 7,
+            pinCLK: 8,
+            panels: [
+              panel(PanelType.LEFT_MOUTH_BACK),
+              panel(PanelType.LEFT_MOUTH_MID_BACK),
+              panel(PanelType.LEFT_MOUTH_MID_FRONT),
+              panel(PanelType.LEFT_MOUTH_FRONT),
+              panel(PanelType.LEFT_NOSE, true),
+              panel(PanelType.LEFT_EYE_FRONT, true),
+              panel(PanelType.LEFT_EYE_BACK, true),
+            ],
+          },
+        ],
+      }
+    },
   },
   {
     id: '13-one',
@@ -109,7 +106,7 @@ export const FACE_LAYOUT_PRESETS: FaceLayoutPreset[] = [
 ]
 
 export function defaultFaceConfig(): FaceConfig {
-  return twoConnections()
+  return FACE_LAYOUT_PRESETS[0]!.build()
 }
 
 export function defaultFeatureConfig(): FeatureConfig {
