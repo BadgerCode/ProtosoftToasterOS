@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
-import { appStore, getDefaultExpression } from './app-state'
+import { appStore, getDefaultExpression, getExtraDefaultExpressions } from './app-state'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
-import { DEFAULT_FACE_NAME } from '@/faces/faces'
+import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
 import { defaultExpressions } from './expressions'
 import { downloadBlob, generateConfigHeader } from './generate-config'
 import { generateFacesHeader } from './generate-faces'
@@ -16,17 +16,18 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 3
+const FORMAT_VERSION = 4
 
 function generateFiles(
   face: typeof appStore.faceConfig,
   features: typeof appStore.featureConfig,
   expressions: typeof appStore.expressions,
   defaultExpressionName: string,
+  extraDefaultNames: string[],
 ): Record<DownloadKind, string> {
   return {
     config: generateConfigHeader(face, features),
-    expressions: generateFacesHeader(expressions, defaultExpressionName),
+    expressions: generateFacesHeader(expressions, defaultExpressionName, extraDefaultNames),
   }
 }
 
@@ -37,6 +38,7 @@ const lastDownloaded = ref(
     defaultFeatureConfig(),
     defaultExpressions(),
     DEFAULT_FACE_NAME,
+    EXTRA_DEFAULT_NAMES.filter((name) => name !== DEFAULT_FACE_NAME),
   ),
 )
 
@@ -46,6 +48,7 @@ const currentFiles = computed(() =>
     appStore.featureConfig,
     appStore.expressions,
     getDefaultExpression().name,
+    getExtraDefaultExpressions().map((e) => e.name),
   ),
 )
 

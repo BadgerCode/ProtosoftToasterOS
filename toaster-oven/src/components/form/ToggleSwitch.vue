@@ -4,6 +4,7 @@ const enabled = defineModel<boolean>({ required: true })
 defineProps<{
   label: string
   description?: string
+  disabled?: boolean
 }>()
 </script>
 
@@ -17,7 +18,13 @@ defineProps<{
     </span>
 
     <span class="relative mt-0.5 inline-flex shrink-0">
-      <input v-model="enabled" type="checkbox" role="switch" class="peer sr-only" />
+      <input
+        v-model="enabled"
+        type="checkbox"
+        role="switch"
+        class="peer sr-only"
+        :disabled="disabled"
+      />
       <span
         class="h-6 w-11 rounded-full bg-slate-700 transition-colors peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface"
       />

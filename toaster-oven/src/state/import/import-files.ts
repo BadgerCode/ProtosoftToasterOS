@@ -87,6 +87,11 @@ export function importFiles(
     } else {
       appStore.expressions.splice(0, appStore.expressions.length, ...r.result.expressions)
       appStore.defaultExpressionId = r.result.defaultExpressionId
+      appStore.extraDefaultExpressionIds.splice(
+        0,
+        appStore.extraDefaultExpressionIds.length,
+        ...r.result.extraDefaultExpressionIds,
+      )
       resetEditor()
       if (r.result.added.length) {
         notes.push(`Added missing expressions the firmware needs: ${r.result.added.join(', ')}`)
@@ -100,7 +105,19 @@ export function importFiles(
             : `${r.name} didn't set a default expression, so it uses ${used}`,
         )
       }
-      upToDate = r.result.added.length === 0 && !fallback
+      if (r.result.extraDefaultsFallback) {
+        notes.push(`${r.name} didn't list extra default expressions, so it uses the usual ones`)
+      }
+      if (r.result.extraDefaultsSkipped.length) {
+        notes.push(
+          `Skipped extra default expressions that weren't in ${r.name}: ${r.result.extraDefaultsSkipped.join(', ')}`,
+        )
+      }
+      upToDate =
+        r.result.added.length === 0 &&
+        !fallback &&
+        !r.result.extraDefaultsFallback &&
+        r.result.extraDefaultsSkipped.length === 0
     }
 
     // The user already has this file, unless something had to be filled in

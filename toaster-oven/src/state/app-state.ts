@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { DEFAULT_FACE_NAME } from '@/faces/faces'
+import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
 import { defaultExpressions } from './expressions'
 
@@ -12,6 +12,13 @@ export const appStore = reactive({
   expressions,
   /** Id of the expression the head shows when idle (DEFAULT_FACE in the firmware) */
   defaultExpressionId: expressions.find((e) => e.name === DEFAULT_FACE_NAME)!.id,
+  /**
+   * Ids of the expressions shown now and then in place of the default one
+   * (ExtraDefaultExpressions in the firmware). Update in place.
+   */
+  extraDefaultExpressionIds: expressions
+    .filter((e) => EXTRA_DEFAULT_NAMES.includes(e.name))
+    .map((e) => e.id),
 })
 
 /** The expression the head shows when idle, falling back to the first one */
@@ -20,6 +27,19 @@ export function getDefaultExpression() {
     appStore.expressions.find((e) => e.id === appStore.defaultExpressionId) ??
     appStore.expressions[0]!
   )
+}
+
+export function isExtraDefault(id: number) {
+  return appStore.extraDefaultExpressionIds.includes(id)
+}
+
+/**
+ * The extra default expressions, in list order. Leaves out the default expression, which
+ * the firmware would skip anyway.
+ */
+export function getExtraDefaultExpressions() {
+  const defaultId = getDefaultExpression().id
+  return appStore.expressions.filter((e) => e.id !== defaultId && isExtraDefault(e.id))
 }
 
 /** An expression by its C++ name (without Face_), falling back to the first one */

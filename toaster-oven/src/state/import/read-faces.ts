@@ -1,5 +1,5 @@
-import { DEFAULT_FACE_NAME, defaultExpression } from '@/faces/faces'
-import { parseDefaultFace, parseExpressions } from '@/faces/parse-faces'
+import { DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES, defaultExpression } from '@/faces/faces'
+import { parseDefaultFace, parseExpressions, parseExtraDefaults } from '@/faces/parse-faces'
 import { REQUIRED_EXPRESSIONS } from '@/faces/required-expressions'
 import { createExpression, displayName, type Expression } from '../expressions'
 
@@ -19,6 +19,12 @@ export interface ReadFacesResult {
    * The name the file asked for, if it had one.
    */
   defaultFallback: { requested: string | null } | null
+  /** Ids of the extra default expressions (ExtraDefaultExpressions) */
+  extraDefaultExpressionIds: number[]
+  /** Set when the file had no ExtraDefaultExpressions, so the defaults were used */
+  extraDefaultsFallback: boolean
+  /** Display names in ExtraDefaultExpressions that aren't expressions in the file */
+  extraDefaultsSkipped: string[]
 }
 
 export function readFaces(text: string): ReadFacesResult {
@@ -50,5 +56,24 @@ export function readFaces(text: string): ReadFacesResult {
   }
 
   const defaultExpressionId = expressions.find((e) => e.name === defaultName)!.id
-  return { expressions, added, defaultExpressionId, defaultFallback }
+
+  // Older files have no ExtraDefaultExpressions; the firmware had the defaults hard-coded
+  const requestedExtras = parseExtraDefaults(text)
+  const extraNames = requestedExtras ?? EXTRA_DEFAULT_NAMES
+  const extraDefaultExpressionIds = expressions
+    .filter((e) => extraNames.includes(e.name))
+    .map((e) => e.id)
+  const extraDefaultsSkipped = (requestedExtras ?? [])
+    .filter((name) => !names.has(name))
+    .map(displayName)
+
+  return {
+    expressions,
+    added,
+    defaultExpressionId,
+    defaultFallback,
+    extraDefaultExpressionIds,
+    extraDefaultsFallback: requestedExtras === null,
+    extraDefaultsSkipped,
+  }
 }

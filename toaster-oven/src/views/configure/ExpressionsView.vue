@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { appStore } from '@/state/app-state'
+import { appStore, isExtraDefault } from '@/state/app-state'
 import {
   createExpression,
   displayName,
@@ -22,6 +22,7 @@ import { PANEL_TYPES, PanelType } from '@/state/config-types'
 import VisorDisplay from '@/components/VisorDisplay.vue'
 import ExpressionCanvas from '@/components/expressions/ExpressionCanvas.vue'
 import ExpressionThumbnail from '@/components/expressions/ExpressionThumbnail.vue'
+import ToggleSwitch from '@/components/form/ToggleSwitch.vue'
 
 const expressions = appStore.expressions
 
@@ -36,6 +37,18 @@ const isDefault = computed(() => selected.value.id === appStore.defaultExpressio
 function setAsDefault() {
   appStore.defaultExpressionId = selected.value.id
 }
+
+// Extra default expressions (ExtraDefaultExpressions): shown now and then in place of the default
+const extraDefault = computed({
+  // The firmware skips the default expression in the list, so show it as off
+  get: () => !isDefault.value && isExtraDefault(selected.value.id),
+  set(include: boolean) {
+    const ids = appStore.extraDefaultExpressionIds
+    const index = ids.indexOf(selected.value.id)
+    if (include && index === -1) ids.push(selected.value.id)
+    else if (!include && index !== -1) ids.splice(index, 1)
+  },
+})
 
 const tool = ref<'draw' | 'erase'>('draw')
 
@@ -105,6 +118,8 @@ function removeExpression() {
   if (!confirm(`Remove "${displayName(expression.name)}"? This can't be undone.`)) return
   const index = expressions.indexOf(expression)
   expressions.splice(index, 1)
+  const extraIndex = appStore.extraDefaultExpressionIds.indexOf(expression.id)
+  if (extraIndex !== -1) appStore.extraDefaultExpressionIds.splice(extraIndex, 1)
   selectedExpressionId.value = expressions[Math.min(index, expressions.length - 1)]!.id
 }
 
@@ -229,7 +244,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
             </p>
           </template>
           <p v-if="isDefault" class="mt-2 text-sm text-slate-400">
-            The default expression, shown when idle between random happy expressions.
+            Shown when no other expression is selected.
             <template v-if="!selectedRequiredBy">
               To remove it, set another expression as the default first.
             </template>
@@ -252,6 +267,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
             Remove
           </button>
         </div>
+      </div>
+
+      <!-- Extra default expression -->
+      <div class="border-b border-border px-5 py-4">
+        <ToggleSwitch
+          v-model="extraDefault"
+          :disabled="isDefault"
+          label="Show in place of the default expression"
+          :description="
+            isDefault
+              ? 'This is the default expression. Other expressions with this turned on are shown in its place now and then.'
+              : 'Every 10–14 seconds, and after a boop, the head swaps the default expression for a random one of these for 5 seconds. Turn this off for every expression to always show the default.'
+          "
+        />
       </div>
 
       <!-- Toolbar -->

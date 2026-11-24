@@ -40,7 +40,17 @@ ${panels(e.mouth)}
 };`
 }
 
-export function generateFacesHeader(expressions: Expression[], defaultName: string): string {
+function generateExtraDefaults(names: string[]): string {
+  const list = names.length ? `{\n${names.map((n) => `  &Face_${n}`).join(',\n')}\n}` : '{}'
+  return `FaceExpression* const ExtraDefaultExpressions[] = ${list};
+const int NumExtraDefaultExpressions = sizeof(ExtraDefaultExpressions) / sizeof(ExtraDefaultExpressions[0]);`
+}
+
+export function generateFacesHeader(
+  expressions: Expression[],
+  defaultName: string,
+  extraDefaultNames: string[],
+): string {
   return `// All of the faces and digits are designed to work on the right face & be flipped on the left face
 
 
@@ -64,5 +74,9 @@ ${expressions.map(generateExpression).join('\n\n')}
 
 // Face usage configuration
 FaceExpression* const DEFAULT_FACE = &Face_${defaultName};
+
+// Additional Neutral/Happy expressions to randomly change to when the default expression is in use
+// Leave the list empty ({}) to always show the default expression
+${generateExtraDefaults(extraDefaultNames)}
 `
 }

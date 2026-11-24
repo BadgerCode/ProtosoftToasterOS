@@ -5,7 +5,13 @@
 
 import facesHeader from '@/assets/Protogen_Faces.h?raw'
 import { PanelType } from '@/state/config-types'
-import { extractDeclaration, parseDefaultFace, parseExpressions, parsePanel } from './parse-faces'
+import {
+  extractDeclaration,
+  parseDefaultFace,
+  parseExpressions,
+  parseExtraDefaults,
+  parsePanel,
+} from './parse-faces'
 
 export type PanelBitmap = number[]
 
@@ -24,6 +30,17 @@ export const DEFAULT_EXPRESSIONS = parseExpressions(facesHeader)
 
 /** The expression the head shows when idle (DEFAULT_FACE), without the Face_ prefix */
 export const DEFAULT_FACE_NAME = parseDefaultFace(facesHeader) ?? 'Neutral'
+
+/**
+ * Expressions shown now and then in place of the default one (ExtraDefaultExpressions).
+ * Also what older files without the list used, as the firmware had these hard-coded.
+ */
+export const EXTRA_DEFAULT_NAMES = parseExtraDefaults(facesHeader) ?? [
+  'Happy_Closed_eyes',
+  'Cute',
+  'Blep',
+  'Silly',
+]
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */
 export const NOSE_SINGLE_DECLARATION = extractDeclaration(facesHeader, 'byte Face_Nose_Single')

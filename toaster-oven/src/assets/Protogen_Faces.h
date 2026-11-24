@@ -478,5 +478,14 @@ struct FaceExpression Face_Spiral4 = {
 // Face usage configuration
 FaceExpression* const DEFAULT_FACE = &Face_Neutral;
 
+// Additional Neutral/Happy expressions to randomly change to when the default expression is in use
+// Leave the list empty ({}) to always show the default expression
+FaceExpression* const ExtraDefaultExpressions[] = {
+  &Face_Happy_Closed_eyes,
+  &Face_Cute,
+  &Face_Blep,
+  &Face_Silly
+};
+const int NumExtraDefaultExpressions = sizeof(ExtraDefaultExpressions) / sizeof(ExtraDefaultExpressions[0]);
 
 

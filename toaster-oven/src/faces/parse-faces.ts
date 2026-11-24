@@ -62,6 +62,16 @@ export function parseDefaultFace(header: string): string | null {
   return header.match(/DEFAULT_FACE\s*=\s*&Face_(\w+)\s*;/)?.[1] ?? null
 }
 
+/**
+ * The expressions in ExtraDefaultExpressions, without the Face_ prefix, or null if the
+ * list isn't there. An empty list ({}) gives [].
+ */
+export function parseExtraDefaults(header: string): string[] | null {
+  const list = header.match(/ExtraDefaultExpressions\[\]\s*=\s*\{([^}]*)\}/)?.[1]
+  if (list === undefined) return null
+  return [...list.matchAll(/&Face_(\w+)/g)].map((m) => m[1]!)
+}
+
 /** A top-level declaration copied as-is, e.g. `byte Face_Nose_Single[8] = { ... };` */
 export function extractDeclaration(header: string, startsWith: string): string {
   const start = header.indexOf(startsWith)
