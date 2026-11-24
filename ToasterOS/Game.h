@@ -177,26 +177,26 @@ private:
     if (score < 100) {
       // Don't use the nose for scores less than 100
       faceRenderer->ClearPanel(PANEL_RIGHT_NOSE);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, ASCIINumbers[digit2], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, ASCIINumbers[digit3], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, ASCIIGlyphs[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, ASCIIGlyphs[digit3], 0, mirrorDigits);
     } else {
       // Use the nose for the hundreds
-      faceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, ASCIINumbers[digit1], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, ASCIINumbers[digit2], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, ASCIINumbers[digit3], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, ASCIIGlyphs[digit1], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, ASCIIGlyphs[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_RIGHT_EYE_BACK, ASCIIGlyphs[digit3], 0, mirrorDigits);
     }
 
     // Left
     if (score < 100) {
       // Don't use the nose for scores less than 100
-      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, ASCIINumbers[digit2], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, ASCIINumbers[digit3], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, ASCIIGlyphs[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, ASCIIGlyphs[digit3], 0, mirrorDigits);
       faceRenderer->ClearPanel(PANEL_LEFT_NOSE);
     } else {
       // Use the nose for the ones when the score is above 100
-      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, ASCIINumbers[digit1], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, ASCIINumbers[digit2], 0, mirrorDigits);
-      faceRenderer->UpdatePanel(PANEL_LEFT_NOSE, ASCIINumbers[digit3], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, ASCIIGlyphs[digit1], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, ASCIIGlyphs[digit2], 0, mirrorDigits);
+      faceRenderer->UpdatePanel(PANEL_LEFT_NOSE, ASCIIGlyphs[digit3], 0, mirrorDigits);
     }
 
     // Side lights

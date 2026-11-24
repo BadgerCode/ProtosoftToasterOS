@@ -91,7 +91,7 @@ public:
     // A corner LED marks the top outer edge of each panel: top-right on the right side, and mirrored to top-left on the left side
     byte debugPanel[8];
     if (ProtoConfig.DebugMode == 3) {
-      memcpy(debugPanel, ASCIINumbers[panelConfig.Address % 16], 8);
+      memcpy(debugPanel, ASCIIGlyphs[panelConfig.Address], 8);
 
       // Left panels are normally mirrored, so they get the mirrored marker. Decided by panel type rather than the mirror
       // argument, as some callers (e.g. ClearPanel) always pass false
