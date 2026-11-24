@@ -52,3 +52,10 @@ function step(from: typeof undoStack, to: typeof undoStack) {
 
 export const undo = () => step(undoStack, redoStack)
 export const redo = () => step(redoStack, undoStack)
+
+/** Start fresh after the expressions are replaced, e.g. by an import */
+export function resetEditor() {
+  selectedExpressionId.value = appStore.expressions[0]!.id
+  undoStack.value = []
+  redoStack.value = []
+}

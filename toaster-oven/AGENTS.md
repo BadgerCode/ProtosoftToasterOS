@@ -45,6 +45,10 @@ src/
     expressions.ts          Expression type, defaults, naming/validation helpers
     expression-editor.ts    Selected expression + undo/redo stacks (module state, survives tab switches)
     pin-usage.ts            Detects digital pins assigned twice
+    import/
+      read-config.ts        Config.h -> state. A list of readers per setting, newest format first
+      read-faces.ts         Protogen_Faces.h -> expressions. Adds back missing required expressions
+      import-files.ts       Detects each file's type, applies it in place, builds the import summary
   faces/
     faces.ts                Parses the presets from assets/Protogen_Faces.h. mirror(), expressionToPanels()
     parse-faces.ts          Regex parser for `struct FaceExpression Face_X = {...}` blocks
@@ -84,6 +88,8 @@ src/
 - `required-expressions.ts`
 - the copy at `src/assets/Protogen_Faces.h`
 
+**Keep old downloads importable.** Users import files they downloaded earlier, possibly from an older version of the site. When the generated format changes, add a reader for the new format at the front of that setting's list in `import/read-config.ts` and keep the old ones. Bump `FORMAT_VERSION` in `config-download.ts`. Settings no reader finds fall back to their defaults and are listed in the import summary.
+
 **Default panel layout differs on purpose.** The app starts with the first preset in `FACE_LAYOUT_PRESETS` (14 panels, one connection). `../ToasterOS/Config.h` keeps the two-connection layout, which is the `14-two` preset. Don't change either to match the other.
 
 To check a generator, render the defaults and diff the output against the firmware file. Expect the panel layout to differ unless you pick the `14-two` preset first. `vite`'s `createServer` + `ssrLoadModule` can load the TS modules from a Node script.
@@ -91,7 +97,8 @@ To check a generator, render the defaults and diff the output against the firmwa
 ## State and downloads
 
 - All state is in memory. **Nothing persists across a refresh yet.** Saving is planned as "projects" (multiple saved configurations to switch between). Keep state serialisable: plain objects, number bitmaps, and numeric ids on expressions.
-- `config-download.ts` regenerates both files reactively and compares each with its text at the last download, starting from the defaults. The download buttons, nav dot and sticky reminder all use `changedDownloads` / `hasChanged(kind)`.
+- `config-download.ts` regenerates both files reactively and compares each with its text at the last download, starting from the defaults. The download buttons, nav dot and sticky reminder all use `changedDownloads` / `hasChanged(kind)`. A clean import counts as a download (`markDownloaded`).
+- The Configure views hold references to `appStore.faceConfig`, `featureConfig` and `expressions`. Update them in place (assign properties, `splice`), never replace the objects.
 - Undo/redo covers LED edits and adding or removing a blink, not renames or removals.
 
 ## Design conventions
