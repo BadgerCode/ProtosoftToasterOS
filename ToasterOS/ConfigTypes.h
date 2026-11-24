@@ -35,6 +35,13 @@ public:
   FaceConfig();
 };
 
+// An expression to show when booped, once there have been at least MinBoops boops in a row
+struct FaceExpression;
+struct BoopExpressionConfig {
+  int MinBoops;
+  FaceExpression* Expression;
+};
+
 struct ProtoConfigStruct {
   // General config
   float Brightness; // Percentage. E.g. 0.25 = 25%

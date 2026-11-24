@@ -113,9 +113,10 @@ public:
 
 private:
   int GetMovementDelay() {
-    // Booping
+    // Booping. Slower once the last boop expression is reached (e.g. Face_X_X)
     if (BoopState->ShouldShowBoopExpression()) {
-      return BoopState->ConsecutiveShortBoops < 6 ? FaceMovementDelay * 1.5 : FaceMovementDelay * 2.25;
+      bool onLastBoopExpression = NumBoopExpressions > 0 && BoopState->ConsecutiveShortBoops >= GetLastBoopExpressionMinBoops();
+      return onLastBoopExpression ? FaceMovementDelay * 2.25 : FaceMovementDelay * 1.5;
     }
 
     // Slow
@@ -140,9 +141,8 @@ private:
         return GetHeartFrame();
       }
 
-      if (BoopState->ConsecutiveShortBoops < 3) return Face_Surprised;
-      if (BoopState->ConsecutiveShortBoops < 6) return Face_Angry;
-      return Face_X_X;
+      FaceExpression* boopExpression = GetBoopExpression(BoopState->ConsecutiveShortBoops);
+      if (boopExpression != NULL) return *boopExpression;
     }
 
     // Animate spirals
@@ -155,6 +155,33 @@ private:
     }
 
     return *CurrentExpression;
+  }
+
+
+  // Boop expressions
+  // The expression for the highest MinBoops that has been reached, or NULL if none has
+  FaceExpression* GetBoopExpression(int boops) {
+    FaceExpression* expression = NULL;
+    int bestMinBoops = 0;
+
+    for (int i = 0; i < NumBoopExpressions; i++) {
+      auto boopExpression = BoopExpressions[i];
+      if (boops >= boopExpression.MinBoops && (expression == NULL || boopExpression.MinBoops >= bestMinBoops)) {
+        expression = boopExpression.Expression;
+        bestMinBoops = boopExpression.MinBoops;
+      }
+    }
+
+    return expression;
+  }
+
+  // The highest MinBoops in BoopExpressions, e.g. 6 for Face_X_X
+  int GetLastBoopExpressionMinBoops() {
+    int maxMinBoops = 0;
+    for (int i = 0; i < NumBoopExpressions; i++) {
+      if (BoopExpressions[i].MinBoops > maxMinBoops) maxMinBoops = BoopExpressions[i].MinBoops;
+    }
+    return maxMinBoops;
   }
 
 

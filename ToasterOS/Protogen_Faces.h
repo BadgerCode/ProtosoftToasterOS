@@ -488,4 +488,14 @@ FaceExpression* const ExtraDefaultExpressions[] = {
 };
 const int NumExtraDefaultExpressions = sizeof(ExtraDefaultExpressions) / sizeof(ExtraDefaultExpressions[0]);
 
+// Expressions to show when booped, by the minimum number of boops in a row
+// The entry with the highest number that has been reached is shown. E.g. 4 boops shows Face_Angry
+// Leave the list empty ({}) to keep the current expression when booped
+const BoopExpressionConfig BoopExpressions[] = {
+  { 1, &Face_Surprised },
+  { 3, &Face_Angry },
+  { 6, &Face_X_X }
+};
+const int NumBoopExpressions = sizeof(BoopExpressions) / sizeof(BoopExpressions[0]);
+
 
