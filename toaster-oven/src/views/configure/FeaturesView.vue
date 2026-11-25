@@ -217,26 +217,59 @@ const remoteButtons = [
         <ToggleSwitch v-model="config.enableSideLEDs" label="Enabled" />
       </template>
 
-      <fieldset :disabled="!config.enableSideLEDs" class="grid gap-4 sm:grid-cols-3">
-        <FormField label="Left strip data pin">
-          <input
-            v-model.number="config.pinLeftLEDStripData"
-            type="number"
-            min="0"
-            class="form-input"
-          />
-        </FormField>
-        <FormField label="Right strip data pin">
-          <input
-            v-model.number="config.pinRightLEDStripData"
-            type="number"
-            min="0"
-            class="form-input"
-          />
-        </FormField>
-        <FormField label="LEDs per strip">
-          <input v-model.number="config.ledStripNumLEDs" type="number" min="1" class="form-input" />
-        </FormField>
+      <fieldset :disabled="!config.enableSideLEDs" class="space-y-5">
+        <div class="grid gap-4 sm:grid-cols-3">
+          <FormField label="Left strip data pin">
+            <input
+              v-model.number="config.pinLeftLEDStripData"
+              type="number"
+              min="0"
+              class="form-input"
+            />
+          </FormField>
+          <FormField label="Right strip data pin">
+            <input
+              v-model.number="config.pinRightLEDStripData"
+              type="number"
+              min="0"
+              class="form-input"
+            />
+          </FormField>
+          <FormField label="LEDs per strip">
+            <input
+              v-model.number="config.ledStripNumLEDs"
+              type="number"
+              min="1"
+              class="form-input"
+            />
+          </FormField>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-slate-200">Colours</h3>
+          <p class="mt-0.5 text-xs text-slate-500">
+            The strips fade back and forth between these two colours. While booped, they show a
+            scrolling rainbow instead.
+          </p>
+          <div class="mt-3 flex flex-wrap gap-6">
+            <label
+              v-for="colour in [
+                { key: 'sideLEDColourA', label: 'Colour 1' },
+                { key: 'sideLEDColourB', label: 'Colour 2' },
+              ] as const"
+              :key="colour.key"
+              class="flex items-center gap-3"
+            >
+              <input
+                v-model="config[colour.key]"
+                type="color"
+                class="h-9 w-14 cursor-pointer rounded-md border border-border bg-page p-1"
+              />
+              <span class="text-sm text-slate-200">{{ colour.label }}</span>
+              <code class="text-xs text-slate-500">{{ config[colour.key].toUpperCase() }}</code>
+            </label>
+          </div>
+        </div>
       </fieldset>
     </SettingsCard>
 

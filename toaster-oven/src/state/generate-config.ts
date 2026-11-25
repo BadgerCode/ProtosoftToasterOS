@@ -16,6 +16,11 @@ function panelTypeDefine(panelType: number): string {
   return info.define
 }
 
+/** "#0000f5" -> "0x0000F5" */
+function hexColour(colour: string): string {
+  return `0x${colour.slice(1).toUpperCase()}`
+}
+
 function generateConnection(connection: FaceLEDConnection): string {
   const numPanels = connection.panels.length
   const panels = connection.panels
@@ -71,6 +76,8 @@ static ProtoConfigStruct ProtoConfig {
 
   // LED Strip config
   .EnableSideLEDs = ${f.enableSideLEDs},
+  .SideLEDColourA = ${hexColour(f.sideLEDColourA)}, // The side LEDs fade between these two colours, as 0xRRGGBB
+  .SideLEDColourB = ${hexColour(f.sideLEDColourB)},
 
   // Remote control config
   .EnableRemoteControl = ${f.enableRemoteControl},

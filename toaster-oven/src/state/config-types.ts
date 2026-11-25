@@ -96,6 +96,9 @@ export interface FeatureConfig {
 
   // Side LED strips
   enableSideLEDs: boolean
+  /** The side LEDs fade between these two colours, as #rrggbb */
+  sideLEDColourA: string
+  sideLEDColourB: string
   pinLeftLEDStripData: number
   pinRightLEDStripData: number
   ledStripNumLEDs: number

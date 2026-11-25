@@ -62,8 +62,10 @@ void setup() {
 
 // PROTOGEN STATE
 // LED Strips
-bool HueShiftForward = true;
-uint8_t LEDStripAnimationOffset = 0;
+uint8_t LEDStripAnimationOffset = 0;  // Rainbow position while booped
+const int SideLEDFadeSteps = 40;      // Steps from one colour to the other, one every 15ms
+int SideLEDFadeStep = 0;
+bool SideLEDFadeForward = true;
 unsigned long NextLEDStripUpdate = millis();
 
 // Game
@@ -112,20 +114,19 @@ void loop() {
 
         LEDStripAnimationOffset = (LEDStripAnimationOffset + 2) % 255;
       } else {
-        // Pulsating blue
-        int minShift = 170;
-        int maxShift = 250;
-        LEDStripAnimationOffset = LEDStripAnimationOffset + (HueShiftForward ? 2 : -2);
+        // Fade back and forth between the two side LED colours (Config.h)
+        SideLEDFadeStep += SideLEDFadeForward ? 1 : -1;
 
-        if (LEDStripAnimationOffset < minShift) {
-          LEDStripAnimationOffset = minShift;
-          HueShiftForward = true;
-        } else if (LEDStripAnimationOffset > maxShift) {
-          LEDStripAnimationOffset = maxShift;
-          HueShiftForward = false;
+        if (SideLEDFadeStep <= 0) {
+          SideLEDFadeStep = 0;
+          SideLEDFadeForward = true;
+        } else if (SideLEDFadeStep >= SideLEDFadeSteps) {
+          SideLEDFadeStep = SideLEDFadeSteps;
+          SideLEDFadeForward = false;
         }
 
-        LEDStripRenderer->SetAllLEDs(CHSV(160, 255, LEDStripAnimationOffset));
+        uint8_t amountOfColourB = SideLEDFadeStep * 255 / SideLEDFadeSteps;
+        LEDStripRenderer->SetAllLEDs(blend(CRGB(ProtoConfig.SideLEDColourA), CRGB(ProtoConfig.SideLEDColourB), amountOfColourB));
       }
 
       NextLEDStripUpdate = curTime + 15;

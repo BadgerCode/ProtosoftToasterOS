@@ -27,6 +27,8 @@ static ProtoConfigStruct ProtoConfig {
 
   // LED Strip config
   .EnableSideLEDs = true,
+  .SideLEDColourA = 0x000071, // The side LEDs fade between these two colours, as 0xRRGGBB
+  .SideLEDColourB = 0x0000F5,
 
   // Remote control config
   .EnableRemoteControl = true,

@@ -30,6 +30,10 @@ const bool: Parser<boolean> = (v) => {
   return undefined
 }
 
+/** "0x0000F5" -> "#0000f5" */
+const hexColour: Parser<string> = (v) =>
+  /^0x[0-9a-f]{6}$/i.test(v) ? `#${v.slice(2).toLowerCase()}` : undefined
+
 /** `.Name = value,` inside a struct initialiser */
 function structField<T>(name: string, parse: Parser<T>): Reader<T> {
   const pattern = new RegExp(`\\.${name}\\s*=\\s*([^,\\s}]+)`)
@@ -82,6 +86,8 @@ const SETTINGS = [
     structField('NumBoopsToActivateGame', int),
   ]),
   setting('enableSideLEDs', 'Side LED strips', [structField('EnableSideLEDs', bool)]),
+  setting('sideLEDColourA', 'Side LED colour 1', [structField('SideLEDColourA', hexColour)]),
+  setting('sideLEDColourB', 'Side LED colour 2', [structField('SideLEDColourB', hexColour)]),
   setting('enableRemoteControl', 'Remote control', [structField('EnableRemoteControl', bool)]),
   setting('pinRemoteButtonA', 'Remote button A pin', [structField('PinRemoteButtonA', int)]),
   setting('pinRemoteButtonB', 'Remote button B pin', [structField('PinRemoteButtonB', int)]),

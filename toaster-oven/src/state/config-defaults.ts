@@ -132,6 +132,8 @@ export function defaultFeatureConfig(): FeatureConfig {
     numBoopsToActivateGame: 15,
 
     enableSideLEDs: false,
+    sideLEDColourA: '#000071',
+    sideLEDColourB: '#0000f5',
     pinLeftLEDStripData: 9,
     pinRightLEDStripData: 10,
     ledStripNumLEDs: 15,

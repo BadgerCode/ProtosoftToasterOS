@@ -70,6 +70,8 @@ struct ProtoConfigStruct {
 
   // LED Strip config
   bool EnableSideLEDs;
+  uint32_t SideLEDColourA;  // The side LEDs fade between these two colours, as 0xRRGGBB
+  uint32_t SideLEDColourB;
 
   // Remote control config
   bool EnableRemoteControl;
