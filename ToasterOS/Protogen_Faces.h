@@ -183,18 +183,18 @@ struct FaceExpression Face_Blep = {
 };
 
 
-// Spiral animation: each frame rotates the eyes 90 degrees, every 200ms
+// Spiral animation: each frame turns the spiral a quarter, every 200ms
 const EyeFrame Spiral_Eye2 = {
-  { B00011111, B00111011, B00100000, B00001100, B00011010, B00010000, B00011001, B00001111 },
-  { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }
+  { B00001111, B00010000, B00100110, B00001001, B00010101, B00010010, B00010000, B00001111 },
+  { B00000000, B10000000, B01000000, B01000000, B01000000, B01000000, B10000000, B00000000 }
 };
 const EyeFrame Spiral_Eye3 = {
-  { B00000001, B00011100, B00110110, B00100010, B00100100, B00110000, B00011001, B00001111 },
-  { B10000000, B11000000, B11000000, B01000000, B11000000, B11000000, B10000000, B00000000 }
+  { B00000001, B00011100, B00100010, B00100101, B00101001, B00100110, B00010000, B00001111 },
+  { B00000000, B10000000, B01000000, B01000000, B01000000, B01000000, B10000000, B00000000 }
 };
 const EyeFrame Spiral_Eye4 = {
-  { B00001111, B00011001, B00110000, B00100101, B00100011, B00110000, B00011101, B00001111 },
-  { B00000000, B10000000, B10000000, B10000000, B00000000, B01000000, B11000000, B10000000 }
+  { B00001111, B00010000, B00100100, B00101010, B00101001, B00100110, B00010000, B00001111 },
+  { B00000000, B10000000, B10000000, B10000000, B00000000, B01000000, B10000000, B00000000 }
 };
 
 const AnimationFrame Spiral_Frames[] = {
@@ -210,8 +210,8 @@ struct FaceExpression Face_Spiral = {
     { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
   },
   .Eye = {
-    { B00001111, B00011001, B00110000, B00110010, B00100100, B00110110, B00110011, B00011000 },  //
-    { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }   //
+    { B00001111, B00010000, B00100110, B00101001, B00101010, B00100100, B00010011, B00001000 },  //
+    { B00000000, B10000000, B01000000, B01000000, B01000000, B01000000, B10000000, B00000000 }   //
   },
   .HasBlink = false,
   .Eye_Blink = {},
@@ -503,7 +503,6 @@ const int NumRemoteControlActions = sizeof(RemoteControlActions) / sizeof(Remote
 FaceExpression* const SlowMovementExpressions[] = {
   &Face_Heart,
   &Face_Smirk,
-  &Face_Spiral,
   &Face_AmongUs
 };
 const int NumSlowMovementExpressions = sizeof(SlowMovementExpressions) / sizeof(SlowMovementExpressions[0]);
@@ -511,6 +510,7 @@ const int NumSlowMovementExpressions = sizeof(SlowMovementExpressions) / sizeof(
 // Expressions that move up and down very slowly (every 600ms)
 FaceExpression* const VerySlowMovementExpressions[] = {
   &Face_Sleepy,
+  &Face_Spiral,
   &Face_X_X
 };
 const int NumVerySlowMovementExpressions = sizeof(VerySlowMovementExpressions) / sizeof(VerySlowMovementExpressions[0]);
