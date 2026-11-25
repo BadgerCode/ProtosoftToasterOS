@@ -11,7 +11,6 @@ import {
   parseBoopExpressions,
   parseExpressionList,
   parseExpressions,
-  parseExtraDefaults,
   parsePanel,
   parseRemoteActions,
 } from './parse-faces'
@@ -31,66 +30,45 @@ export interface FaceExpressionData {
 /** The starting pack of expressions that ships with ToasterOS */
 export const DEFAULT_EXPRESSIONS = parseExpressions(facesHeader)
 
+/** A setting the firmware's Protogen_Faces.h must have. Fails the page load if it's missing */
+function fromHeader<T>(value: T | null, name: string): T {
+  if (value === null) throw new Error(`${name} is missing from src/assets/Protogen_Faces.h`)
+  return value
+}
+
 /** The expression the head shows when idle (DEFAULT_FACE), without the Face_ prefix */
-export const DEFAULT_FACE_NAME = parseDefaultFace(facesHeader) ?? 'Neutral'
+export const DEFAULT_FACE_NAME = fromHeader(parseDefaultFace(facesHeader), 'DEFAULT_FACE')
 
-/**
- * Expressions shown now and then in place of the default one (ExtraDefaultExpressions).
- * Also what older files without the list used, as the firmware had these hard-coded.
- */
-export const EXTRA_DEFAULT_NAMES = parseExtraDefaults(facesHeader) ?? [
-  'Happy_Closed_eyes',
-  'Cute',
-  'Blep',
-  'Silly',
-]
+/** Expressions shown now and then in place of the default one (ExtraDefaultExpressions) */
+export const EXTRA_DEFAULT_NAMES = fromHeader(
+  parseExpressionList(facesHeader, 'ExtraDefaultExpressions'),
+  'ExtraDefaultExpressions',
+)
 
-/**
- * Expressions shown when booped, by the minimum number of boops in a row (BoopExpressions).
- * Also what older files without the list used, as the firmware had these hard-coded.
- */
-export const BOOP_EXPRESSION_DEFAULTS = parseBoopExpressions(facesHeader) ?? [
-  { minBoops: 1, name: 'Surprised' },
-  { minBoops: 3, name: 'Angry' },
-  { minBoops: 6, name: 'X_X' },
-]
+/** Expressions shown when booped, by the minimum number of boops in a row (BoopExpressions) */
+export const BOOP_EXPRESSION_DEFAULTS = fromHeader(
+  parseBoopExpressions(facesHeader),
+  'BoopExpressions',
+)
 
-/**
- * What each remote control button combo does (RemoteControlActions).
- * Also what older files without the list used, as the firmware had these hard-coded.
- */
-export const REMOTE_ACTION_DEFAULTS = parseRemoteActions(facesHeader) ?? [
-  { buttons: 'AA', action: 'REMOTE_RESET_TO_DEFAULT', name: null },
-  { buttons: 'AB', action: 'REMOTE_EXPRESSION', name: 'Blep' },
-  { buttons: 'AC', action: 'REMOTE_EXPRESSION', name: 'Sleepy' },
-  { buttons: 'AD', action: 'REMOTE_EXPRESSION', name: 'Excited' },
-  { buttons: 'BA', action: 'REMOTE_EXPRESSION', name: 'Angry' },
-  { buttons: 'BB', action: 'REMOTE_EXPRESSION', name: 'Sad' },
-  { buttons: 'BC', action: 'REMOTE_EXPRESSION', name: 'Surprised' },
-  { buttons: 'BD', action: 'REMOTE_EXPRESSION', name: 'X_X' },
-  { buttons: 'CA', action: 'REMOTE_EXPRESSION', name: 'Heart' },
-  { buttons: 'CB', action: 'REMOTE_EXPRESSION', name: 'BoyKisser' },
-  { buttons: 'CC', action: 'REMOTE_EXPRESSION', name: 'Smirk' },
-  { buttons: 'CD', action: 'REMOTE_EXPRESSION', name: 'Spiral' },
-  { buttons: 'DA', action: 'REMOTE_CYCLE_BRIGHTNESS', name: null },
-  { buttons: 'DB', action: 'REMOTE_TOGGLE_BOOP_SENSOR', name: null },
-  { buttons: 'DD', action: 'REMOTE_EXPRESSION', name: 'AmongUs' },
-]
+/** What each remote control button combo does (RemoteControlActions) */
+export const REMOTE_ACTION_DEFAULTS = fromHeader(
+  parseRemoteActions(facesHeader),
+  'RemoteControlActions',
+)
 
 /**
  * Expressions that move up and down slowly (SlowMovementExpressions) and very slowly
- * (VerySlowMovementExpressions). Also what older files without the lists used.
+ * (VerySlowMovementExpressions)
  */
-export const SLOW_MOVEMENT_NAMES = parseExpressionList(facesHeader, 'SlowMovementExpressions') ?? [
-  'Heart',
-  'Smirk',
-  'Spiral',
-  'AmongUs',
-]
-export const VERY_SLOW_MOVEMENT_NAMES = parseExpressionList(
-  facesHeader,
+export const SLOW_MOVEMENT_NAMES = fromHeader(
+  parseExpressionList(facesHeader, 'SlowMovementExpressions'),
+  'SlowMovementExpressions',
+)
+export const VERY_SLOW_MOVEMENT_NAMES = fromHeader(
+  parseExpressionList(facesHeader, 'VerySlowMovementExpressions'),
   'VerySlowMovementExpressions',
-) ?? ['Sleepy', 'X_X']
+)
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */
 export const NOSE_SINGLE_DECLARATION = extractDeclaration(facesHeader, 'byte Face_Nose_Single')

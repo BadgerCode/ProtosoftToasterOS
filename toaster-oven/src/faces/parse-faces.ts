@@ -72,11 +72,6 @@ export function parseExpressionList(header: string, listName: string): string[] 
   return [...list.matchAll(/&Face_(\w+)/g)].map((m) => m[1]!)
 }
 
-/** The expressions in ExtraDefaultExpressions. See parseExpressionList() */
-export function parseExtraDefaults(header: string): string[] | null {
-  return parseExpressionList(header, 'ExtraDefaultExpressions')
-}
-
 /**
  * The entries in BoopExpressions, e.g. `{ 3, &Face_Angry }`, or null if the list isn't there.
  * An empty list ({}) gives [].
