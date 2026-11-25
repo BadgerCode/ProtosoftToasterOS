@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { appStore, getDefaultExpression, isExtraDefault } from '@/state/app-state'
+import { appStore, isExtraDefault, getListedExpressions } from '@/state/app-state'
 import {
   createExpression,
   displayName,
@@ -43,19 +43,8 @@ import {
 
 const expressions = appStore.expressions
 
-/**
- * The list as shown: the default expression first, then the rest alphabetically. Only the display
- * is sorted; the stored order is the order expressions are written to Protogen_Faces.h.
- */
-const listedExpressions = computed(() => {
-  const defaultExpression = getDefaultExpression()
-  const others = expressions
-    .filter((e) => e !== defaultExpression)
-    .sort((a, b) =>
-      displayName(a.name).localeCompare(displayName(b.name), undefined, { sensitivity: 'base' }),
-    )
-  return [defaultExpression, ...others]
-})
+/** The list as shown: the default expression first, then the rest A-Z */
+const listedExpressions = computed(getListedExpressions)
 
 const selected = computed(
   () => expressions.find((e) => e.id === selectedExpressionId.value) ?? expressions[0]!,

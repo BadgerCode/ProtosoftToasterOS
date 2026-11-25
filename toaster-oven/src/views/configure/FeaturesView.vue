@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { appStore } from '@/state/app-state'
+import { appStore, getListedExpressions } from '@/state/app-state'
 import { DEBUG_MODES } from '@/state/config-types'
 import { displayName } from '@/state/expressions'
 import { duplicateMinBoops, isValidMinBoops } from '@/state/boop-expressions'
@@ -17,6 +17,9 @@ import ColourPicker from '@/components/form/ColourPicker.vue'
 import PinConflictWarning from '@/components/PinConflictWarning.vue'
 
 const config = appStore.featureConfig
+
+/** For the expression dropdowns: the default first, then the rest A-Z */
+const listedExpressions = computed(getListedExpressions)
 
 const brightnessPercent = computed(() => Math.round(config.brightness * 100))
 
@@ -174,7 +177,7 @@ const remoteButtons = [
                   :aria-label="`Expression ${i + 1}`"
                 >
                   <option
-                    v-for="expression in appStore.expressions"
+                    v-for="expression in listedExpressions"
                     :key="expression.id"
                     :value="expression.id"
                   >
@@ -338,7 +341,7 @@ const remoteButtons = [
                   </optgroup>
                   <optgroup label="Expressions">
                     <option
-                      v-for="expression in appStore.expressions"
+                      v-for="expression in listedExpressions"
                       :key="expression.id"
                       :value="`expression:${expression.id}`"
                     >

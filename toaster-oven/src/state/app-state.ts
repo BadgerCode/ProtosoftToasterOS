@@ -10,7 +10,7 @@ import {
 import type { BoopExpression } from './boop-expressions'
 import { remoteActionsFromEntries } from './remote-actions'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
-import { defaultExpressions } from './expressions'
+import { defaultExpressions, displayName } from './expressions'
 
 const expressions = defaultExpressions()
 
@@ -75,6 +75,20 @@ export function isExtraDefault(id: number) {
 export function getExtraDefaultExpressions() {
   const defaultId = getDefaultExpression().id
   return appStore.expressions.filter((e) => e.id !== defaultId && isExtraDefault(e.id))
+}
+
+/**
+ * The expressions in the order the site shows them: the default first, then the rest A-Z.
+ * Only for display; the stored order is the order they're written to Protogen_Faces.h.
+ */
+export function getListedExpressions() {
+  const defaultExpression = getDefaultExpression()
+  const others = appStore.expressions
+    .filter((e) => e !== defaultExpression)
+    .sort((a, b) =>
+      displayName(a.name).localeCompare(displayName(b.name), undefined, { sensitivity: 'base' }),
+    )
+  return [defaultExpression, ...others]
 }
 
 /** An expression by its C++ name (without Face_), falling back to the first one */
