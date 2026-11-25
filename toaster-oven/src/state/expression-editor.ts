@@ -1,11 +1,12 @@
 import { ref } from 'vue'
 import type { FaceExpressionData } from '@/faces/faces'
-import { appStore } from './app-state'
+import { appStore, getDefaultExpression } from './app-state'
 import type { Expression } from './expressions'
 
 // Editor state that should survive switching between the Configure tabs
 
-export const selectedExpressionId = ref<number>(appStore.expressions[0]!.id)
+// Starts on the default expression, which is at the top of the list
+export const selectedExpressionId = ref<number>(getDefaultExpression().id)
 
 interface HistoryEntry {
   id: number
@@ -61,7 +62,7 @@ export const redo = () => step(redoStack, undoStack)
 
 /** Start fresh after the expressions are replaced, e.g. by an import */
 export function resetEditor() {
-  selectedExpressionId.value = appStore.expressions[0]!.id
+  selectedExpressionId.value = getDefaultExpression().id
   undoStack.value = []
   redoStack.value = []
 }

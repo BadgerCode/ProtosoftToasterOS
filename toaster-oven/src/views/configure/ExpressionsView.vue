@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { appStore, isExtraDefault } from '@/state/app-state'
+import { appStore, getDefaultExpression, isExtraDefault } from '@/state/app-state'
 import {
   createExpression,
   displayName,
@@ -42,6 +42,20 @@ import {
 } from '@/state/movement-speed'
 
 const expressions = appStore.expressions
+
+/**
+ * The list as shown: the default expression first, then the rest alphabetically. Only the display
+ * is sorted; the stored order is the order expressions are written to Protogen_Faces.h.
+ */
+const listedExpressions = computed(() => {
+  const defaultExpression = getDefaultExpression()
+  const others = expressions
+    .filter((e) => e !== defaultExpression)
+    .sort((a, b) =>
+      displayName(a.name).localeCompare(displayName(b.name), undefined, { sensitivity: 'base' }),
+    )
+  return [defaultExpression, ...others]
+})
 
 const selected = computed(
   () => expressions.find((e) => e.id === selectedExpressionId.value) ?? expressions[0]!,
@@ -252,8 +266,8 @@ function removeExpression() {
   ].filter(Boolean)
   const usedNote = usedIn.length ? ` It will also be removed from the ${usedIn.join(' and ')}.` : ''
   if (!confirm(`Remove "${displayName(expression.name)}"?${usedNote} This can't be undone.`)) return
-  const index = expressions.indexOf(expression)
-  expressions.splice(index, 1)
+  const listedIndex = listedExpressions.value.indexOf(expression)
+  expressions.splice(expressions.indexOf(expression), 1)
   const extraIndex = appStore.extraDefaultExpressionIds.indexOf(expression.id)
   if (extraIndex !== -1) appStore.extraDefaultExpressionIds.splice(extraIndex, 1)
   setMovementSpeed(expression.id, 'normal') // Takes it out of the movement lists
@@ -268,7 +282,9 @@ function removeExpression() {
       action.expressionId = null
     }
   }
-  selectedExpressionId.value = expressions[Math.min(index, expressions.length - 1)]!.id
+  // Select the expression that's now in its place in the list
+  const listed = listedExpressions.value
+  selectedExpressionId.value = listed[Math.min(listedIndex, listed.length - 1)]!.id
 }
 
 // Blink
@@ -315,7 +331,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
       </div>
 
       <ul class="max-h-72 overflow-y-auto p-2 lg:max-h-[calc(100vh-14rem)]">
-        <li v-for="expression in expressions" :key="expression.id">
+        <li v-for="expression in listedExpressions" :key="expression.id">
           <button
             type="button"
             class="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
