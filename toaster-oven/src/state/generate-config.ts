@@ -62,6 +62,7 @@ static ProtoConfigStruct ProtoConfig {
   // General config
   .Brightness = ${f.brightness}, // Percentage. E.g. 0.25 = 25%
   .DebugMode = ${f.debugMode}, // 0 = off, 1 = FPS log, 2 = max frame duration log, 3 = render numbers on all panels
+  .EnableFaceBobbing = ${f.enableFaceBobbing}, // Move the face up and down
 
   // Boop sensor config
   .EnableBoopSensor = ${f.enableBoopSensor},

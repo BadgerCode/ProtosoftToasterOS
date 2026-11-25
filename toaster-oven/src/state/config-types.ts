@@ -86,6 +86,7 @@ export interface FeatureConfig {
   // General
   brightness: number
   debugMode: number
+  enableFaceBobbing: boolean
   rapidPanelAutoRecovery: boolean
 
   // Boop sensor

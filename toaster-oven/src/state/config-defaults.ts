@@ -124,6 +124,7 @@ export function defaultFeatureConfig(): FeatureConfig {
   return {
     brightness: 0.27,
     debugMode: 0,
+    enableFaceBobbing: true,
     rapidPanelAutoRecovery: true,
 
     enableBoopSensor: false,

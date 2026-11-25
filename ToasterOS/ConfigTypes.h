@@ -61,6 +61,7 @@ struct ProtoConfigStruct {
   // General config
   float Brightness; // Percentage. E.g. 0.25 = 25%
   int DebugMode;
+  bool EnableFaceBobbing;  // Move the face up and down
 
   // Boop sensor config
   bool EnableBoopSensor;

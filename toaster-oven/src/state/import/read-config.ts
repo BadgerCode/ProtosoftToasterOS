@@ -73,6 +73,7 @@ const SETTINGS = [
   ]),
   setting('brightness', 'Brightness', [structField('Brightness', number)]),
   setting('debugMode', 'Debug mode', [structField('DebugMode', int)]),
+  setting('enableFaceBobbing', 'Face bobbing', [structField('EnableFaceBobbing', bool)]),
   setting('enableBoopSensor', 'Boop sensor', [structField('EnableBoopSensor', bool)]),
   setting('pinAnalogBoopSensor', 'Boop sensor analog pin', [
     structField('PinAnalogBoopSensor', int),

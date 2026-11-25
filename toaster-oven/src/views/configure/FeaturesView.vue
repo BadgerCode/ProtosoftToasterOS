@@ -92,6 +92,12 @@ const remoteButtons = [
         </FormField>
 
         <ToggleSwitch
+          v-model="config.enableFaceBobbing"
+          label="Face bobbing"
+          description="Move the face up and down. Each expression's speed is set in the Expressions tab."
+        />
+
+        <ToggleSwitch
           v-model="config.rapidPanelAutoRecovery"
           label="Rapid panel auto-recovery"
           description="Prevent panels with loose connections from getting stuck (and needing a reboot), at a slight cost to performance."

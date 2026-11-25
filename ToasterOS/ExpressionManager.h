@@ -54,7 +54,10 @@ public:
     }
 
     // Update face movement state- time to move?
-    if (curTime >= NextOffsetShift) {
+    if (!ProtoConfig.EnableFaceBobbing) {
+      // Face bobbing turned off: keep the face still
+      Face_OffsetY = 0;
+    } else if (curTime >= NextOffsetShift) {
       // Update state
       NextOffsetShift = curTime + GetMovementDelay();
       Face_OffsetY += Face_OffsetY_Dir;

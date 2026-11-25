@@ -314,7 +314,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
 
         <FormField
           label="Movement speed"
-          hint="How often the face moves up and down while this expression shows: every 200 ms (normal), 300 ms (slow) or 600 ms (very slow). Boops have their own speed."
+          hint="How often the face moves up and down while this expression shows: every 200 ms (normal), 300 ms (slow) or 600 ms (very slow). Boops have their own speed. Face bobbing can be turned off on the Features tab."
         >
           <select v-model="movementSpeed" class="form-input sm:max-w-64">
             <option v-for="speed in MOVEMENT_SPEEDS" :key="speed.value" :value="speed.value">
