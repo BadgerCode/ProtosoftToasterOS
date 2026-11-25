@@ -2,6 +2,7 @@ import {
   BOOP_EXPRESSION_DEFAULTS,
   DEFAULT_FACE_NAME,
   EXTRA_DEFAULT_NAMES,
+  REMOTE_ACTION_DEFAULTS,
   defaultExpression,
 } from '@/faces/faces'
 import {
@@ -9,8 +10,10 @@ import {
   parseDefaultFace,
   parseExpressions,
   parseExtraDefaults,
+  parseRemoteActions,
 } from '@/faces/parse-faces'
 import type { BoopExpression } from '../boop-expressions'
+import { remoteActionsFromEntries, type RemoteAction } from '../remote-actions'
 import { REQUIRED_EXPRESSIONS } from '@/faces/required-expressions'
 import { createExpression, displayName, type Expression } from '../expressions'
 
@@ -41,6 +44,12 @@ export interface ReadFacesResult {
   boopExpressionsFallback: boolean
   /** Display names in BoopExpressions that aren't expressions in the file */
   boopExpressionsSkipped: string[]
+  /** One entry per remote control combo */
+  remoteActions: RemoteAction[]
+  /** Set when the file had no RemoteControlActions, so the defaults were used */
+  remoteActionsFallback: boolean
+  /** RemoteControlActions entries that couldn't be used, e.g. "AB (Missing face)" */
+  remoteActionsSkipped: string[]
 }
 
 export function readFaces(text: string): ReadFacesResult {
@@ -96,6 +105,10 @@ export function readFaces(text: string): ReadFacesResult {
     .filter((b) => !names.has(b.name))
     .map((b) => displayName(b.name))
 
+  // Older files have no RemoteControlActions; the firmware had the defaults hard-coded
+  const requestedRemote = parseRemoteActions(text)
+  const remote = remoteActionsFromEntries(requestedRemote ?? REMOTE_ACTION_DEFAULTS, expressions)
+
   return {
     expressions,
     added,
@@ -107,5 +120,8 @@ export function readFaces(text: string): ReadFacesResult {
     boopExpressions,
     boopExpressionsFallback: requestedBoops === null,
     boopExpressionsSkipped,
+    remoteActions: remote.actions,
+    remoteActionsFallback: requestedRemote === null,
+    remoteActionsSkipped: remote.skipped,
   }
 }

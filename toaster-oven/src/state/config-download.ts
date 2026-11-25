@@ -1,11 +1,21 @@
 import { computed, ref } from 'vue'
 import { appStore, getDefaultExpression, getExtraDefaultExpressions } from './app-state'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
-import { BOOP_EXPRESSION_DEFAULTS, DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import {
+  BOOP_EXPRESSION_DEFAULTS,
+  DEFAULT_FACE_NAME,
+  EXTRA_DEFAULT_NAMES,
+  REMOTE_ACTION_DEFAULTS,
+} from '@/faces/faces'
 import { usableBoopExpressions } from './boop-expressions'
 import { defaultExpressions } from './expressions'
 import { downloadBlob, generateConfigHeader } from './generate-config'
-import { generateFacesHeader, type BoopExpressionEntry } from './generate-faces'
+import {
+  generateFacesHeader,
+  type BoopExpressionEntry,
+  type RemoteActionEntry,
+} from './generate-faces'
+import { usableRemoteActions } from './remote-actions'
 
 export type DownloadKind = 'config' | 'expressions'
 
@@ -17,7 +27,7 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 5
+const FORMAT_VERSION = 6
 
 function generateFiles(
   face: typeof appStore.faceConfig,
@@ -26,6 +36,7 @@ function generateFiles(
   defaultExpressionName: string,
   extraDefaultNames: string[],
   boopExpressions: BoopExpressionEntry[],
+  remoteActions: RemoteActionEntry[],
 ): Record<DownloadKind, string> {
   return {
     config: generateConfigHeader(face, features),
@@ -34,6 +45,7 @@ function generateFiles(
       defaultExpressionName,
       extraDefaultNames,
       boopExpressions,
+      remoteActions,
     ),
   }
 }
@@ -47,6 +59,7 @@ const lastDownloaded = ref(
     DEFAULT_FACE_NAME,
     EXTRA_DEFAULT_NAMES.filter((name) => name !== DEFAULT_FACE_NAME),
     BOOP_EXPRESSION_DEFAULTS,
+    REMOTE_ACTION_DEFAULTS,
   ),
 )
 
@@ -61,6 +74,7 @@ const currentFiles = computed(() =>
       minBoops: b.minBoops,
       name: b.expression.name,
     })),
+    usableRemoteActions(appStore.remoteActions, appStore.expressions),
   ),
 )
 

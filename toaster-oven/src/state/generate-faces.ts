@@ -1,6 +1,13 @@
 import { NOSE_SINGLE_DECLARATION, type PanelBitmap } from '@/faces/faces'
 import type { Expression } from './expressions'
 
+/** A RemoteControlActions entry, by expression name */
+export interface RemoteActionEntry {
+  buttons: string
+  action: string
+  name: string | null
+}
+
 /** A BoopExpressions entry, by expression name */
 export interface BoopExpressionEntry {
   minBoops: number
@@ -60,11 +67,22 @@ function generateBoopExpressions(entries: BoopExpressionEntry[]): string {
 const int NumBoopExpressions = sizeof(BoopExpressions) / sizeof(BoopExpressions[0]);`
 }
 
+function generateRemoteActions(entries: RemoteActionEntry[]): string {
+  const entry = (a: RemoteActionEntry) =>
+    a.name
+      ? `  { "${a.buttons}", ${a.action}, &Face_${a.name} }`
+      : `  { "${a.buttons}", ${a.action} }`
+  const list = entries.length ? `{\n${entries.map(entry).join(',\n')}\n}` : '{}'
+  return `const RemoteControlActionConfig RemoteControlActions[] = ${list};
+const int NumRemoteControlActions = sizeof(RemoteControlActions) / sizeof(RemoteControlActions[0]);`
+}
+
 export function generateFacesHeader(
   expressions: Expression[],
   defaultName: string,
   extraDefaultNames: string[],
   boopExpressions: BoopExpressionEntry[],
+  remoteActions: RemoteActionEntry[],
 ): string {
   return `// All of the faces and digits are designed to work on the right face & be flipped on the left face
 
@@ -98,5 +116,10 @@ ${generateExtraDefaults(extraDefaultNames)}
 // The entry with the highest number that has been reached is shown. E.g. 4 boops shows Face_Angry
 // Leave the list empty ({}) to keep the current expression when booped
 ${generateBoopExpressions(boopExpressions)}
+
+// Remote control button combos: press one button, then another. E.g. "AB" is A then B
+// Actions: REMOTE_EXPRESSION (with an expression), REMOTE_RESET_TO_DEFAULT, REMOTE_CYCLE_BRIGHTNESS, REMOTE_TOGGLE_BOOP_SENSOR
+// Combos that aren't in the list do nothing
+${generateRemoteActions(remoteActions)}
 `
 }

@@ -46,6 +46,7 @@ src/
     expression-editor.ts    Selected expression + undo/redo stacks (module state, survives tab switches)
     pin-usage.ts            Detects digital pins assigned twice
     boop-expressions.ts     Boop expression helpers, matching ExpressionManager::GetBoopExpression()
+    remote-actions.ts       Remote control combos (AA-DD), actions and their labels
     import/
       read-config.ts        Config.h -> state. A list of readers per setting, newest format first
       read-faces.ts         Protogen_Faces.h -> expressions. Adds back missing required expressions
@@ -73,15 +74,16 @@ src/
   - Each expression has 1 nose panel, 2 eye panels (front, back), an optional 2-panel blink frame, and 4 mouth panels (front → back).
   - A bitmap is 8 numbers, one per row. The most significant bit is the leftmost LED.
 - **Visor geometry:** units are LEDs. Panel positions are in `VisorDisplay.vue` and `expression-layout.ts`, laid out like `../Docs/Images/panels_diagram_twocon.png`.
-- **Required expressions:** `required-expressions.ts` lists the 16 expressions that `ExpressionManager.h` and `RemoteControl.h` refer to by name.
+- **Required expressions:** `required-expressions.ts` lists the 10 expressions that `ExpressionManager.h` refers to by name (hearts, spirals and the movement speed checks).
   - The editor lets users change their LEDs, but blocks renaming and removing them, because either would break the firmware build.
-  - Only expressions not in that list can be renamed or removed, e.g. Neutral, Happy Closed eyes, Cute, Silly, OWO, Binary, UWU and user-created ones.
+  - Only expressions not in that list can be renamed or removed, e.g. Neutral, Surprised, Angry, Blep, Sad, OWO and user-created ones.
   - The owner plans to make this configurable.
 - **Default expression:** the face shown when idle, `DEFAULT_FACE` at the end of `Protogen_Faces.h`. It's stored as `appStore.defaultExpressionId`, so renaming it is fine; it can't be removed while it's the default. `getDefaultExpression()` returns it, and the home page visor and panel map show it. Importing a file without a usable `DEFAULT_FACE` (downloaded before format 3) falls back to Neutral, adding Neutral back if needed.
 - **Extra default expressions:** `ExtraDefaultExpressions` in `Protogen_Faces.h`, shown now and then in place of the default expression (every 10–14 seconds for 5 seconds, and after a boop). An empty list turns this off. Stored as `appStore.extraDefaultExpressionIds` (update in place) and toggled per expression in the Expressions tab. `getExtraDefaultExpressions()` returns them in list order, leaving out the default expression, which the firmware would skip anyway. Removing an expression drops it from the list. Importing a file without the list (downloaded before format 4) uses the usual four: Happy Closed eyes, Cute, Blep and Silly.
 - **Boop expressions:** `BoopExpressions` in `Protogen_Faces.h`: `{ minBoops, &Face_X }` entries. The firmware shows the entry with the highest `minBoops` reached; with none reached, or an empty list, the current expression stays. Rubbing the nose always shows the hearts, which aren't configurable yet. Stored as `appStore.boopExpressions` (`{ minBoops, expressionId }`, update in place) and edited under Features → Boop sensor, though it's saved in `Protogen_Faces.h`, not `Config.h`. The generator sorts entries by `minBoops` and leaves out invalid ones, which the editor flags. Removing an expression drops its entries. Importing a file without the list (downloaded before format 5) uses Surprised (1), Angry (3) and X_X (6).
+- **Remote control combos:** `RemoteControlActions` in `Protogen_Faces.h`: `{ "AB", REMOTE_EXPRESSION, &Face_X }` or `{ "DA", REMOTE_CYCLE_BRIGHTNESS }` entries (actions are `RemoteActionType` in `../ToasterOS/ConfigTypes.h`). Combos not listed do nothing; the firmware uses the first entry for a combo. Stored as `appStore.remoteActions`, always one entry per combo AA to DD with `action: 'none'` for unused ones (update in place), and edited under Features → Remote control, though it's saved in `Protogen_Faces.h`. Removing an expression sets its combos to nothing. Importing a file without the list (downloaded before format 6) uses the old hard-coded menu.
 - **Generated files:**
-  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE`, `ExtraDefaultExpressions` and `BoopExpressions` (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
+  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE`, `ExtraDefaultExpressions`, `BoopExpressions` and `RemoteControlActions` (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
   - Expression names are C++ identifiers, saved as `Face_<name>`. The UI shows them with spaces instead of underscores.
 
 **Keep in sync with the firmware.** If `../ToasterOS/ConfigTypes.h`, `Config.h`, `Protogen_Faces.h` or the files that reference expressions change, update:

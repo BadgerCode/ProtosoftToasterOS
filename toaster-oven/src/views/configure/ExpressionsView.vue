@@ -115,9 +115,12 @@ function duplicateExpression() {
 function removeExpression() {
   const expression = selected.value
   if (isDefault.value) return
-  const usedForBoops = appStore.boopExpressions.some((b) => b.expressionId === expression.id)
-  const boopNote = usedForBoops ? ' It will also be removed from the boop expressions.' : ''
-  if (!confirm(`Remove "${displayName(expression.name)}"?${boopNote} This can't be undone.`)) return
+  const usedIn = [
+    appStore.boopExpressions.some((b) => b.expressionId === expression.id) && 'boop expressions',
+    appStore.remoteActions.some((a) => a.expressionId === expression.id) && 'remote control combos',
+  ].filter(Boolean)
+  const usedNote = usedIn.length ? ` It will also be removed from the ${usedIn.join(' and ')}.` : ''
+  if (!confirm(`Remove "${displayName(expression.name)}"?${usedNote} This can't be undone.`)) return
   const index = expressions.indexOf(expression)
   expressions.splice(index, 1)
   const extraIndex = appStore.extraDefaultExpressionIds.indexOf(expression.id)
@@ -125,6 +128,12 @@ function removeExpression() {
   for (let i = appStore.boopExpressions.length - 1; i >= 0; i--) {
     if (appStore.boopExpressions[i]!.expressionId === expression.id) {
       appStore.boopExpressions.splice(i, 1)
+    }
+  }
+  for (const action of appStore.remoteActions) {
+    if (action.expressionId === expression.id) {
+      action.action = 'none'
+      action.expressionId = null
     }
   }
   selectedExpressionId.value = expressions[Math.min(index, expressions.length - 1)]!.id

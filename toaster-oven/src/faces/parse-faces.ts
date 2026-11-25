@@ -85,6 +85,22 @@ export function parseBoopExpressions(header: string): { minBoops: number; name: 
   }))
 }
 
+/**
+ * The entries in RemoteControlActions, e.g. `{ "AB", REMOTE_EXPRESSION, &Face_Blep }`, or null
+ * if the list isn't there. `name` is the expression, without the Face_ prefix. An empty list gives [].
+ */
+export function parseRemoteActions(
+  header: string,
+): { buttons: string; action: string; name: string | null }[] | null {
+  const list = header.match(/RemoteControlActions\[\]\s*=\s*\{([\s\S]*?)\};/)?.[1]
+  if (list === undefined) return null
+  return [...list.matchAll(/\{\s*"([^"]*)"\s*,\s*(\w+)\s*(?:,\s*&Face_(\w+)\s*)?\}/g)].map((m) => ({
+    buttons: m[1]!,
+    action: m[2]!,
+    name: m[3] ?? null,
+  }))
+}
+
 /** A top-level declaration copied as-is, e.g. `byte Face_Nose_Single[8] = { ... };` */
 export function extractDeclaration(header: string, startsWith: string): string {
   const start = header.indexOf(startsWith)

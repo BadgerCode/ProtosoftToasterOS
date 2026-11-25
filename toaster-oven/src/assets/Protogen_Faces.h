@@ -498,4 +498,26 @@ const BoopExpressionConfig BoopExpressions[] = {
 };
 const int NumBoopExpressions = sizeof(BoopExpressions) / sizeof(BoopExpressions[0]);
 
+// Remote control button combos: press one button, then another. E.g. "AB" is A then B
+// Actions: REMOTE_EXPRESSION (with an expression), REMOTE_RESET_TO_DEFAULT, REMOTE_CYCLE_BRIGHTNESS, REMOTE_TOGGLE_BOOP_SENSOR
+// Combos that aren't in the list do nothing
+const RemoteControlActionConfig RemoteControlActions[] = {
+  { "AA", REMOTE_RESET_TO_DEFAULT },
+  { "AB", REMOTE_EXPRESSION, &Face_Blep },
+  { "AC", REMOTE_EXPRESSION, &Face_Sleepy },
+  { "AD", REMOTE_EXPRESSION, &Face_Excited },
+  { "BA", REMOTE_EXPRESSION, &Face_Angry },
+  { "BB", REMOTE_EXPRESSION, &Face_Sad },
+  { "BC", REMOTE_EXPRESSION, &Face_Surprised },
+  { "BD", REMOTE_EXPRESSION, &Face_X_X },
+  { "CA", REMOTE_EXPRESSION, &Face_Heart },
+  { "CB", REMOTE_EXPRESSION, &Face_BoyKisser },
+  { "CC", REMOTE_EXPRESSION, &Face_Smirk },
+  { "CD", REMOTE_EXPRESSION, &Face_Spiral },
+  { "DA", REMOTE_CYCLE_BRIGHTNESS },
+  { "DB", REMOTE_TOGGLE_BOOP_SENSOR },
+  { "DD", REMOTE_EXPRESSION, &Face_AmongUs }
+};
+const int NumRemoteControlActions = sizeof(RemoteControlActions) / sizeof(RemoteControlActions[0]);
+
 

@@ -1,6 +1,12 @@
 import { reactive } from 'vue'
-import { BOOP_EXPRESSION_DEFAULTS, DEFAULT_FACE_NAME, EXTRA_DEFAULT_NAMES } from '@/faces/faces'
+import {
+  BOOP_EXPRESSION_DEFAULTS,
+  DEFAULT_FACE_NAME,
+  EXTRA_DEFAULT_NAMES,
+  REMOTE_ACTION_DEFAULTS,
+} from '@/faces/faces'
 import type { BoopExpression } from './boop-expressions'
+import { remoteActionsFromEntries } from './remote-actions'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
 import { defaultExpressions } from './expressions'
 
@@ -25,6 +31,11 @@ export const appStore = reactive({
     minBoops: b.minBoops,
     expressionId: expressions.find((e) => e.name === b.name)!.id,
   })),
+  /**
+   * What each remote control button combo does (RemoteControlActions in the firmware).
+   * One entry per combo, AA to DD. Update in place.
+   */
+  remoteActions: remoteActionsFromEntries(REMOTE_ACTION_DEFAULTS, expressions).actions,
 })
 
 /** The expression the head shows when idle, falling back to the first one */

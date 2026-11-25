@@ -4,6 +4,12 @@ import { appStore } from '@/state/app-state'
 import { DEBUG_MODES } from '@/state/config-types'
 import { displayName } from '@/state/expressions'
 import { duplicateMinBoops, isValidMinBoops } from '@/state/boop-expressions'
+import {
+  REMOTE_BUILT_IN_ACTIONS,
+  REMOTE_BUTTONS,
+  type RemoteAction,
+  type RemoteActionType,
+} from '@/state/remote-actions'
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
 import ToggleSwitch from '@/components/form/ToggleSwitch.vue'
@@ -26,6 +32,27 @@ function boopWarning(minBoops: number): string | null {
     return `The game starts at ${config.numBoopsToActivateGame} boops, so this won't show.`
   }
   return null
+}
+
+// Remote control combos: one select per combo, for an action or an expression
+const remoteActions = appStore.remoteActions
+
+function remoteActionsStartingWith(button: string) {
+  return remoteActions.filter((a) => a.buttons[0] === button)
+}
+
+function remoteSelectValue(action: RemoteAction) {
+  return action.action === 'REMOTE_EXPRESSION' ? `expression:${action.expressionId}` : action.action
+}
+
+function setRemoteAction(action: RemoteAction, value: string) {
+  if (value.startsWith('expression:')) {
+    action.action = 'REMOTE_EXPRESSION'
+    action.expressionId = Number(value.slice('expression:'.length))
+  } else {
+    action.action = value as RemoteActionType
+    action.expressionId = null
+  }
 }
 
 function addBoopExpression() {
@@ -228,6 +255,55 @@ const remoteButtons = [
               :disabled="!config.enableRemoteControlOutputLEDs"
             />
           </FormField>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-slate-200">Button combos</h3>
+          <p class="mt-0.5 text-xs text-slate-500">
+            Press one button, then another within 3 seconds, to show an expression or change a
+            setting.
+          </p>
+
+          <div class="mt-3 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            <div v-for="first in REMOTE_BUTTONS" :key="first" class="space-y-2">
+              <label
+                v-for="action in remoteActionsStartingWith(first)"
+                :key="action.buttons"
+                class="flex items-center gap-3"
+              >
+                <span class="flex shrink-0 items-center gap-1 text-xs text-slate-500">
+                  <kbd class="kbd">{{ action.buttons[0] }}</kbd>
+                  then
+                  <kbd class="kbd">{{ action.buttons[1] }}</kbd>
+                </span>
+                <select
+                  :value="remoteSelectValue(action)"
+                  class="form-input min-w-0 flex-1"
+                  @change="setRemoteAction(action, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option value="none">Nothing</option>
+                  <optgroup label="Settings">
+                    <option
+                      v-for="builtIn in REMOTE_BUILT_IN_ACTIONS"
+                      :key="builtIn.value"
+                      :value="builtIn.value"
+                    >
+                      {{ builtIn.label }}
+                    </option>
+                  </optgroup>
+                  <optgroup label="Expressions">
+                    <option
+                      v-for="expression in appStore.expressions"
+                      :key="expression.id"
+                      :value="`expression:${expression.id}`"
+                    >
+                      {{ displayName(expression.name) }}
+                    </option>
+                  </optgroup>
+                </select>
+              </label>
+            </div>
+          </div>
         </div>
       </fieldset>
     </SettingsCard>

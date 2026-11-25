@@ -12,6 +12,7 @@ import {
   parseExpressions,
   parseExtraDefaults,
   parsePanel,
+  parseRemoteActions,
 } from './parse-faces'
 
 export type PanelBitmap = number[]
@@ -51,6 +52,28 @@ export const BOOP_EXPRESSION_DEFAULTS = parseBoopExpressions(facesHeader) ?? [
   { minBoops: 1, name: 'Surprised' },
   { minBoops: 3, name: 'Angry' },
   { minBoops: 6, name: 'X_X' },
+]
+
+/**
+ * What each remote control button combo does (RemoteControlActions).
+ * Also what older files without the list used, as the firmware had these hard-coded.
+ */
+export const REMOTE_ACTION_DEFAULTS = parseRemoteActions(facesHeader) ?? [
+  { buttons: 'AA', action: 'REMOTE_RESET_TO_DEFAULT', name: null },
+  { buttons: 'AB', action: 'REMOTE_EXPRESSION', name: 'Blep' },
+  { buttons: 'AC', action: 'REMOTE_EXPRESSION', name: 'Sleepy' },
+  { buttons: 'AD', action: 'REMOTE_EXPRESSION', name: 'Excited' },
+  { buttons: 'BA', action: 'REMOTE_EXPRESSION', name: 'Angry' },
+  { buttons: 'BB', action: 'REMOTE_EXPRESSION', name: 'Sad' },
+  { buttons: 'BC', action: 'REMOTE_EXPRESSION', name: 'Surprised' },
+  { buttons: 'BD', action: 'REMOTE_EXPRESSION', name: 'X_X' },
+  { buttons: 'CA', action: 'REMOTE_EXPRESSION', name: 'Heart' },
+  { buttons: 'CB', action: 'REMOTE_EXPRESSION', name: 'BoyKisser' },
+  { buttons: 'CC', action: 'REMOTE_EXPRESSION', name: 'Smirk' },
+  { buttons: 'CD', action: 'REMOTE_EXPRESSION', name: 'Spiral' },
+  { buttons: 'DA', action: 'REMOTE_CYCLE_BRIGHTNESS', name: null },
+  { buttons: 'DB', action: 'REMOTE_TOGGLE_BOOP_SENSOR', name: null },
+  { buttons: 'DD', action: 'REMOTE_EXPRESSION', name: 'AmongUs' },
 ]
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */

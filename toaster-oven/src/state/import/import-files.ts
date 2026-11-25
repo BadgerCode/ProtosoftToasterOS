@@ -97,6 +97,7 @@ export function importFiles(
         appStore.boopExpressions.length,
         ...r.result.boopExpressions,
       )
+      appStore.remoteActions.splice(0, appStore.remoteActions.length, ...r.result.remoteActions)
       resetEditor()
       if (r.result.added.length) {
         notes.push(`Added missing expressions the firmware needs: ${r.result.added.join(', ')}`)
@@ -126,7 +127,17 @@ export function importFiles(
           `Skipped boop expressions that weren't in ${r.name}: ${r.result.boopExpressionsSkipped.join(', ')}`,
         )
       }
+      if (r.result.remoteActionsFallback) {
+        notes.push(`${r.name} didn't list remote control combos, so it uses the usual ones`)
+      }
+      if (r.result.remoteActionsSkipped.length) {
+        notes.push(
+          `Skipped remote control combos that couldn't be used: ${r.result.remoteActionsSkipped.join(', ')}`,
+        )
+      }
       upToDate =
+        !r.result.remoteActionsFallback &&
+        r.result.remoteActionsSkipped.length === 0 &&
         !r.result.boopExpressionsFallback &&
         r.result.boopExpressionsSkipped.length === 0 &&
         r.result.added.length === 0 &&
