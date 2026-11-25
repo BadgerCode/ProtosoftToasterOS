@@ -137,6 +137,62 @@ private:
     LastButtonPressTime = 0;
   }
 
+  // 'A' for BUTTON_A etc. 0 if it isn't a single button
+  char ButtonToLetter(int button) {
+    switch (button) {
+      case BUTTON_A: return 'A';
+      case BUTTON_B: return 'B';
+      case BUTTON_C: return 'C';
+      case BUTTON_D: return 'D';
+      default: return 0;
+    }
+  }
+
+  // The first action in RemoteControlActions for these two buttons, or NULL if there isn't one
+  const RemoteControlActionConfig* FindAction(int firstButton, int secondButton) {
+    char first = ButtonToLetter(firstButton);
+    char second = ButtonToLetter(secondButton);
+    if (first == 0 || second == 0) return NULL;
+
+    for (int i = 0; i < NumRemoteControlActions; i++) {
+      const RemoteControlActionConfig* action = &RemoteControlActions[i];
+      if (action->Buttons[0] == first && action->Buttons[1] == second) return action;
+    }
+    return NULL;
+  }
+
+  void RunAction(const RemoteControlActionConfig* action) {
+    switch (action->Action) {
+      case REMOTE_EXPRESSION:
+        if (action->Expression != NULL) SetExpression(action->Expression);
+        break;
+
+      case REMOTE_RESET_TO_DEFAULT:
+        ExpressionState->ResetToNeutral();
+        RecordSelectedExpression();
+        break;
+
+      case REMOTE_CYCLE_BRIGHTNESS:
+        // Cycle between values 0%, 25%, 50%, 100%
+        if (ProtoConfig.Brightness <= 0.0)
+          ProtoConfig.Brightness = 0.25;
+        else if (ProtoConfig.Brightness <= 0.25)
+          ProtoConfig.Brightness = 0.5;
+        else if (ProtoConfig.Brightness <= 0.5)
+          ProtoConfig.Brightness = 1.0;
+        else
+          ProtoConfig.Brightness = 0.0;
+
+        FaceRenderer->SetBrightness(ProtoConfig.Brightness);
+        break;
+
+      case REMOTE_TOGGLE_BOOP_SENSOR:
+        ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
+        if (!ProtoConfig.EnableBoopSensor) BoopState->StopBoop();
+        break;
+    }
+  }
+
   void UpdateMenuState() {
     // Reset button presses if its been too long
     if (NumPressedButtons > 0 && timeSince(LastButtonPressTime) >= MaxButtonPressWaitMs)
@@ -156,119 +212,18 @@ private:
     PressedButtons[NumPressedButtons++] = pressedButton;
     LastButtonPressTime = millis();
 
-    // MENU: A - HAPPY
-    if (PressedButtons[0] == BUTTON_A) {
-      // Wait for 2 button presses
-      if (NumPressedButtons < 2) return;
-
-      // MENU: AA - Reset to neutral
-      if (PressedButtons[1] == BUTTON_A) {
-        ExpressionState->ResetToNeutral();
-        RecordSelectedExpression();
-      }
-
-      // MENU: AB - BLEP
-      if (PressedButtons[1] == BUTTON_B) {
-        SetExpression(&Face_Blep);
-      }
-
-      // MENU: AC - CLOSED EYES
-      if (PressedButtons[1] == BUTTON_C) {
-        SetExpression(&Face_Sleepy);
-      }
-
-      // MENU: AD - EXCITED
-      if (PressedButtons[1] == BUTTON_D) {
-        SetExpression(&Face_Excited);
-      }
+    // Combos start with a single button. Ignore several buttons pressed at once
+    if (ButtonToLetter(PressedButtons[0]) == 0) {
+      ResetMenuSelection();
+      return;
     }
 
-    // MENU: B - BAD EMOTIONS
-    else if (PressedButtons[0] == BUTTON_B) {
-      // Wait for 2 button presses
-      if (NumPressedButtons < 2) return;
+    // Wait for 2 button presses
+    if (NumPressedButtons < 2) return;
 
-      // MENU: BA - ANGRY
-      if (PressedButtons[1] == BUTTON_A) {
-        SetExpression(&Face_Angry);
-      }
-
-      // MENU: BB - Bad (sad)
-      if (PressedButtons[1] == BUTTON_B) {
-        SetExpression(&Face_Sad);
-      }
-
-      // MENU: BC - SHOCKED
-      if (PressedButtons[1] == BUTTON_C) {
-        SetExpression(&Face_Surprised);
-      }
-
-      // MENU: BD - DEAD
-      if (PressedButtons[1] == BUTTON_D) {
-        SetExpression(&Face_X_X);
-      }
-    }
-
-    // MENU: C - SAUCY
-    else if (PressedButtons[0] == BUTTON_C) {
-      // Wait for 2 button presses
-      if (NumPressedButtons < 2) return;
-
-      // MENU: CA - HEARTS
-      if (PressedButtons[1] == BUTTON_A) {
-        SetExpression(&Face_Heart);
-      }
-
-      // MENU: CB - BOY KISSER
-      if (PressedButtons[1] == BUTTON_B) {
-        SetExpression(&Face_BoyKisser);
-      }
-
-      // MENU: CC - SMIRK
-      if (PressedButtons[1] == BUTTON_C) {
-        SetExpression(&Face_Smirk);
-      }
-
-      // MENU: CD - DAZED/SPIRALS
-      if (PressedButtons[1] == BUTTON_D) {
-        SetExpression(&Face_Spiral);
-      }
-    }
-
-    // MENU: D
-    else if (PressedButtons[0] == BUTTON_D) {
-      // Wait for 2 button presses
-      if (NumPressedButtons < 2) return;
-
-      // MENU: DA - CYCLE BRIGHTNESS
-      if (PressedButtons[1] == BUTTON_A) {
-        // Cycle between values 0%, 25%, 50%, 100%
-        float currentBrightness = ProtoConfig.Brightness;
-        if (currentBrightness <= 0.0)
-          ProtoConfig.Brightness = 0.25;
-        else if (currentBrightness <= 0.25)
-          ProtoConfig.Brightness = 0.5;
-        else if (currentBrightness <= 0.5)
-          ProtoConfig.Brightness = 1.0;
-        else
-          ProtoConfig.Brightness = 0.0;
-
-        // Update brightness
-        FaceRenderer->SetBrightness(ProtoConfig.Brightness);
-      }
-
-      // MENU: DB - TOGGLE BOOP SENSOR
-      if (PressedButtons[1] == BUTTON_B) {
-        ProtoConfig.EnableBoopSensor = !ProtoConfig.EnableBoopSensor;
-
-        if (!ProtoConfig.EnableBoopSensor) BoopState->StopBoop();
-      }
-
-      // MENU: DD - AMONG US
-      if (PressedButtons[1] == BUTTON_D) {
-        SetExpression(&Face_AmongUs);
-      }
-    }
+    // Run the action for this combo, if there is one (RemoteControlActions in Protogen_Faces.h)
+    const RemoteControlActionConfig* action = FindAction(PressedButtons[0], PressedButtons[1]);
+    if (action != NULL) RunAction(action);
 
     // If we didn't return early to wait for more button presses, reset
     ResetMenuSelection();

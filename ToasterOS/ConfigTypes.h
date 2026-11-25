@@ -42,6 +42,21 @@ struct BoopExpressionConfig {
   FaceExpression* Expression;
 };
 
+// What a remote control button combo does
+enum RemoteActionType {
+  REMOTE_EXPRESSION,          // Show an expression
+  REMOTE_RESET_TO_DEFAULT,    // Go back to the default expression
+  REMOTE_CYCLE_BRIGHTNESS,    // Cycle the brightness between 0%, 25%, 50% and 100%
+  REMOTE_TOGGLE_BOOP_SENSOR,  // Turn the boop sensor on or off
+};
+
+// A remote control button combo: two buttons pressed one after the other, e.g. "AB"
+struct RemoteControlActionConfig {
+  char Buttons[3];
+  RemoteActionType Action;
+  FaceExpression* Expression;  // For REMOTE_EXPRESSION only
+};
+
 struct ProtoConfigStruct {
   // General config
   float Brightness; // Percentage. E.g. 0.25 = 25%
