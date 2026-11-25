@@ -29,7 +29,7 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 2
+const FORMAT_VERSION = 3
 
 function generateFiles(
   face: typeof appStore.faceConfig,

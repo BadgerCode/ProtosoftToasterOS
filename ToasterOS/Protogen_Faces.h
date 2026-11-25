@@ -509,8 +509,8 @@ const int NumSlowMovementExpressions = sizeof(SlowMovementExpressions) / sizeof(
 
 // Expressions that move up and down very slowly (every 600ms)
 FaceExpression* const VerySlowMovementExpressions[] = {
-  &Face_Sleepy,
   &Face_Spiral,
+  &Face_Sleepy,
   &Face_X_X
 };
 const int NumVerySlowMovementExpressions = sizeof(VerySlowMovementExpressions) / sizeof(VerySlowMovementExpressions[0]);

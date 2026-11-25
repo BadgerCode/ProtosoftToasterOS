@@ -1,4 +1,5 @@
 import type { FaceExpressionData, PanelBitmap } from './faces'
+import { normaliseFirstFrame, type AnimationFrame } from './animation'
 
 // Reads expressions out of the firmware's Protogen_Faces.h, e.g.
 //
@@ -7,7 +8,8 @@ import type { FaceExpressionData, PanelBitmap } from './faces'
 //   .Eye = { {...}, {...} },
 //   .HasBlink = true,
 //   .Eye_Blink = { {...}, {...} },
-//   .Mouth = { {...}, {...}, {...}, {...} }
+//   .Mouth = { {...}, {...}, {...}, {...} },
+//   .Animation = &Neutral_Animation  // Optional, see parseAnimation()
 // };
 
 export interface ParsedExpression extends FaceExpressionData {
@@ -50,11 +52,67 @@ function parseExpressionBody(name: string, body: string): ParsedExpression {
     eye: eye as [PanelBitmap, PanelBitmap],
     eyeBlink: hasBlink && eyeBlink!.length === 2 ? (eyeBlink as [PanelBitmap, PanelBitmap]) : null,
     mouth: mouth as [PanelBitmap, PanelBitmap, PanelBitmap, PanelBitmap],
+    animation: null,
   }
 }
 
+/** The panels in a `const EyeFrame NAME = {...};` or `const byte NAME[n][8] = {...};` */
+function parseNamedPanels(header: string, name: string, count: number): PanelBitmap[] {
+  const match = header.match(
+    new RegExp(`const\\s+(?:EyeFrame|byte)\\s+${name}\\b[^=]*=\\s*(\\{[\\s\\S]*?\\});`),
+  )
+  if (!match) throw new Error(`Couldn't find ${name}`)
+  const panels = [...match[1]!.matchAll(PANEL_PATTERN)].map((m) => parsePanel(m[1]!))
+  if (panels.length !== count) throw new Error(`Expected ${count} panels in ${name}`)
+  return panels
+}
+
+/**
+ * An expression's animation, from
+ *   const AnimationFrame X_Frames[] = { { 200 }, { 200, &X_Frame2_Eye, X_Frame2_Mouth, NULL } };
+ *   const FaceAnimation X_Animation = ANIMATION(X_Frames);
+ * Each frame is a duration, then the eyes, mouth and nose it replaces (NULL or left out: none).
+ */
+function parseAnimation(header: string, name: string, animationName: string): AnimationFrame[] {
+  const animation = header.match(
+    new RegExp(
+      `const\\s+FaceAnimation\\s+${animationName}\\s*=\\s*(?:ANIMATION\\(\\s*(\\w+)\\s*\\)|\\{\\s*(\\w+)\\s*,)`,
+    ),
+  )
+  if (!animation) throw new Error(`Couldn't find ${animationName} for Face_${name}`)
+  const framesName = animation[1] ?? animation[2]!
+  const list = header.match(
+    new RegExp(`const\\s+AnimationFrame\\s+${framesName}\\[\\]\\s*=\\s*\\{([\\s\\S]*?)\\};`),
+  )?.[1]
+  if (list === undefined) throw new Error(`Couldn't find ${framesName} for Face_${name}`)
+
+  const reference = (value: string | undefined) => {
+    const ref = value?.trim().replace(/^&/, '')
+    return !ref || ref === 'NULL' || ref === 'nullptr' || ref === '0' ? null : ref
+  }
+  const frames = [...list.matchAll(/\{\s*(\d+)\s*((?:,\s*&?\w+\s*)*)\}/g)].map((m) => {
+    const [eye, mouth, nose] = m[2]!.split(',').slice(1).map(reference)
+    return {
+      durationMs: parseInt(m[1]!, 10),
+      eye: eye ? (parseNamedPanels(header, eye, 2) as AnimationFrame['eye']) : null,
+      mouth: mouth ? (parseNamedPanels(header, mouth, 4) as AnimationFrame['mouth']) : null,
+      nose: nose ? parseNamedPanels(header, nose, 1)[0]! : null,
+    }
+  })
+  if (frames.length === 0) throw new Error(`${framesName} has no frames`)
+  return frames
+}
+
 export function parseExpressions(header: string): ParsedExpression[] {
-  return [...header.matchAll(EXPRESSION_PATTERN)].map((m) => parseExpressionBody(m[1]!, m[2]!))
+  return [...header.matchAll(EXPRESSION_PATTERN)].map((m) => {
+    const expression = parseExpressionBody(m[1]!, m[2]!)
+    const animationName = m[2]!.match(/\.Animation\s*=\s*&(\w+)/)?.[1]
+    if (animationName) {
+      expression.animation = parseAnimation(header, expression.name, animationName)
+      normaliseFirstFrame(expression)
+    }
+    return expression
+  })
 }
 
 /** The expression DEFAULT_FACE points at, without the Face_ prefix, or null if there isn't one */

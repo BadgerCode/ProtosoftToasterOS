@@ -5,6 +5,7 @@
 
 import facesHeader from '@/assets/Protogen_Faces.h?raw'
 import { PanelType } from '@/state/config-types'
+import type { AnimationFrame } from './animation'
 import {
   extractDeclaration,
   parseDefaultFace,
@@ -25,6 +26,8 @@ export interface FaceExpressionData {
   eyeBlink: [PanelBitmap, PanelBitmap] | null
   /** [front, mid-front, mid-back, back] */
   mouth: [PanelBitmap, PanelBitmap, PanelBitmap, PanelBitmap]
+  /** Frames to loop through, or null if it isn't animated. Frame 1 is the expression itself */
+  animation: AnimationFrame[] | null
 }
 
 /** The starting pack of expressions that ships with ToasterOS */

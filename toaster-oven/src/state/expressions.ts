@@ -8,13 +8,17 @@ export interface Expression extends FaceExpressionData {
 
 let nextId = 1
 
+// JSON rather than structuredClone: the expressions are Vue proxies, which can't be structured-cloned
 function clone(face: FaceExpressionData): FaceExpressionData {
-  return structuredClone({
-    nose: face.nose,
-    eye: face.eye,
-    eyeBlink: face.eyeBlink,
-    mouth: face.mouth,
-  })
+  return JSON.parse(
+    JSON.stringify({
+      nose: face.nose,
+      eye: face.eye,
+      eyeBlink: face.eyeBlink,
+      mouth: face.mouth,
+      animation: face.animation,
+    }),
+  )
 }
 
 export function defaultExpressions(): Expression[] {
@@ -34,6 +38,7 @@ export function createExpression(name: string, from?: FaceExpressionData): Expre
           number[],
           number[],
         ],
+        animation: null,
       }
   return { id: nextId++, name, ...face }
 }

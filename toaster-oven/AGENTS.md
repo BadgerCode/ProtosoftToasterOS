@@ -54,7 +54,8 @@ src/
       import-files.ts       Detects each file's type, applies it in place, builds the import summary
   faces/
     faces.ts                Parses the presets from assets/Protogen_Faces.h. mirror(), expressionToPanels()
-    parse-faces.ts          Regex parser for `struct FaceExpression Face_X = {...}` blocks
+    parse-faces.ts          Regex parser for `struct FaceExpression Face_X = {...}` blocks and their animations
+    animation.ts            Animation frames: frameView(), detachFrame(), pruneFrames(), frameIndexAt()
     required-expressions.ts Expressions the firmware references by name (see below)
   components/
     VisorDisplay.vue        SVG visor that draws panels as LED dots. Used on Home (hero), the panel map and the preview
@@ -72,20 +73,21 @@ src/
 - **Panels:** there are 15 panel types (`PanelType` in `config-types.ts`, matching the `#define PANEL_*` values). Each **connection** is a chain of panels on 3 pins (DIN, CS, CLK), listed in wiring order. `-1` means an empty slot. Up to 16 panels per chain.
 - **Left and right:** these are as seen from the front of the head, not from the wearer's point of view.
 - **Expressions:** every expression is drawn for the **right side** only. The left side is mirrored horizontally, as in `ExpressionManager::Render()`.
-  - Each expression has 1 nose panel, 2 eye panels (front, back), an optional 2-panel blink frame, and 4 mouth panels (front → back).
+  - Each expression has 1 nose panel, 2 eye panels (front, back), an optional 2-panel blink frame, 4 mouth panels (front → back) and an optional animation.
   - A bitmap is 8 numbers, one per row. The most significant bit is the leftmost LED.
 - **Visor geometry:** units are LEDs. Panel positions are in `VisorDisplay.vue` and `expression-layout.ts`, laid out like `../Docs/Images/panels_diagram_twocon.png`.
-- **Required expressions:** `required-expressions.ts` lists the 6 expressions that `ExpressionManager.h` refers to by name: the hearts (nose rub and heart animation) and the spiral frames.
+- **Required expressions:** `required-expressions.ts` lists the expressions `ExpressionManager.h` refers to by name: only Heart, for the nose rub.
   - The editor lets users change their LEDs, but blocks renaming and removing them, because either would break the firmware build.
-  - Only expressions not in that list can be renamed or removed, e.g. Neutral, Surprised, Smirk, Sleepy, X_X, AmongUs, OWO and user-created ones.
+  - Only expressions not in that list can be renamed or removed, i.e. everything except Heart.
   - The owner plans to make this configurable.
 - **Default expression:** the face shown when idle, `DEFAULT_FACE` at the end of `Protogen_Faces.h`. It's stored as `appStore.defaultExpressionId`, so renaming it is fine; it can't be removed while it's the default. `getDefaultExpression()` returns it, and the home page visor and panel map show it.
 - **Extra default expressions:** `ExtraDefaultExpressions` in `Protogen_Faces.h`, shown now and then in place of the default expression (every 10–14 seconds for 5 seconds, and after a boop). An empty list turns this off. Stored as `appStore.extraDefaultExpressionIds` (update in place) and toggled per expression in the Expressions tab. `getExtraDefaultExpressions()` returns them in list order, leaving out the default expression, which the firmware would skip anyway. Removing an expression drops it from the list.
 - **Boop expressions:** `BoopExpressions` in `Protogen_Faces.h`: `{ minBoops, &Face_X }` entries. The firmware shows the entry with the highest `minBoops` reached; with none reached, or an empty list, the current expression stays. Rubbing the nose always shows the hearts, which aren't configurable yet. Stored as `appStore.boopExpressions` (`{ minBoops, expressionId }`, update in place) and edited under Features → Boop sensor, though it's saved in `Protogen_Faces.h`, not `Config.h`. The generator sorts entries by `minBoops` and leaves out invalid ones, which the editor flags. Removing an expression drops its entries.
 - **Remote control combos:** `RemoteControlActions` in `Protogen_Faces.h`: `{ "AB", REMOTE_EXPRESSION, &Face_X }` or `{ "DA", REMOTE_CYCLE_BRIGHTNESS }` entries (actions are `RemoteActionType` in `../ToasterOS/ConfigTypes.h`). Combos not listed do nothing; the firmware uses the first entry for a combo. Stored as `appStore.remoteActions`, always one entry per combo AA to DD with `action: 'none'` for unused ones (update in place), and edited under Features → Remote control, though it's saved in `Protogen_Faces.h`. Removing an expression sets its combos to nothing.
 - **Movement speed:** `SlowMovementExpressions` (every 300 ms) and `VerySlowMovementExpressions` (every 600 ms) in `Protogen_Faces.h`; other expressions move every 200 ms. The firmware checks the slow list first. Stored as `appStore.slowMovementExpressionIds` and `verySlowMovementExpressionIds` (update in place, never both for one expression) and shown as a Normal / Slow / Very slow dropdown on each expression. `movement-speed.ts` reads and sets it. Lists are generated in expression order.
+- **Animations:** an expression's `animation` is a list of frames (`AnimationFrame`, `FaceAnimation` and `ANIMATION()` in the firmware), or null. Frame 1 is the expression itself and never replaces parts; later frames store only the eyes, mouth or nose they replace (`null`: follow frame 1). The editor draws on each frame as a whole face: `frameView()` shows a frame, `detachFrame()` gives it copies before a stroke and `pruneFrames()` drops copies identical to frame 1 after it, so undrawn parts keep following frame 1. The parser moves parts a hand-written first frame replaces into the expression (`normaliseFirstFrame()`). Animated expressions don't blink, so the blink controls are hidden for them; the preview plays the animation unless the viewer prefers reduced motion. Generated names are `<Name>_Frames`, `<Name>_Animation` and `<Name>_Frame<N>_Eye/Mouth/Nose`, written just before the expression. Durations are 1-65535 ms (an `unsigned int` on the Arduino).
 - **Generated files:**
-  - `Protogen_Faces.h` copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE`, `ExtraDefaultExpressions`, `BoopExpressions`, `RemoteControlActions` and the two movement lists (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
+  - `Protogen_Faces.h` starts with the face types (keep them identical to the firmware's), copies `Face_Nose_Single` from the parsed header as-is, and ends with `DEFAULT_FACE`, `ExtraDefaultExpressions`, `BoopExpressions`, `RemoteControlActions` and the two movement lists (an empty list is `{}`; the firmware's GCC allows it). The digits used by the game and debug mode 3 live in the firmware's `Utils.h` (`ASCIIGlyphs`), not in this file.
   - Expression names are C++ identifiers, saved as `Face_<name>`. The UI shows them with spaces instead of underscores.
 
 **Keep in sync with the firmware.** If `../ToasterOS/ConfigTypes.h`, `Config.h`, `Protogen_Faces.h` or the files that reference expressions change, update:
@@ -107,7 +109,7 @@ To check a generator, render the defaults and diff the output against the firmwa
 - All state is in memory. **Nothing persists across a refresh yet.** Saving is planned as "projects" (multiple saved configurations to switch between). Keep state serialisable: plain objects, number bitmaps, and numeric ids on expressions.
 - `config-download.ts` regenerates both files reactively and compares each with its text at the last download, starting from the defaults. The download buttons, nav dot and sticky reminder all use `changedDownloads` / `hasChanged(kind)`. A clean import counts as a download (`markDownloaded`).
 - The Configure views hold references to `appStore.faceConfig`, `featureConfig` and `expressions`. Update them in place (assign properties, `splice`), never replace the objects.
-- Undo/redo covers LED edits and adding or removing a blink, not renames or removals.
+- Undo/redo covers LED edits, adding or removing a blink, and changes to animation frames (except durations), not renames or removals.
 
 ## Design conventions
 

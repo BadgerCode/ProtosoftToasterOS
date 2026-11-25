@@ -22,6 +22,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** A new brush stroke is about to change the face (for undo) */
   strokeStart: []
+  /** A brush stroke that changed the face has finished */
+  strokeEnd: []
 }>()
 
 const svg = ref<SVGSVGElement>()
@@ -51,15 +53,15 @@ function toLayout(event: PointerEvent) {
 function paintAt(x: number, y: number) {
   const hit = ledAt(x, y)
   if (!hit || !stroke) return
-  const bitmap = hit.panel.bitmap(props.face, props.blink)
   const on = !stroke.erase
-  if (isLit(bitmap, hit.row, hit.col) === on) return
+  if (isLit(hit.panel.bitmap(props.face, props.blink), hit.row, hit.col) === on) return
 
   if (!stroke.started) {
     emit('strokeStart')
     stroke.started = true
   }
-  setLed(bitmap, hit.row, hit.col, on)
+  // Read the panel again: handling strokeStart can give an animation frame its own copy to draw on
+  setLed(hit.panel.bitmap(props.face, props.blink), hit.row, hit.col, on)
 }
 
 /** Paint every LED between the last point and this one, so fast strokes don't leave gaps */
@@ -97,6 +99,7 @@ function onPointerMove(event: PointerEvent) {
 }
 
 function endStroke() {
+  if (stroke?.started) emit('strokeEnd')
   stroke = null
 }
 </script>

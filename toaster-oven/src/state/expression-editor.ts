@@ -19,7 +19,13 @@ export const redoStack = ref<HistoryEntry[]>([])
 
 function snapshot(e: Expression): FaceExpressionData {
   return JSON.parse(
-    JSON.stringify({ nose: e.nose, eye: e.eye, eyeBlink: e.eyeBlink, mouth: e.mouth }),
+    JSON.stringify({
+      nose: e.nose,
+      eye: e.eye,
+      eyeBlink: e.eyeBlink,
+      mouth: e.mouth,
+      animation: e.animation,
+    }),
   )
 }
 
@@ -31,7 +37,7 @@ function restore(entry: HistoryEntry) {
   return true
 }
 
-/** Call before changing an expression's LEDs, so the change can be undone */
+/** Call before changing an expression's LEDs or animation frames, so the change can be undone */
 export function recordChange(expression: Expression, description: string) {
   undoStack.value.push({ id: expression.id, face: snapshot(expression), description })
   if (undoStack.value.length > MAX_HISTORY) undoStack.value.shift()

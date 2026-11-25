@@ -8,16 +8,9 @@
 // it's the default, but it can be renamed.
 
 const NOSE_RUB = 'Nose rub'
-const HEART = 'Heart animation'
-const SPIRAL = 'Spiral animation'
 
 export const REQUIRED_EXPRESSIONS: Record<string, string[]> = {
-  Heart: [NOSE_RUB, HEART],
-  Heart_Small: [HEART],
-  Spiral: [SPIRAL],
-  Spiral2: [SPIRAL],
-  Spiral3: [SPIRAL],
-  Spiral4: [SPIRAL],
+  Heart: [NOSE_RUB],
 }
 
 export function requiredBy(name: string): string[] | undefined {

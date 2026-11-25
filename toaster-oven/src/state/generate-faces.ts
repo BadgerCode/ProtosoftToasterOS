@@ -1,4 +1,5 @@
 import { NOSE_SINGLE_DECLARATION, type PanelBitmap } from '@/faces/faces'
+import { storableDuration, type AnimationFrame } from '@/faces/animation'
 import type { Expression } from './expressions'
 
 /** A RemoteControlActions entry, by expression name */
@@ -31,6 +32,45 @@ function panels(list: PanelBitmap[]): string {
     .join('\n')
 }
 
+/** `const EyeFrame X = {...};` or `const byte X[4][8] = {...};` for a part a frame replaces */
+function partDeclaration(type: 'EyeFrame' | 'byte', name: string, list: PanelBitmap[]): string {
+  const declaration =
+    type === 'EyeFrame' ? `const EyeFrame ${name}` : `const byte ${name}[${list.length}][8]`
+  return `${declaration} = {\n${list.map((p) => `  { ${panelRow(p)} }`).join(',\n')}\n};`
+}
+
+/** The frames and parts of an animated expression, written just before it */
+function generateAnimation(e: Expression, frames: AnimationFrame[]): string {
+  const declarations: string[] = []
+  const entries = frames.map((frame, i) => {
+    const prefix = `${e.name}_Frame${i + 1}`
+    const refs: string[] = []
+    if (frame.eye) {
+      declarations.push(partDeclaration('EyeFrame', `${prefix}_Eye`, frame.eye))
+      refs[0] = `&${prefix}_Eye`
+    }
+    if (frame.mouth) {
+      declarations.push(partDeclaration('byte', `${prefix}_Mouth`, frame.mouth))
+      refs[1] = `${prefix}_Mouth`
+    }
+    if (frame.nose) {
+      declarations.push(partDeclaration('byte', `${prefix}_Nose`, [frame.nose]))
+      refs[2] = `${prefix}_Nose`
+    }
+    const parts = Array.from({ length: refs.length }, (_, p) => refs[p] ?? 'NULL')
+    return `  { ${[storableDuration(frame.durationMs), ...parts].join(', ')} }`
+  })
+
+  return `// ${e.name} animation
+${declarations.map((d) => d + '\n').join('\n')}
+const AnimationFrame ${e.name}_Frames[] = {
+${entries.join(',\n')}
+};
+const FaceAnimation ${e.name}_Animation = ANIMATION(${e.name}_Frames);
+
+`
+}
+
 function generateExpression(e: Expression): string {
   const blink = e.eyeBlink
     ? `{
@@ -38,7 +78,10 @@ ${panels(e.eyeBlink)}
   }`
     : '{}'
 
-  return `struct FaceExpression Face_${e.name} = {
+  const animated = e.animation !== null && e.animation.length > 1
+  const animation = animated ? generateAnimation(e, e.animation!) : ''
+
+  return `${animation}struct FaceExpression Face_${e.name} = {
   .Nose = {
 ${panels([e.nose])}
   },
@@ -49,7 +92,7 @@ ${panels(e.eye)}
   .Eye_Blink = ${blink},
   .Mouth = {
 ${panels(e.mouth)}
-  }
+  }${animated ? `,\n  .Animation = &${e.name}_Animation` : ''}
 };`
 }
 
@@ -91,13 +134,31 @@ export function generateFacesHeader(
 
 typedef byte EyeFrame[2][8];
 
+struct FaceAnimation;
+
 struct FaceExpression {
   byte Nose[1][8];
   EyeFrame Eye;
   bool HasBlink;
   EyeFrame Eye_Blink;
   byte Mouth[4][8];
+  const FaceAnimation* Animation;  // NULL for expressions that don't animate
 };
+
+// One frame of an animated expression. Parts that are left out (NULL) use the expression's own
+struct AnimationFrame {
+  unsigned int DurationMs;
+  const EyeFrame* Eye;
+  const byte (*Mouth)[8];  // 4 panels
+  const byte (*Nose)[8];   // 1 panel
+};
+
+// An animated expression loops through its frames, and doesn't blink
+struct FaceAnimation {
+  const AnimationFrame* Frames;
+  int NumFrames;
+};
+#define ANIMATION(frames) { frames, sizeof(frames) / sizeof(frames[0]) }
 
 
 ${NOSE_SINGLE_DECLARATION}
