@@ -3,13 +3,31 @@
 
 typedef byte EyeFrame[2][8];
 
+struct FaceAnimation;
+
 struct FaceExpression {
   byte Nose[1][8];
   EyeFrame Eye;
   bool HasBlink;
   EyeFrame Eye_Blink;
   byte Mouth[4][8];
+  const FaceAnimation* Animation;  // NULL for expressions that don't animate
 };
+
+// One frame of an animated expression. Parts that are left out (NULL) use the expression's own
+struct AnimationFrame {
+  unsigned int DurationMs;
+  const EyeFrame* Eye;
+  const byte (*Mouth)[8];  // 4 panels
+  const byte (*Nose)[8];   // 1 panel
+};
+
+// An animated expression loops through its frames, and doesn't blink
+struct FaceAnimation {
+  const AnimationFrame* Frames;
+  int NumFrames;
+};
+#define ANIMATION(frames) { frames, sizeof(frames) / sizeof(frames[0]) }
 
 
 struct FaceExpression Face_Neutral = {
@@ -36,6 +54,19 @@ struct FaceExpression Face_Neutral = {
 byte Face_Nose_Single[8] = { B00000000, B00000000, B01111110, B00111100, B00011000, B00000000, B00000000, B00000000 };
 
 
+// Heart animation: a beating heart, switching to smaller eyes for 400ms in every 1200ms
+const EyeFrame Heart_SmallEye = {
+  { B00000000, B00000110, B00001111, B00001111, B00000111, B00000011, B00000001, B00000000 },
+  { B00000000, B11000000, B11100000, B11100000, B11000000, B10000000, B00000000, B00000000 }
+};
+
+const AnimationFrame Heart_Frames[] = {
+  { 400 },  // The expression itself
+  { 400, &Heart_SmallEye },
+  { 400 }
+};
+const FaceAnimation Heart_Animation = ANIMATION(Heart_Frames);
+
 struct FaceExpression Face_Heart = {
   .Nose = {
     { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
@@ -51,27 +82,9 @@ struct FaceExpression Face_Heart = {
     { B00000000, B00000000, B10000000, B11000000, B01110000, B00111110, B00001111, B00000000 },  //
     { B00000000, B00000000, B00000000, B00000000, B00011111, B01111111, B11100000, B00000000 },  //
     { B00000000, B00000010, B00001110, B01111100, B11100000, B11000000, B00000000, B00000000 }   //
-  }
-};
-
-struct FaceExpression Face_Heart_Small = {
-  .Nose = {
-    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
   },
-  .Eye = {
-    { B00000000, B00000110, B00001111, B00001111, B00000111, B00000011, B00000001, B00000000 },  //
-    { B00000000, B11000000, B11100000, B11100000, B11000000, B10000000, B00000000, B00000000 }   //
-  },
-  .HasBlink = false,
-  .Eye_Blink = {},
-  .Mouth = {
-    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000 },  //
-    { B00000000, B00000000, B10000000, B11000000, B01110000, B00111110, B00001111, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B00011111, B01111111, B11100000, B00000000 },  //
-    { B00000000, B00000010, B00001110, B01111100, B11100000, B11000000, B00000000, B00000000 }   //
-  }
+  .Animation = &Heart_Animation
 };
-
 
 struct FaceExpression Face_Happy_Closed_eyes = {
   .Nose = {
@@ -170,6 +183,28 @@ struct FaceExpression Face_Blep = {
 };
 
 
+// Spiral animation: each frame rotates the eyes 90 degrees, every 200ms
+const EyeFrame Spiral_Eye2 = {
+  { B00011111, B00111011, B00100000, B00001100, B00011010, B00010000, B00011001, B00001111 },
+  { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }
+};
+const EyeFrame Spiral_Eye3 = {
+  { B00000001, B00011100, B00110110, B00100010, B00100100, B00110000, B00011001, B00001111 },
+  { B10000000, B11000000, B11000000, B01000000, B11000000, B11000000, B10000000, B00000000 }
+};
+const EyeFrame Spiral_Eye4 = {
+  { B00001111, B00011001, B00110000, B00100101, B00100011, B00110000, B00011101, B00001111 },
+  { B00000000, B10000000, B10000000, B10000000, B00000000, B01000000, B11000000, B10000000 }
+};
+
+const AnimationFrame Spiral_Frames[] = {
+  { 200 },  // The expression itself
+  { 200, &Spiral_Eye2 },
+  { 200, &Spiral_Eye3 },
+  { 200, &Spiral_Eye4 }
+};
+const FaceAnimation Spiral_Animation = ANIMATION(Spiral_Frames);
+
 struct FaceExpression Face_Spiral = {
   .Nose = {
     { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
@@ -185,7 +220,8 @@ struct FaceExpression Face_Spiral = {
     { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
     { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
     { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
-  }
+  },
+  .Animation = &Spiral_Animation
 };
 
 
@@ -418,63 +454,6 @@ struct FaceExpression Face_BoyKisser = {
 
 
 // Spiral rotations (easier than rotating via code)
-struct FaceExpression Face_Spiral2 = {
-  .Nose = {
-    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
-  },
-  .Eye = {
-    { B00011111, B00111011, B00100000, B00001100, B00011010, B00010000, B00011001, B00001111 },  //
-    { B00000000, B10000000, B11000000, B01000000, B01000000, B11000000, B10000000, B00000000 }   //
-  },
-  .HasBlink = false,
-  .Eye_Blink = {},
-  .Mouth = {
-    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
-    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
-  }
-};
-
-struct FaceExpression Face_Spiral3 = {
-  .Nose = {
-    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
-  },
-  .Eye = {
-    { B00000001, B00011100, B00110110, B00100010, B00100100, B00110000, B00011001, B00001111 },  //
-    { B10000000, B11000000, B11000000, B01000000, B11000000, B11000000, B10000000, B00000000 }   //
-  },
-  .HasBlink = false,
-  .Eye_Blink = {},
-  .Mouth = {
-    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
-    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
-  }
-};
-
-struct FaceExpression Face_Spiral4 = {
-  .Nose = {
-    { B00110000, B01110000, B11100000, B11000000, B00000000, B00000000, B00000000, B00000000 }  //
-  },
-  .Eye = {
-    { B00001111, B00011001, B00110000, B00100101, B00100011, B00110000, B00011101, B00001111 },  //
-    { B00000000, B10000000, B10000000, B10000000, B00000000, B01000000, B11000000, B10000000 }   //
-  },
-  .HasBlink = false,
-  .Eye_Blink = {},
-  .Mouth = {
-    { B00000000, B00000000, B00000000, B00000000, B00000000, B00000001, B00000000, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B00001111, B11111111, B00000011, B00000000 },  //
-    { B00000000, B00000000, B00000000, B00000000, B11111111, B11100111, B10000000, B00000000 },  //
-    { B00000000, B00000000, B00000111, B01111100, B11110000, B11000000, B00000000, B00000000 }   //
-  }
-};
-
-
-
-
 // Face usage configuration
 FaceExpression* const DEFAULT_FACE = &Face_Neutral;
 

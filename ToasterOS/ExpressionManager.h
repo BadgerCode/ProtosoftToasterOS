@@ -83,7 +83,7 @@ public:
   }
 
   void Render() {
-    struct FaceExpression facialExpression = DetermineExpression();
+    FaceParts face = GetFaceParts(DetermineExpression());
 
     bool shouldBlink = (millis() >= NextBlink);
     int offsetY = Face_OffsetY;
@@ -91,23 +91,23 @@ public:
     bool mirrorRight = false;
 
     // Mouth
-    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorLeft);
-    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorLeft);
-    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorLeft);
-    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorLeft);
+    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_FRONT, face.Mouth[0], offsetY, mirrorLeft);
+    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_FRONT, face.Mouth[1], offsetY, mirrorLeft);
+    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_MID_BACK, face.Mouth[2], offsetY, mirrorLeft);
+    FaceRenderer->UpdatePanel(PANEL_LEFT_MOUTH_BACK, face.Mouth[3], offsetY, mirrorLeft);
 
-    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, (facialExpression).Mouth[0], offsetY, mirrorRight);
-    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, (facialExpression).Mouth[1], offsetY, mirrorRight);
-    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, (facialExpression).Mouth[2], offsetY, mirrorRight);
-    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, (facialExpression).Mouth[3], offsetY, mirrorRight);
+    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_FRONT, face.Mouth[0], offsetY, mirrorRight);
+    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_FRONT, face.Mouth[1], offsetY, mirrorRight);
+    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_MID_BACK, face.Mouth[2], offsetY, mirrorRight);
+    FaceRenderer->UpdatePanel(PANEL_RIGHT_MOUTH_BACK, face.Mouth[3], offsetY, mirrorRight);
 
     // Nose
-    FaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, (facialExpression).Nose[0], 0, mirrorLeft);
-    FaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, (facialExpression).Nose[0], 0, mirrorRight);
+    FaceRenderer->UpdatePanel(PANEL_LEFT_NOSE, face.Nose[0], 0, mirrorLeft);
+    FaceRenderer->UpdatePanel(PANEL_RIGHT_NOSE, face.Nose[0], 0, mirrorRight);
     FaceRenderer->UpdatePanel(PANEL_SINGLE_NOSE, Face_Nose_Single, 0, false);
 
     // Eyes
-    EyeFrame* eyes = shouldBlink && facialExpression.HasBlink ? &((facialExpression).Eye_Blink) : &((facialExpression).Eye);
+    const EyeFrame* eyes = shouldBlink && face.EyeBlink != NULL ? face.EyeBlink : face.Eye;
     FaceRenderer->UpdatePanel(PANEL_LEFT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorLeft);
     FaceRenderer->UpdatePanel(PANEL_LEFT_EYE_BACK, (*eyes)[1], offsetY * -1, mirrorLeft);
     FaceRenderer->UpdatePanel(PANEL_RIGHT_EYE_FRONT, (*eyes)[0], offsetY * -1, mirrorRight);
@@ -136,28 +136,17 @@ private:
     return FaceMovementDelay;
   }
 
-  struct FaceExpression DetermineExpression() {
-    // Show boop faces
-
+  // The expression to show now: a boop or nose rub expression, or the current one
+  const FaceExpression* DetermineExpression() {
     if (BoopState->ShouldShowBoopExpression()) {
-      if (BoopState->IsFaceRub()) {
-        return GetHeartFrame();
-      }
+      // Nose rub: the heart, which animates by its own frames
+      if (BoopState->IsFaceRub()) return &Face_Heart;
 
       FaceExpression* boopExpression = GetBoopExpression(BoopState->ConsecutiveShortBoops);
-      if (boopExpression != NULL) return *boopExpression;
+      if (boopExpression != NULL) return boopExpression;
     }
 
-    // Animate spirals
-    if (CurrentExpression == &Face_Spiral) {
-      return GetSpiralFrame();
-    }
-    // Animate hearts
-    else if (CurrentExpression == &Face_Heart) {
-      return GetHeartFrame();
-    }
-
-    return *CurrentExpression;
+    return CurrentExpression;
   }
 
 
@@ -195,29 +184,50 @@ private:
   }
 
 
-  // Animated expressions helpers
-  // Animation- Spirals
-  FaceExpression GetSpiralFrame() {
-    // Rotate the eye 90 degrees every 200ms
-    int eyeRotation = (millis() / 200) % 4;
+  // Animated expressions
+  // The parts of the face to draw this frame. Points into the expression and its animation,
+  // so nothing is copied
+  struct FaceParts {
+    const byte (*Nose)[8];     // 1 panel
+    const EyeFrame* Eye;
+    const EyeFrame* EyeBlink;  // NULL if it doesn't blink
+    const byte (*Mouth)[8];    // 4 panels
+  };
 
-    if (eyeRotation == 0) {
-      return Face_Spiral;
-    } else if (eyeRotation == 1) {
-      return Face_Spiral2;
-    } else if (eyeRotation == 2) {
-      return Face_Spiral3;
-    } else if (eyeRotation == 3) {
-      return Face_Spiral4;
+  FaceParts GetFaceParts(const FaceExpression* expression) {
+    FaceParts parts = {
+      expression->Nose,
+      &expression->Eye,
+      // Animated expressions don't blink
+      expression->HasBlink && expression->Animation == NULL ? &expression->Eye_Blink : NULL,
+      expression->Mouth,
+    };
+
+    // Swap in any parts the current animation frame replaces
+    const AnimationFrame* frame = GetAnimationFrame(expression->Animation);
+    if (frame != NULL) {
+      if (frame->Eye != NULL) parts.Eye = frame->Eye;
+      if (frame->Mouth != NULL) parts.Mouth = frame->Mouth;
+      if (frame->Nose != NULL) parts.Nose = frame->Nose;
     }
+
+    return parts;
   }
 
-  // Animation- Hearts
-  FaceExpression GetHeartFrame() {
-    // Simulate beating heart, by changing between the small & big heart
-    // Big (800 ms), Small (400 ms), Big (800 ms)
-    bool showSmallHeart = (millis() / 400) % 3 == 1;
+  // The frame to show now, or NULL if the expression isn't animated.
+  // Based on millis(), so every animation shares one clock
+  const AnimationFrame* GetAnimationFrame(const FaceAnimation* animation) {
+    if (animation == NULL || animation->NumFrames == 0) return NULL;
 
-    return showSmallHeart ? Face_Heart_Small : Face_Heart;
+    unsigned long totalMs = 0;
+    for (int i = 0; i < animation->NumFrames; i++) totalMs += animation->Frames[i].DurationMs;
+    if (totalMs == 0) return &animation->Frames[0];
+
+    unsigned long timeInLoop = millis() % totalMs;
+    for (int i = 0; i < animation->NumFrames; i++) {
+      if (timeInLoop < animation->Frames[i].DurationMs) return &animation->Frames[i];
+      timeInLoop -= animation->Frames[i].DurationMs;
+    }
+    return &animation->Frames[animation->NumFrames - 1];
   }
 };

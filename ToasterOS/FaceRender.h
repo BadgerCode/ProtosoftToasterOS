@@ -82,7 +82,7 @@ public:
     UpdatePanel(panelType, EmptyPanel, 0, false);
   }
 
-  void UpdatePanel(int panelType, byte data[], int offsetY, bool mirror) {
+  void UpdatePanel(int panelType, const byte data[], int offsetY, bool mirror) {
     auto panelConfig = PanelConfigs[panelType];
 
     if (!panelConfig.Enabled) return;  // Skip disabled panels
