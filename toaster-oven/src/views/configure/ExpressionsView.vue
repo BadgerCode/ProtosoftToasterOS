@@ -346,31 +346,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
         </div>
       </div>
 
-      <!-- Extra default expression and movement speed -->
-      <div class="space-y-4 border-b border-border px-5 py-4">
-        <ToggleSwitch
-          v-model="extraDefault"
-          :disabled="isDefault"
-          label="Show in place of the default expression"
-          :description="
-            isDefault
-              ? 'This is the default expression. Other expressions with this turned on are shown in its place now and then.'
-              : 'Every 10–14 seconds, and after a boop, the head swaps the default expression for a random one of these for 5 seconds. Turn this off for every expression to always show the default.'
-          "
-        />
-
-        <FormField
-          label="Movement speed"
-          hint="How often the face moves up and down while this expression shows: every 200 ms (normal), 300 ms (slow) or 600 ms (very slow). Boops have their own speed. Face bobbing can be turned off on the Features tab."
-        >
-          <select v-model="movementSpeed" class="form-input sm:max-w-64">
-            <option v-for="speed in MOVEMENT_SPEEDS" :key="speed.value" :value="speed.value">
-              {{ speed.label }}
-            </option>
-          </select>
-        </FormField>
-      </div>
-
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-5 py-3">
         <div class="flex items-center gap-2">
@@ -461,7 +436,24 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
 
       <!-- Canvas -->
       <div class="p-5">
-        <p class="mb-3 text-sm text-slate-400">
+        <!--
+          Capped so the whole canvas fits in the window below the name and toolbar: the canvas is
+          about 1.39 times as wide as it is tall (its viewBox is 41 x 29.5), plus 2.5rem of padding.
+          12rem leaves room for the name, toolbar and hint. Never narrower than 20rem.
+        -->
+        <div
+          class="mx-auto rounded-lg bg-visor-glass p-3 sm:p-5"
+          style="max-width: max(20rem, calc((100dvh - 12rem) * 1.39 + 2.5rem))"
+        >
+          <ExpressionCanvas
+            :face="selected"
+            :blink="editingBlink"
+            :tool="tool"
+            @stroke-start="recordChange(selected, tool === 'erase' ? 'Erase' : 'Draw')"
+          />
+        </div>
+
+        <p class="mt-2 text-xs text-slate-500">
           <template v-if="editingBlink">
             Editing the blink frame. The eyes show this briefly every 10–15 seconds.
           </template>
@@ -471,21 +463,39 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
           </template>
           Right-click or hold <kbd class="kbd">Alt</kbd> to erase while drawing.
         </p>
+      </div>
 
-        <div class="rounded-lg bg-visor-glass p-3 sm:p-5">
-          <ExpressionCanvas
-            :face="selected"
-            :blink="editingBlink"
-            :tool="tool"
-            @stroke-start="recordChange(selected, tool === 'erase' ? 'Erase' : 'Draw')"
-          />
-        </div>
-
-        <div class="mt-6">
+      <!-- Whole face preview, and the expression's settings -->
+      <div class="grid gap-6 border-t border-border px-5 py-5 lg:grid-cols-2">
+        <div>
           <h3 class="text-sm font-medium text-slate-200">Whole face</h3>
           <div class="mt-2 max-w-md">
             <VisorDisplay :bitmaps="previewBitmaps" :panel-ids="previewPanels" />
           </div>
+        </div>
+
+        <div class="space-y-4">
+          <ToggleSwitch
+            v-model="extraDefault"
+            :disabled="isDefault"
+            label="Show in place of the default expression"
+            :description="
+              isDefault
+                ? 'This is the default expression. Other expressions with this turned on are shown in its place now and then.'
+                : 'Every 10–14 seconds, and after a boop, the head swaps the default expression for a random one of these for 5 seconds. Turn this off for every expression to always show the default.'
+            "
+          />
+
+          <FormField
+            label="Movement speed"
+            hint="How often the face moves up and down while this expression shows: every 200 ms (normal), 300 ms (slow) or 600 ms (very slow). Boops have their own speed. Face bobbing can be turned off on the Features tab."
+          >
+            <select v-model="movementSpeed" class="form-input sm:max-w-64">
+              <option v-for="speed in MOVEMENT_SPEEDS" :key="speed.value" :value="speed.value">
+                {{ speed.label }}
+              </option>
+            </select>
+          </FormField>
         </div>
       </div>
     </section>
