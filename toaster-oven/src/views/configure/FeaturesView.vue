@@ -13,6 +13,7 @@ import {
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
 import ToggleSwitch from '@/components/form/ToggleSwitch.vue'
+import ColourPicker from '@/components/form/ColourPicker.vue'
 import PinConflictWarning from '@/components/PinConflictWarning.vue'
 
 const config = appStore.featureConfig
@@ -252,22 +253,15 @@ const remoteButtons = [
             scrolling rainbow instead.
           </p>
           <div class="mt-3 flex flex-wrap gap-6">
-            <label
+            <ColourPicker
               v-for="colour in [
                 { key: 'sideLEDColourA', label: 'Colour 1' },
                 { key: 'sideLEDColourB', label: 'Colour 2' },
               ] as const"
               :key="colour.key"
-              class="flex items-center gap-3"
-            >
-              <input
-                v-model="config[colour.key]"
-                type="color"
-                class="h-9 w-14 cursor-pointer rounded-md border border-border bg-page p-1"
-              />
-              <span class="text-sm text-slate-200">{{ colour.label }}</span>
-              <code class="text-xs text-slate-500">{{ config[colour.key].toUpperCase() }}</code>
-            </label>
+              v-model="config[colour.key]"
+              :label="colour.label"
+            />
           </div>
         </div>
       </fieldset>
