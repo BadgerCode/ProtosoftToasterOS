@@ -15,7 +15,8 @@ byte Reverse(byte b) {
 // PrintF("Rendering Row %d\n", row);
 // https://stackoverflow.com/a/77608699/13497411
 int PrintF(const char* format, ...) {
-  static char buffer[1024];  // Adjust to your needs
+  // Kept small to save RAM (the Nano Every has 6KB). Longer messages are cut off
+  static char buffer[64];
   va_list aptr;
   va_start(aptr, format);
   int results = vsnprintf(buffer, sizeof(buffer), format, aptr);
