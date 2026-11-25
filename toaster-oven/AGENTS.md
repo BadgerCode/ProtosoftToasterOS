@@ -34,7 +34,7 @@ src/
   router/index.ts           /  and  /configure/{panels,expressions,features}
   assets/
     main.css                Theme tokens + small component classes (.btn, .form-input, .kbd, .display-title)
-    Protogen_Faces.h        COPY of ../ToasterOS/Protogen_Faces.h, parsed at build time for the preset expressions
+    Protogen_Faces.h        COPY of ../ToasterOS/Protogen_Faces.h, plus OWO, Binary and UWU, parsed at build time for the preset expressions
   state/
     app-state.ts            appStore: faceConfig, featureConfig, expressions. findExpression(name)
     config-types.ts         TS mirror of ../ToasterOS/ConfigTypes.h (panel type ids, structs)
@@ -96,7 +96,7 @@ src/
 - `config-defaults.ts`
 - the generators
 - `required-expressions.ts`
-- the copy at `src/assets/Protogen_Faces.h`
+- the copy at `src/assets/Protogen_Faces.h`. Keep the OWO, Binary and UWU expressions in it: the firmware no longer has them, but they stay in the editor for others to use
 
 **Keep old downloads importable.** Users import files they downloaded earlier, possibly from an older version of the site. When the generated format changes, add a reader for the new format at the front of that setting's list in `import/read-config.ts` and keep the old ones. Bump `FORMAT_VERSION` in `config-download.ts`. Settings no reader finds fall back to their defaults and are listed in the import summary. Format 1 is the baseline: nobody had used the site before it, so nothing older needs to import. `Protogen_Faces.h` has no per-setting readers: a file missing any of `DEFAULT_FACE`, `ExtraDefaultExpressions`, `BoopExpressions`, `RemoteControlActions` or the movement lists fails to import. Within a file, missing required expressions are added back and settings that name expressions it doesn't have are skipped (a default that isn't there falls back to the firmware's), with a note.
 

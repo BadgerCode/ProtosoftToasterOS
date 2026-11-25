@@ -281,22 +281,6 @@ struct FaceExpression Face_Excited = {
 };
 
 
-
-
-
-// Extra faces
-// &Face_Bored,
-// &Face_UWU,
-// &Face_X_X,
-// &Face_AmongUs,
-// &Face_Angry,
-// &Face_Surprised,
-// &Face_Binary,
-
-
-
-
-
 struct FaceExpression Face_AmongUs = {
   .Nose = {
     { B00000000, B00011100, B00110000, B00111100, B00111100, B00011100, B00010100, B00000000 }  //
@@ -453,7 +437,6 @@ struct FaceExpression Face_BoyKisser = {
 
 
 
-// Spiral rotations (easier than rotating via code)
 // Face usage configuration
 FaceExpression* const DEFAULT_FACE = &Face_Neutral;
 
