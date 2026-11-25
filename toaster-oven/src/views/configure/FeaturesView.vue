@@ -73,7 +73,7 @@ const remoteButtons = [
     <PinConflictWarning />
 
     <!-- General -->
-    <SettingsCard title="General">
+    <SettingsCard title="General" collapsible>
       <div class="space-y-5">
         <FormField label="Brightness" hint="Default brightness of the face panels and LED strips.">
           <span class="flex items-center gap-4">
@@ -117,7 +117,12 @@ const remoteButtons = [
     </SettingsCard>
 
     <!-- Boop sensor -->
-    <SettingsCard title="Boop sensor" description="IR obstacle sensor in the nose.">
+    <SettingsCard
+      title="Boop sensor"
+      description="IR obstacle sensor in the nose."
+      collapsible
+      :start-collapsed="!config.enableBoopSensor"
+    >
       <template #actions>
         <ToggleSwitch v-model="config.enableBoopSensor" label="Enabled" />
       </template>
@@ -205,6 +210,8 @@ const remoteButtons = [
     <SettingsCard
       title="Side LED strips"
       description="RGB LED strips in each side panel/headphone."
+      collapsible
+      :start-collapsed="!config.enableSideLEDs"
     >
       <template #actions>
         <ToggleSwitch v-model="config.enableSideLEDs" label="Enabled" />
@@ -234,7 +241,12 @@ const remoteButtons = [
     </SettingsCard>
 
     <!-- Remote control -->
-    <SettingsCard title="Remote control" description="4-button remote receiver.">
+    <SettingsCard
+      title="Remote control"
+      description="4-button remote receiver."
+      collapsible
+      :start-collapsed="!config.enableRemoteControl"
+    >
       <template #actions>
         <ToggleSwitch v-model="config.enableRemoteControl" label="Enabled" />
       </template>

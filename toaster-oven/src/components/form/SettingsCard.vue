@@ -6,9 +6,11 @@ const props = defineProps<{
   description?: string
   /** Show a button in the header that hides and shows the body */
   collapsible?: boolean
+  /** Start with the body hidden. Only applies when collapsible */
+  startCollapsed?: boolean
 }>()
 
-const open = ref(true)
+const open = ref(!(props.collapsible && props.startCollapsed))
 const bodyId = useId()
 </script>
 
