@@ -1,4 +1,4 @@
-// All of the faces and digits are designed to work on the right face & be flipped on the left face
+// All of the faces are designed to work on the right face & be flipped on the left face
 
 
 typedef byte EyeFrame[2][8];
