@@ -3,11 +3,14 @@ import {
   DEFAULT_FACE_NAME,
   EXTRA_DEFAULT_NAMES,
   REMOTE_ACTION_DEFAULTS,
+  SLOW_MOVEMENT_NAMES,
+  VERY_SLOW_MOVEMENT_NAMES,
   defaultExpression,
 } from '@/faces/faces'
 import {
   parseBoopExpressions,
   parseDefaultFace,
+  parseExpressionList,
   parseExpressions,
   parseExtraDefaults,
   parseRemoteActions,
@@ -16,6 +19,7 @@ import type { BoopExpression } from '../boop-expressions'
 import { remoteActionsFromEntries, type RemoteAction } from '../remote-actions'
 import { REQUIRED_EXPRESSIONS } from '@/faces/required-expressions'
 import { createExpression, displayName, type Expression } from '../expressions'
+import { idsOf } from '../app-state'
 
 // Reads a Protogen_Faces.h that Toaster Oven downloaded earlier.
 // Expressions the firmware needs but the file doesn't have are added back from the defaults,
@@ -50,6 +54,13 @@ export interface ReadFacesResult {
   remoteActionsFallback: boolean
   /** RemoteControlActions entries that couldn't be used, e.g. "AB (Missing face)" */
   remoteActionsSkipped: string[]
+  /** Ids in SlowMovementExpressions and VerySlowMovementExpressions. None are in both */
+  slowMovementExpressionIds: number[]
+  verySlowMovementExpressionIds: number[]
+  /** Set when the file was missing either movement list, so the defaults were used for it */
+  movementFallback: boolean
+  /** Display names in the movement lists that aren't expressions in the file */
+  movementSkipped: string[]
 }
 
 export function readFaces(text: string): ReadFacesResult {
@@ -109,6 +120,17 @@ export function readFaces(text: string): ReadFacesResult {
   const requestedRemote = parseRemoteActions(text)
   const remote = remoteActionsFromEntries(requestedRemote ?? REMOTE_ACTION_DEFAULTS, expressions)
 
+  // Older files have no movement lists; the firmware had them hard-coded
+  const requestedSlow = parseExpressionList(text, 'SlowMovementExpressions')
+  const requestedVerySlow = parseExpressionList(text, 'VerySlowMovementExpressions')
+  const slowNames = requestedSlow ?? SLOW_MOVEMENT_NAMES
+  const verySlowNames = (requestedVerySlow ?? VERY_SLOW_MOVEMENT_NAMES).filter(
+    (name) => !slowNames.includes(name), // The firmware checks the slow list first
+  )
+  const movementSkipped = [...(requestedSlow ?? []), ...(requestedVerySlow ?? [])]
+    .filter((name) => !names.has(name))
+    .map(displayName)
+
   return {
     expressions,
     added,
@@ -123,5 +145,9 @@ export function readFaces(text: string): ReadFacesResult {
     remoteActions: remote.actions,
     remoteActionsFallback: requestedRemote === null,
     remoteActionsSkipped: remote.skipped,
+    slowMovementExpressionIds: idsOf(expressions, slowNames),
+    verySlowMovementExpressionIds: idsOf(expressions, verySlowNames),
+    movementFallback: requestedSlow === null || requestedVerySlow === null,
+    movementSkipped,
   }
 }

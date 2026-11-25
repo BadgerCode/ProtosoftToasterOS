@@ -63,13 +63,18 @@ export function parseDefaultFace(header: string): string | null {
 }
 
 /**
- * The expressions in ExtraDefaultExpressions, without the Face_ prefix, or null if the
- * list isn't there. An empty list ({}) gives [].
+ * The expressions in a `FaceExpression* const <listName>[] = { &Face_X, ... };` list, without
+ * the Face_ prefix, or null if the list isn't there. An empty list ({}) gives [].
  */
-export function parseExtraDefaults(header: string): string[] | null {
-  const list = header.match(/ExtraDefaultExpressions\[\]\s*=\s*\{([^}]*)\}/)?.[1]
+export function parseExpressionList(header: string, listName: string): string[] | null {
+  const list = header.match(new RegExp(`\\b${listName}\\[\\]\\s*=\\s*\\{([^}]*)\\}`))?.[1]
   if (list === undefined) return null
   return [...list.matchAll(/&Face_(\w+)/g)].map((m) => m[1]!)
+}
+
+/** The expressions in ExtraDefaultExpressions. See parseExpressionList() */
+export function parseExtraDefaults(header: string): string[] | null {
+  return parseExpressionList(header, 'ExtraDefaultExpressions')
 }
 
 /**

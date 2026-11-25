@@ -23,6 +23,13 @@ import VisorDisplay from '@/components/VisorDisplay.vue'
 import ExpressionCanvas from '@/components/expressions/ExpressionCanvas.vue'
 import ExpressionThumbnail from '@/components/expressions/ExpressionThumbnail.vue'
 import ToggleSwitch from '@/components/form/ToggleSwitch.vue'
+import FormField from '@/components/form/FormField.vue'
+import {
+  MOVEMENT_SPEEDS,
+  getMovementSpeed,
+  setMovementSpeed,
+  type MovementSpeed,
+} from '@/state/movement-speed'
 
 const expressions = appStore.expressions
 
@@ -37,6 +44,12 @@ const isDefault = computed(() => selected.value.id === appStore.defaultExpressio
 function setAsDefault() {
   appStore.defaultExpressionId = selected.value.id
 }
+
+// Movement speed (SlowMovementExpressions and VerySlowMovementExpressions)
+const movementSpeed = computed({
+  get: () => getMovementSpeed(selected.value.id),
+  set: (speed: MovementSpeed) => setMovementSpeed(selected.value.id, speed),
+})
 
 // Extra default expressions (ExtraDefaultExpressions): shown now and then in place of the default
 const extraDefault = computed({
@@ -125,6 +138,7 @@ function removeExpression() {
   expressions.splice(index, 1)
   const extraIndex = appStore.extraDefaultExpressionIds.indexOf(expression.id)
   if (extraIndex !== -1) appStore.extraDefaultExpressionIds.splice(extraIndex, 1)
+  setMovementSpeed(expression.id, 'normal') // Takes it out of the movement lists
   for (let i = appStore.boopExpressions.length - 1; i >= 0; i--) {
     if (appStore.boopExpressions[i]!.expressionId === expression.id) {
       appStore.boopExpressions.splice(i, 1)
@@ -285,8 +299,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
         </div>
       </div>
 
-      <!-- Extra default expression -->
-      <div class="border-b border-border px-5 py-4">
+      <!-- Extra default expression and movement speed -->
+      <div class="space-y-4 border-b border-border px-5 py-4">
         <ToggleSwitch
           v-model="extraDefault"
           :disabled="isDefault"
@@ -297,6 +311,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
               : 'Every 10–14 seconds, and after a boop, the head swaps the default expression for a random one of these for 5 seconds. Turn this off for every expression to always show the default.'
           "
         />
+
+        <FormField
+          label="Movement speed"
+          hint="How often the face moves up and down while this expression shows: every 200 ms (normal), 300 ms (slow) or 600 ms (very slow). Boops have their own speed."
+        >
+          <select v-model="movementSpeed" class="form-input sm:max-w-64">
+            <option v-for="speed in MOVEMENT_SPEEDS" :key="speed.value" :value="speed.value">
+              {{ speed.label }}
+            </option>
+          </select>
+        </FormField>
       </div>
 
       <!-- Toolbar -->

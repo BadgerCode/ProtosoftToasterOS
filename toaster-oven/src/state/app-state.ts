@@ -4,6 +4,8 @@ import {
   DEFAULT_FACE_NAME,
   EXTRA_DEFAULT_NAMES,
   REMOTE_ACTION_DEFAULTS,
+  SLOW_MOVEMENT_NAMES,
+  VERY_SLOW_MOVEMENT_NAMES,
 } from '@/faces/faces'
 import type { BoopExpression } from './boop-expressions'
 import { remoteActionsFromEntries } from './remote-actions'
@@ -36,7 +38,23 @@ export const appStore = reactive({
    * One entry per combo, AA to DD. Update in place.
    */
   remoteActions: remoteActionsFromEntries(REMOTE_ACTION_DEFAULTS, expressions).actions,
+  /**
+   * Ids of the expressions that move up and down slowly and very slowly
+   * (SlowMovementExpressions and VerySlowMovementExpressions in the firmware). Update in place.
+   */
+  slowMovementExpressionIds: idsOf(expressions, SLOW_MOVEMENT_NAMES),
+  verySlowMovementExpressionIds: idsOf(expressions, VERY_SLOW_MOVEMENT_NAMES),
 })
+
+/** Ids of the named expressions that exist, in expression order */
+export function idsOf(list: { id: number; name: string }[], names: string[]) {
+  return list.filter((e) => names.includes(e.name)).map((e) => e.id)
+}
+
+/** Names of the expressions with these ids, in expression order, for the generated file */
+export function namesOf(ids: number[]) {
+  return appStore.expressions.filter((e) => ids.includes(e.id)).map((e) => e.name)
+}
 
 /** The expression the head shows when idle, falling back to the first one */
 export function getDefaultExpression() {

@@ -53,10 +53,11 @@ ${panels(e.mouth)}
 };`
 }
 
-function generateExtraDefaults(names: string[]): string {
+/** A `FaceExpression* const <listName>[]` list and its Num<listName> count */
+function generateExpressionList(listName: string, names: string[]): string {
   const list = names.length ? `{\n${names.map((n) => `  &Face_${n}`).join(',\n')}\n}` : '{}'
-  return `FaceExpression* const ExtraDefaultExpressions[] = ${list};
-const int NumExtraDefaultExpressions = sizeof(ExtraDefaultExpressions) / sizeof(ExtraDefaultExpressions[0]);`
+  return `FaceExpression* const ${listName}[] = ${list};
+const int Num${listName} = sizeof(${listName}) / sizeof(${listName}[0]);`
 }
 
 function generateBoopExpressions(entries: BoopExpressionEntry[]): string {
@@ -83,6 +84,7 @@ export function generateFacesHeader(
   extraDefaultNames: string[],
   boopExpressions: BoopExpressionEntry[],
   remoteActions: RemoteActionEntry[],
+  movement: { slow: string[]; verySlow: string[] },
 ): string {
   return `// All of the faces and digits are designed to work on the right face & be flipped on the left face
 
@@ -110,7 +112,7 @@ FaceExpression* const DEFAULT_FACE = &Face_${defaultName};
 
 // Additional Neutral/Happy expressions to randomly change to when the default expression is in use
 // Leave the list empty ({}) to always show the default expression
-${generateExtraDefaults(extraDefaultNames)}
+${generateExpressionList('ExtraDefaultExpressions', extraDefaultNames)}
 
 // Expressions to show when booped, by the minimum number of boops in a row
 // The entry with the highest number that has been reached is shown. E.g. 4 boops shows Face_Angry
@@ -121,5 +123,11 @@ ${generateBoopExpressions(boopExpressions)}
 // Actions: REMOTE_EXPRESSION (with an expression), REMOTE_RESET_TO_DEFAULT, REMOTE_CYCLE_BRIGHTNESS, REMOTE_TOGGLE_BOOP_SENSOR
 // Combos that aren't in the list do nothing
 ${generateRemoteActions(remoteActions)}
+
+// Expressions that move up and down slowly (every 300ms, instead of every 200ms)
+${generateExpressionList('SlowMovementExpressions', movement.slow)}
+
+// Expressions that move up and down very slowly (every 600ms)
+${generateExpressionList('VerySlowMovementExpressions', movement.verySlow)}
 `
 }

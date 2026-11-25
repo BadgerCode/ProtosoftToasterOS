@@ -98,6 +98,16 @@ export function importFiles(
         ...r.result.boopExpressions,
       )
       appStore.remoteActions.splice(0, appStore.remoteActions.length, ...r.result.remoteActions)
+      appStore.slowMovementExpressionIds.splice(
+        0,
+        appStore.slowMovementExpressionIds.length,
+        ...r.result.slowMovementExpressionIds,
+      )
+      appStore.verySlowMovementExpressionIds.splice(
+        0,
+        appStore.verySlowMovementExpressionIds.length,
+        ...r.result.verySlowMovementExpressionIds,
+      )
       resetEditor()
       if (r.result.added.length) {
         notes.push(`Added missing expressions the firmware needs: ${r.result.added.join(', ')}`)
@@ -135,7 +145,17 @@ export function importFiles(
           `Skipped remote control combos that couldn't be used: ${r.result.remoteActionsSkipped.join(', ')}`,
         )
       }
+      if (r.result.movementFallback) {
+        notes.push(`${r.name} didn't list movement speeds, so it uses the usual ones`)
+      }
+      if (r.result.movementSkipped.length) {
+        notes.push(
+          `Skipped movement speeds for expressions that weren't in ${r.name}: ${r.result.movementSkipped.join(', ')}`,
+        )
+      }
       upToDate =
+        !r.result.movementFallback &&
+        r.result.movementSkipped.length === 0 &&
         !r.result.remoteActionsFallback &&
         r.result.remoteActionsSkipped.length === 0 &&
         !r.result.boopExpressionsFallback &&

@@ -119,13 +119,13 @@ private:
       return onLastBoopExpression ? FaceMovementDelay * 2.25 : FaceMovementDelay * 1.5;
     }
 
-    // Slow
-    if (CurrentExpression == &Face_Heart || CurrentExpression == &Face_AmongUs || CurrentExpression == &Face_Smirk || CurrentExpression == &Face_Spiral) {
+    // Slow (SlowMovementExpressions in Protogen_Faces.h)
+    if (IsInList(CurrentExpression, SlowMovementExpressions, NumSlowMovementExpressions)) {
       return FaceMovementDelay * 1.5;
     }
 
-    // Very slow
-    if (CurrentExpression == &Face_Sleepy || CurrentExpression == &Face_X_X) {
+    // Very slow (VerySlowMovementExpressions in Protogen_Faces.h)
+    if (IsInList(CurrentExpression, VerySlowMovementExpressions, NumVerySlowMovementExpressions)) {
       return FaceMovementDelay * 3;
     }
 
@@ -157,6 +157,13 @@ private:
     return *CurrentExpression;
   }
 
+
+  bool IsInList(FaceExpression* expression, FaceExpression* const list[], int listLength) {
+    for (int i = 0; i < listLength; i++) {
+      if (list[i] == expression) return true;
+    }
+    return false;
+  }
 
   // Boop expressions
   // The expression for the highest MinBoops that has been reached, or NULL if none has

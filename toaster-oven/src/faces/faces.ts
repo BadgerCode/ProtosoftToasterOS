@@ -9,6 +9,7 @@ import {
   extractDeclaration,
   parseDefaultFace,
   parseBoopExpressions,
+  parseExpressionList,
   parseExpressions,
   parseExtraDefaults,
   parsePanel,
@@ -75,6 +76,21 @@ export const REMOTE_ACTION_DEFAULTS = parseRemoteActions(facesHeader) ?? [
   { buttons: 'DB', action: 'REMOTE_TOGGLE_BOOP_SENSOR', name: null },
   { buttons: 'DD', action: 'REMOTE_EXPRESSION', name: 'AmongUs' },
 ]
+
+/**
+ * Expressions that move up and down slowly (SlowMovementExpressions) and very slowly
+ * (VerySlowMovementExpressions). Also what older files without the lists used.
+ */
+export const SLOW_MOVEMENT_NAMES = parseExpressionList(facesHeader, 'SlowMovementExpressions') ?? [
+  'Heart',
+  'Smirk',
+  'Spiral',
+  'AmongUs',
+]
+export const VERY_SLOW_MOVEMENT_NAMES = parseExpressionList(
+  facesHeader,
+  'VerySlowMovementExpressions',
+) ?? ['Sleepy', 'X_X']
 
 /** Firmware declarations that aren't expressions, copied into the generated file as-is */
 export const NOSE_SINGLE_DECLARATION = extractDeclaration(facesHeader, 'byte Face_Nose_Single')

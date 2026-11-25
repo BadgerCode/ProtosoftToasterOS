@@ -1,11 +1,13 @@
 import { computed, ref } from 'vue'
-import { appStore, getDefaultExpression, getExtraDefaultExpressions } from './app-state'
+import { appStore, getDefaultExpression, getExtraDefaultExpressions, namesOf } from './app-state'
 import { defaultFaceConfig, defaultFeatureConfig } from './config-defaults'
 import {
   BOOP_EXPRESSION_DEFAULTS,
   DEFAULT_FACE_NAME,
   EXTRA_DEFAULT_NAMES,
   REMOTE_ACTION_DEFAULTS,
+  SLOW_MOVEMENT_NAMES,
+  VERY_SLOW_MOVEMENT_NAMES,
 } from '@/faces/faces'
 import { usableBoopExpressions } from './boop-expressions'
 import { defaultExpressions } from './expressions'
@@ -27,7 +29,7 @@ export const DOWNLOADS: Record<DownloadKind, { fileName: string; label: string }
 const KINDS = Object.keys(DOWNLOADS) as DownloadKind[]
 
 /** Written into downloaded files. Bump it when the generated format changes */
-const FORMAT_VERSION = 6
+const FORMAT_VERSION = 7
 
 function generateFiles(
   face: typeof appStore.faceConfig,
@@ -37,6 +39,7 @@ function generateFiles(
   extraDefaultNames: string[],
   boopExpressions: BoopExpressionEntry[],
   remoteActions: RemoteActionEntry[],
+  movement: { slow: string[]; verySlow: string[] },
 ): Record<DownloadKind, string> {
   return {
     config: generateConfigHeader(face, features),
@@ -46,6 +49,7 @@ function generateFiles(
       extraDefaultNames,
       boopExpressions,
       remoteActions,
+      movement,
     ),
   }
 }
@@ -60,6 +64,7 @@ const lastDownloaded = ref(
     EXTRA_DEFAULT_NAMES.filter((name) => name !== DEFAULT_FACE_NAME),
     BOOP_EXPRESSION_DEFAULTS,
     REMOTE_ACTION_DEFAULTS,
+    { slow: SLOW_MOVEMENT_NAMES, verySlow: VERY_SLOW_MOVEMENT_NAMES },
   ),
 )
 
@@ -75,6 +80,10 @@ const currentFiles = computed(() =>
       name: b.expression.name,
     })),
     usableRemoteActions(appStore.remoteActions, appStore.expressions),
+    {
+      slow: namesOf(appStore.slowMovementExpressionIds),
+      verySlow: namesOf(appStore.verySlowMovementExpressionIds),
+    },
   ),
 )
 

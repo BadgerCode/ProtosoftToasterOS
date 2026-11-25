@@ -520,4 +520,20 @@ const RemoteControlActionConfig RemoteControlActions[] = {
 };
 const int NumRemoteControlActions = sizeof(RemoteControlActions) / sizeof(RemoteControlActions[0]);
 
+// Expressions that move up and down slowly (every 300ms, instead of every 200ms)
+FaceExpression* const SlowMovementExpressions[] = {
+  &Face_Heart,
+  &Face_Smirk,
+  &Face_Spiral,
+  &Face_AmongUs
+};
+const int NumSlowMovementExpressions = sizeof(SlowMovementExpressions) / sizeof(SlowMovementExpressions[0]);
+
+// Expressions that move up and down very slowly (every 600ms)
+FaceExpression* const VerySlowMovementExpressions[] = {
+  &Face_Sleepy,
+  &Face_X_X
+};
+const int NumVerySlowMovementExpressions = sizeof(VerySlowMovementExpressions) / sizeof(VerySlowMovementExpressions[0]);
+
 
