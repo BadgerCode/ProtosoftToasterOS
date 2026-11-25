@@ -77,39 +77,45 @@ const editingBlink = computed(() => showBlink.value && selected.value.eyeBlink !
 const previewPanels = PANEL_TYPES.map((p) => p.id).filter((id) => id !== PanelType.SINGLE_NOSE)
 const previewBitmaps = computed(() => expressionToPanels(selected.value, editingBlink.value))
 
-// Renaming
+// Renaming: the name is a title with a pencil button, which swaps it for an input
+const editingName = ref(false)
 const nameInput = ref<HTMLInputElement>()
 const nameDraft = ref('')
 const nameError = ref<string | null>(null)
-watch(
-  () => selected.value.name,
-  (name) => {
-    nameDraft.value = displayName(name)
-    nameError.value = null
-  },
-  { immediate: true },
-)
+watch(selectedExpressionId, () => (editingName.value = false))
+
+async function startRename() {
+  if (selectedRequiredBy.value) return
+  nameDraft.value = displayName(selected.value.name)
+  nameError.value = null
+  editingName.value = true
+  await nextTick()
+  nameInput.value?.focus()
+  nameInput.value?.select()
+}
 
 function onNameInput() {
   nameError.value = validateName(nameFromDisplay(nameDraft.value), expressions, selected.value.id)
 }
 
-function commitName() {
+function confirmName() {
   const name = nameFromDisplay(nameDraft.value)
-  if (validateName(name, expressions, selected.value.id)) {
-    nameDraft.value = displayName(selected.value.name)
-    nameError.value = null
-    return
-  }
+  nameError.value = validateName(name, expressions, selected.value.id)
+  if (nameError.value) return
   selected.value.name = name
+  editingName.value = false
+}
+
+function cancelRename() {
+  editingName.value = false
+  nameError.value = null
 }
 
 // Adding and removing
 async function selectAndRename(id: number) {
   selectedExpressionId.value = id
   await nextTick()
-  nameInput.value?.focus()
-  nameInput.value?.select()
+  startRename()
 }
 
 function addExpression() {
@@ -245,34 +251,75 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
         class="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between"
       >
         <div class="min-w-0 flex-1">
-          <template v-if="selectedRequiredBy">
-            <h2 class="text-lg font-semibold text-white">{{ displayName(selected.name) }}</h2>
-            <p class="mt-0.5 text-sm text-slate-400">
-              Used by: {{ selectedRequiredBy.join(', ') }}. You can edit its LEDs, but it can't be
-              renamed or removed yet.
-            </p>
-          </template>
-          <template v-else>
-            <label for="expression-name" class="block text-sm font-medium text-slate-200">
-              Name
-            </label>
-            <input
-              id="expression-name"
-              ref="nameInput"
-              v-model="nameDraft"
-              class="form-input mt-1.5 sm:max-w-80"
-              :class="{ '!border-gold-400': nameError }"
-              autocomplete="off"
-              spellcheck="false"
-              @input="onNameInput"
-              @change="commitName"
-              @keydown.enter="($event.target as HTMLInputElement).blur()"
-            />
-            <p v-if="nameError" class="mt-1 text-xs text-gold-300">{{ nameError }}</p>
-            <p v-else class="mt-1 text-xs text-slate-500">
-              Saved as <code class="text-slate-400">Face_{{ selected.name }}</code>
-            </p>
-          </template>
+          <div v-if="editingName" class="flex items-start gap-2">
+            <div class="min-w-0 flex-1 sm:max-w-80">
+              <input
+                ref="nameInput"
+                v-model="nameDraft"
+                class="form-input"
+                :class="{ '!border-gold-400': nameError }"
+                aria-label="Expression name"
+                autocomplete="off"
+                spellcheck="false"
+                @input="onNameInput"
+                @keydown.enter.prevent="confirmName"
+                @keydown.esc="cancelRename"
+              />
+              <p v-if="nameError" class="mt-1 text-xs text-gold-300">{{ nameError }}</p>
+              <p v-else class="mt-1 text-xs text-slate-500">
+                Saved as <code class="text-slate-400">Face_{{ nameFromDisplay(nameDraft) }}</code
+                >. Press <kbd class="kbd">Esc</kbd> to cancel.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-icon mt-1 shrink-0"
+              title="Save name"
+              aria-label="Save name"
+              :disabled="!!nameError"
+              @click="confirmName"
+            >
+              <svg class="size-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+          <div v-else class="flex items-center gap-1">
+            <h2 class="min-w-0 truncate text-lg font-semibold text-white">
+              {{ displayName(selected.name) }}
+            </h2>
+            <button
+              type="button"
+              class="btn btn-icon shrink-0"
+              :title="
+                selectedRequiredBy ? `Used by the firmware, so it can't be renamed` : 'Rename'
+              "
+              :aria-label="
+                selectedRequiredBy
+                  ? `Rename (used by the firmware, so it can't be renamed)`
+                  : 'Rename'
+              "
+              :disabled="!!selectedRequiredBy"
+              @click="startRename"
+            >
+              <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z"
+                />
+                <path
+                  d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z"
+                />
+              </svg>
+            </button>
+          </div>
+          <p v-if="selectedRequiredBy" class="mt-0.5 text-sm text-slate-400">
+            Used by: {{ selectedRequiredBy.join(', ') }}. You can edit its LEDs, but it can't be
+            renamed or removed yet.
+          </p>
           <p v-if="isDefault" class="mt-2 text-sm text-slate-400">
             Shown when no other expression is selected.
             <template v-if="!selectedRequiredBy">
