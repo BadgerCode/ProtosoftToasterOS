@@ -95,6 +95,17 @@ const mapMarkers = computed(() => {
   return markers
 })
 
+// Wiring on the map: each connection's panels in order, starting from the Arduino
+const mapChains = computed(() =>
+  face.connections
+    .map((connection, ci) => ({
+      label: `Connection ${ci + 1}`,
+      title: `Connection ${ci + 1} from the Arduino: DIN pin ${connection.pinDataIn}, CS pin ${connection.pinCS}, CLK pin ${connection.pinCLK}`,
+      panelIds: connection.panels.map((p) => p.panelType).filter((t) => t !== EMPTY_PANEL),
+    }))
+    .filter((chain) => chain.panelIds.length > 0),
+)
+
 // Presets
 const presets = computed(() =>
   FACE_LAYOUT_PRESETS.map((preset) => {
@@ -190,7 +201,12 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
       description="Every face panel and whether it's been assigned to a connection. Unused panels are simply not rendered."
     >
       <div class="mx-auto max-w-3xl">
-        <VisorDisplay :bitmaps="mapBitmaps" :panel-ids="mapPanelIds" :markers="mapMarkers" />
+        <VisorDisplay
+          :bitmaps="mapBitmaps"
+          :panel-ids="mapPanelIds"
+          :markers="mapMarkers"
+          :chains="mapChains"
+        />
       </div>
 
       <p class="mt-4 text-sm text-slate-300">
@@ -210,6 +226,13 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
         <li class="flex items-center gap-2">
           <span class="size-3 rounded-sm border border-gold-400 bg-gold-400/30" />
           Used more than once
+        </li>
+        <li class="flex items-center gap-2">
+          <svg class="h-3 w-6" viewBox="0 0 24 12" aria-hidden="true">
+            <line x1="1" y1="6" x2="17" y2="6" stroke="#2fcd03" stroke-width="2" />
+            <polygon points="23,6 15,1.5 15,10.5" fill="#2fcd03" />
+          </svg>
+          Wires
         </li>
       </ul>
 

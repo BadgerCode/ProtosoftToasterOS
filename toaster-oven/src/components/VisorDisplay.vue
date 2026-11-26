@@ -12,6 +12,16 @@ export interface PanelMarker {
   title?: string
 }
 
+/** A chain of panels wired together, drawn as wires from the Arduino through each panel in turn */
+export interface PanelChain {
+  /** Shown where the wires come in from the Arduino, e.g. "C1" */
+  label: string
+  /** Tooltip for the incoming wires, e.g. the pins */
+  title?: string
+  /** The panels in wiring order */
+  panelIds: number[]
+}
+
 const props = withDefaults(
   defineProps<{
     /** What each panel shows. Panels without a bitmap are drawn unlit. */
@@ -20,10 +30,12 @@ const props = withDefaults(
     panelIds: number[]
     /** Outline, label and colour each panel by status (panel layout map) */
     markers?: Record<number, PanelMarker>
+    /** Draw the wiring of each chain (panel layout map) */
+    chains?: PanelChain[]
     /** Light the LEDs row by row when first shown, like the MAX7219s do */
     boot?: boolean
   }>(),
-  { markers: undefined, boot: false },
+  { markers: undefined, chains: undefined, boot: false },
 )
 
 const hasSingleNose = computed(() => props.panelIds.includes(PanelType.SINGLE_NOSE))
@@ -71,9 +83,126 @@ const panels = computed(() =>
         leds.push({ row, col, on })
       }
     }
-    return { id, ...positions.value[id]!, leds, marker }
+    // Labels go above the panel, unless a wire meets its top edge there
+    const labelBelow = wiring.value.labelBelow.has(id)
+    return { id, ...positions.value[id]!, leds, marker, labelY: labelBelow ? 10.3 : -1.1 }
   }),
 )
+
+// Wiring: a wire from each panel to the next, with an arrow where it goes in. Panels are 8x8,
+// so a wire leaves a panel's edge facing the next panel and enters the next panel's facing edge
+type Point = { x: number; y: number }
+
+interface Wire {
+  key: string
+  /** The wires in from the Arduino */
+  input: boolean
+  line: { from: Point; to: Point }
+  arrow: string
+  label?: Point & { text: string; anchor: 'start' | 'end' }
+  title?: string
+  /** The panels the wire meets, and where on their edges */
+  ends: { panel: number; point: Point }[]
+}
+
+/** How far the wires in from the Arduino start outside the visor, leaving room for their label */
+const CABLE_START_X = 62.5
+
+/** Where a line from a panel's centre towards a point crosses the panel's edge */
+function edgeToward(panel: Point, target: Point): Point {
+  const centre = { x: panel.x + 4, y: panel.y + 4 }
+  const dx = target.x - centre.x
+  const dy = target.y - centre.y
+  const t = Math.min(dx ? 4 / Math.abs(dx) : Infinity, dy ? 4 / Math.abs(dy) : Infinity)
+  return { x: centre.x + dx * t, y: centre.y + dy * t }
+}
+
+/** An arrowhead whose tip is just past `at`, pointing from `from` towards `at` */
+function arrowhead(from: Point, at: Point) {
+  const length = Math.hypot(at.x - from.x, at.y - from.y) || 1
+  const ux = (at.x - from.x) / length
+  const uy = (at.y - from.y) / length
+  const tip = { x: at.x + ux * 0.6, y: at.y + uy * 0.6 }
+  const back = { x: at.x - ux * 0.9, y: at.y - uy * 0.9 }
+  return [
+    tip,
+    { x: back.x - uy * 0.85, y: back.y + ux * 0.85 },
+    { x: back.x + uy * 0.85, y: back.y - ux * 0.85 },
+  ]
+    .map((p) => `${p.x},${p.y}`)
+    .join(' ')
+}
+
+const wiring = computed(() => {
+  const wires = (props.chains ?? []).flatMap((chain) => {
+    const shown = chain.panelIds.filter((id) => props.panelIds.includes(id) && positions.value[id])
+    if (!shown.length) return []
+    const at = (id: number) => positions.value[id]!
+    const centre = (id: number) => ({ x: at(id).x + 4, y: at(id).y + 4 })
+
+    // Wires in from the Arduino, from outside the visor on the first panel's side,
+    // labelled just outside the visor
+    const first = shown[0]!
+    const side = centre(first).x >= 0 ? 1 : -1
+    const start = { x: side * CABLE_START_X, y: centre(first).y }
+    const entry = edgeToward(at(first), start)
+    const chainWires: Wire[] = [
+      {
+        key: `${chain.label}-in`,
+        input: true,
+        line: { from: start, to: entry },
+        arrow: arrowhead(start, entry),
+        label: {
+          text: chain.label,
+          x: side * 49.5,
+          y: start.y - 0.9,
+          anchor: side > 0 ? 'start' : 'end',
+        },
+        title: chain.title,
+        ends: [{ panel: first, point: entry }],
+      },
+    ]
+
+    // Wires from each panel to the next
+    for (let i = 1; i < shown.length; i++) {
+      const from = shown[i - 1]!
+      const to = shown[i]!
+      if (from === to) continue
+      const exit = edgeToward(at(from), centre(to))
+      const enter = edgeToward(at(to), centre(from))
+      chainWires.push({
+        key: `${chain.label}-${i}`,
+        input: false,
+        line: { from: exit, to: enter },
+        // Touching panels have no gap to draw a wire in: point from one centre to the other
+        arrow: arrowhead(
+          Math.hypot(enter.x - exit.x, enter.y - exit.y) < 0.5 ? centre(from) : exit,
+          enter,
+        ),
+        ends: [
+          { panel: from, point: exit },
+          { panel: to, point: enter },
+        ],
+      })
+    }
+    return chainWires
+  })
+
+  // Panels whose top edge a wire meets (where their label goes) but not their bottom edge
+  const onEdge = (id: number, y: number) =>
+    wires.some((w) => w.ends.some((e) => e.panel === id && Math.abs(e.point.y - y) < 0.01))
+  const labelBelow = new Set(
+    props.panelIds.filter((id) => {
+      const top = positions.value[id]?.y
+      return top !== undefined && onEdge(id, top) && !onEdge(id, top + 8)
+    }),
+  )
+
+  return { wires, labelBelow }
+})
+
+/** Wider when wiring is shown, to fit the wires coming in from the Arduino and their labels */
+const viewBox = computed(() => (props.chains?.length ? '-64 -7 128 45' : '-50 -7 100 45'))
 
 const booting = ref(props.boot)
 onMounted(() => {
@@ -83,7 +212,7 @@ onMounted(() => {
 
 <template>
   <svg
-    viewBox="-50 -7 100 45"
+    :viewBox="viewBox"
     class="visor block h-auto w-full"
     :class="{ booting }"
     role="img"
@@ -148,9 +277,35 @@ onMounted(() => {
         class="panel-label"
         :class="`panel-${panel.marker.state}`"
         x="0"
-        y="-1.1"
+        :y="panel.labelY"
       >
         {{ panel.marker.label }}
+      </text>
+    </g>
+
+    <!-- Wiring, on top of the panels so the arrows show where wires go in -->
+    <g
+      v-for="wire in wiring.wires"
+      :key="wire.key"
+      class="wire"
+      :class="{ 'wire-input': wire.input }"
+    >
+      <title v-if="wire.title">{{ wire.title }}</title>
+      <line
+        :x1="wire.line.from.x"
+        :y1="wire.line.from.y"
+        :x2="wire.line.to.x"
+        :y2="wire.line.to.y"
+      />
+      <polygon class="wire-arrow" :points="wire.arrow" />
+      <text
+        v-if="wire.label"
+        class="wire-label"
+        :x="wire.label.x"
+        :y="wire.label.y"
+        :text-anchor="wire.label.anchor"
+      >
+        {{ wire.label.text }}
       </text>
     </g>
   </svg>
@@ -205,6 +360,32 @@ onMounted(() => {
 
 .panel-label.panel-attention {
   fill: var(--color-gold-300);
+}
+
+/* Wires and arrows are green, so they stand out from the blue LEDs */
+.wire line {
+  stroke: #2fcd03;
+  stroke-width: 0.3;
+  stroke-linecap: round;
+}
+
+/* The wires in from the Arduino: a thicker cable */
+.wire-input line {
+  stroke-width: 0.6;
+}
+
+.wire-arrow {
+  fill: #2fcd03;
+  stroke: var(--color-visor-glass);
+  stroke-width: 0.15;
+  stroke-linejoin: round;
+}
+
+.wire-label {
+  font-family: var(--font-sans);
+  font-size: 1.7px;
+  font-weight: 700;
+  fill: var(--color-white);
 }
 
 /* Power-on: rows light top to bottom across every panel at once, like the MAX7219 chain */
