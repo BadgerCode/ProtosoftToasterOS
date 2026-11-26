@@ -134,6 +134,28 @@
     @apply mt-12 scroll-mt-20 font-semibold text-slate-200;
   }
 
+  /*
+    The link button after each heading, which copies a link to it. It shows on hover with a mouse,
+    and all the time on touch screens, which can't hover
+  */
+  .guide-content .heading-link {
+    @apply ml-1.5 inline-flex size-7 items-center justify-center rounded-md align-middle text-slate-500 no-underline opacity-0 transition-opacity hover:bg-surface hover:text-accent focus-visible:opacity-100;
+  }
+
+  .guide-content .heading-link svg {
+    @apply size-4;
+  }
+
+  .guide-content :is(h1, h2, h3, h4):hover .heading-link {
+    @apply opacity-100;
+  }
+
+  @media (hover: none) {
+    .guide-content .heading-link {
+      @apply opacity-100;
+    }
+  }
+
   /* A heading straight after another heading, e.g. a ### just under a ##, needs less space */
   .guide-content :is(h2, h3, h4) + :is(h2, h3, h4) {
     @apply mt-6;

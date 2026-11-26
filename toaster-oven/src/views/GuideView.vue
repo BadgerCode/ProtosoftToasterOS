@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { findGuide, renderGuide, sectionGuides } from '@/guides/guides'
 import { GUIDE_SECTIONS } from '@/guides/sections'
 
 const props = defineProps<{ slug: string }>()
 const router = useRouter()
+const route = useRoute()
 
 const guide = computed(() => findGuide(props.slug))
 const rendered = computed(() => (guide.value ? renderGuide(guide.value) : null))
@@ -21,8 +22,34 @@ const index = computed(() => siblings.value.findIndex((g) => g.slug === props.sl
 const previous = computed(() => siblings.value[index.value - 1])
 const next = computed(() => siblings.value[index.value + 1])
 
-// Links to other pages of the site open without reloading the page
+// The link button after each heading copies a link to that section
+const copyMessage = ref<string | null>(null)
+let copyMessageTimer: ReturnType<typeof setTimeout> | undefined
+onBeforeUnmount(() => clearTimeout(copyMessageTimer))
+
+async function copyHeadingLink(hash: string) {
+  // Also put it in the address bar, so it can be copied from there if copying isn't allowed
+  router.replace({ hash })
+  const url = `${window.location.origin}${route.path}${hash}`
+  try {
+    await navigator.clipboard.writeText(url)
+    copyMessage.value = 'Link copied'
+  } catch {
+    copyMessage.value = "Couldn't copy the link. It's in the address bar instead"
+  }
+  clearTimeout(copyMessageTimer)
+  copyMessageTimer = setTimeout(() => (copyMessage.value = null), 2500)
+}
+
 function onContentClick(event: MouseEvent) {
+  const headingLink = (event.target as HTMLElement).closest('a.heading-link')
+  if (headingLink) {
+    event.preventDefault()
+    copyHeadingLink(headingLink.getAttribute('href')!)
+    return
+  }
+
+  // Links to other pages of the site open without reloading the page
   const link = (event.target as HTMLElement).closest('a')
   const href = link?.getAttribute('href')
   if (!link || !href?.startsWith('/') || link.target || event.ctrlKey || event.metaKey) return
@@ -99,4 +126,16 @@ function onContentClick(event: MouseEvent) {
       <RouterLink to="/guides" class="text-accent hover:underline">See all guides</RouterLink>.
     </p>
   </section>
+  <!-- "Link copied", after using a heading's link button -->
+  <div
+    class="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4"
+    aria-live="polite"
+  >
+    <p
+      v-if="copyMessage"
+      class="rounded-lg border border-border bg-slate-900/95 px-4 py-2 text-sm text-white shadow-lg shadow-black/30"
+    >
+      {{ copyMessage }}
+    </p>
+  </div>
 </template>
