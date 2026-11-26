@@ -10,11 +10,18 @@ This guide gets a face working: the microcontroller, the LED panels, and the sof
 
 ### Microcontroller
 
-Toaster OS runs on an **Arduino Nano Every**. It controls everything in the head, and you program it from your computer over USB.
+Toaster OS can run on an **Arduino Nano Every** or an **ESP32** microcontroller. It controls everything in the head, and you program it from your computer over USB.
 
 ### MAX7219 LED panels
 
-The face is made of **MAX7219 8x8 LED panels**: modules with 64 LEDs and a MAX7219 chip that drives them. A typical face uses 14:
+The face is made of **MAX7219 8x8 LED panels**: modules with 64 LEDs and a MAX7219 chip that drives them.
+
+> [!NOTE]
+> Some panels come with their pin headers loose in the bag, so you may have to solder them on before you can wire them up.
+
+#### How many panels to use
+
+A typical face uses 14 panels
 
 | Part of the face | Panels per side |
 | ---------------- | --------------- |
@@ -22,39 +29,48 @@ The face is made of **MAX7219 8x8 LED panels**: modules with 64 LEDs and a MAX72
 | Eye              | 2               |
 | Nose             | 1               |
 
-You can also use one centre nose panel instead of two (13 panels in total).
+You can also use one centre nose panel instead of two (13 panels in total).\
+Or use less panels (e.g. only 3 panels for the mouth).
 
-> [!NOTE]
-> Some panels come with their pin headers loose in the bag, so you may have to solder them on before you can wire them up.
 
-The panels are wired in **chains**: the first panel connects to the Arduino, and each panel's output pins connect to the next panel's input pins. Each chain uses 3 of the Arduino's pins, plus 5V and ground:
+#### Panel layout
+When using 16 panels or less, you can drive the whole face off one connection.\
+Power and data are passed from one panel, to the next.
 
+![The panel layout with one chain](images/panels_diagram_onecon.png)
+
+You will need to provide power to the chain of panels (5V power and ground).\
+And you will need to plug 3 wires into your microcontroller- 
 - **DIN** (data in)
 - **CS** (chip select)
 - **CLK** (clock)
 
-A chain can have up to 16 panels. You can use one chain for the whole face, or one per side.
+#### Other panel layouts
 
-#### Two chains (the default)
+The software supports a range of layouts
+- Using a single nose panel
+- Upside down panels
+- Separate connections for the left & right sides of the face
+- Wiring the panels in a different order
+- Using fewer panels for the mouth
 
-Each side of the face is its own chain, starting at the back of the mouth and finishing at the back of the eye:
+See [Toaster Oven](/configure) configure page.
 
-![The panel layout with two chains: the right side on pins 3, 4 and 5, and the left side on pins 6, 7 and 8](images/panels_diagram_twocon.png)
-
-| Chain      | DIN | CS  | CLK | Order                                                                               |
-| ---------- | --- | --- | --- | ----------------------------------------------------------------------------------- |
-| Right side | 3   | 4   | 5   | Mouth back, mouth mid-back, mouth mid-front, mouth front, nose, eye front, eye back |
-| Left side  | 6   | 7   | 8   | The same, on the left                                                               |
-
-"Left" and "right" are as you look at the head from the front.
-
-#### One chain
-
-Toaster Oven also has presets for a single chain on pins 3, 4 and 5, with 14 panels or 13. Choose one on the **Panels** page to see its order.
 
 ### Power
 
-Everything runs on 5V from a USB battery pack. Split the USB cable's 5V and ground so they feed the Arduino and the LED panels (and any extras later). Every part must share the same ground.
+Everything runs on 5V.
+
+The easiest option is to use standard USB battery pack
+- Use an exposed USB cable, so that you can access the voltage (red) and ground (black) wires
+    - You can either buy one or cut the end off a USB cable
+- Use a splitter on the voltage and ground to allow multiple components to connect to it
+    - E.g. a WAGO splitter or a JST Y splitter
+
+TODO: Add a picture
+
+> [!WARNING]
+> Every part must be connected to the same ground or you will get weird behaviour
 
 > [!WARNING]
 > Power the head from its battery, not your computer's USB port. A computer can't supply enough power for the panels, and parts like the boop sensor stop working properly without it.
