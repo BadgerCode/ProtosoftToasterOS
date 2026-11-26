@@ -2,7 +2,8 @@
 //
 // Supports: # to #### headings, paragraphs, **bold**, *italic*, `code`, [links](url),
 // ![images](images/file.png), - and 1. lists (indent by 2+ spaces to nest), ``` code blocks,
-// > quotes, > [!NOTE] / [!TIP] / [!WARNING] callouts, | tables |, and --- rules.
+// > quotes, > [!NOTE] / [!TIP] / [!WARNING] callouts, | tables |, --- rules, and line breaks:
+// end a line with \ to carry on straight underneath, without starting a new paragraph.
 // HTML in the Markdown is shown as text, not run.
 
 export interface GuideHeading {
@@ -50,7 +51,16 @@ function inline(text: string, resolveImage: ResolveImage): string {
   html = html
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^\w*])\*(?!\s)(.+?)\*(?!\w)/g, '$1<em>$2</em>')
-  return html.replace(/\u0000(\d+)\u0000/g, (_, i: string) => `<code>${codes[Number(i)]}</code>`)
+  return html
+    .replace(/\u0000(\d+)\u0000/g, (_, i: string) => `<code>${codes[Number(i)]}</code>`)
+    .replace(/\u0001/g, '<br>')
+}
+
+/** Joins lines into one, with a line break after any line that ends with \ */
+function joinLines(lines: string[]) {
+  return lines.reduce((text, line) =>
+    text.endsWith('\\') ? `${text.slice(0, -1).trimEnd()}\u0001${line}` : `${text} ${line}`,
+  )
 }
 
 const FENCE = /^```(\w*)\s*$/
@@ -212,7 +222,8 @@ export function renderMarkdown(
               text: item[3]!,
             })
           } else if (/^\s+/.test(lines[i]!) && items.length) {
-            items[items.length - 1]!.text += ' ' + lines[i]!.trim()
+            const item = items[items.length - 1]!
+            item.text = joinLines([item.text, lines[i]!.trim()])
           } else break
           i++
         }
@@ -232,7 +243,7 @@ export function renderMarkdown(
       while (i < lines.length && lines[i]!.trim() && !startsBlock(lines, i)) {
         paragraph.push(lines[i++]!.trim())
       }
-      out.push(`<p>${inline(paragraph.join(' '), resolveImage)}</p>`)
+      out.push(`<p>${inline(joinLines(paragraph), resolveImage)}</p>`)
     }
     return out.join('\n')
   }

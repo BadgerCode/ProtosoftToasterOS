@@ -9,7 +9,10 @@ const router = useRouter()
 
 const guide = computed(() => findGuide(props.slug))
 const rendered = computed(() => (guide.value ? renderGuide(guide.value) : null))
-const contents = computed(() => rendered.value?.headings.filter((h) => h.level === 2) ?? [])
+// Level 2 and 3 headings, with level 3 indented under them
+const contents = computed(
+  () => rendered.value?.headings.filter((h) => h.level === 2 || h.level === 3) ?? [],
+)
 
 // Previous and next are within the guide's section
 const section = computed(() => GUIDE_SECTIONS.find((s) => s.folder === guide.value?.section))
@@ -48,13 +51,15 @@ function onContentClick(event: MouseEvent) {
       <article class="guide-content min-w-0" @click="onContentClick" v-html="rendered.html" />
 
       <nav v-if="contents.length > 1" class="hidden lg:block" aria-label="On this page">
-        <div class="sticky top-20">
+        <!-- Scrolls on its own if a long guide's contents don't fit the window -->
+        <div class="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto">
           <p class="text-sm font-semibold text-slate-200">On this page</p>
           <ul class="mt-2 space-y-1.5 border-l border-border text-sm">
             <li v-for="heading in contents" :key="heading.id">
               <a
                 :href="`#${heading.id}`"
-                class="-ml-px block border-l border-transparent pl-3 text-slate-400 hover:border-accent hover:text-white"
+                class="-ml-px block border-l border-transparent text-slate-400 hover:border-accent hover:text-white"
+                :class="heading.level === 3 ? 'pl-6 text-[0.8rem]' : 'pl-3'"
               >
                 {{ heading.text }}
               </a>

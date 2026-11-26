@@ -123,15 +123,20 @@
   }
 
   .guide-content h2 {
-    @apply mt-10 scroll-mt-20 border-b border-border pb-2 text-2xl font-bold text-white;
+    @apply mt-20 scroll-mt-20 border-b border-border pb-2 text-2xl font-bold text-white;
   }
 
   .guide-content h3 {
-    @apply mt-8 scroll-mt-20 text-lg font-semibold text-white;
+    @apply mt-16 scroll-mt-20 text-lg font-semibold text-white;
   }
 
   .guide-content h4 {
-    @apply mt-6 scroll-mt-20 font-semibold text-slate-200;
+    @apply mt-12 scroll-mt-20 font-semibold text-slate-200;
+  }
+
+  /* A heading straight after another heading, e.g. a ### just under a ##, needs less space */
+  .guide-content :is(h2, h3, h4) + :is(h2, h3, h4) {
+    @apply mt-6;
   }
 
   .guide-content a {
