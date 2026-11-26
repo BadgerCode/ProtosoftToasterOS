@@ -111,3 +111,124 @@
     @apply size-8 p-0 text-slate-400 hover:bg-red-950 hover:text-red-400;
   }
 }
+
+/* Guides: Markdown rendered by src/guides/markdown.ts */
+@layer components {
+  .guide-content {
+    @apply max-w-prose leading-relaxed text-slate-300;
+  }
+
+  .guide-content > * + * {
+    @apply mt-4;
+  }
+
+  .guide-content h2 {
+    @apply mt-10 scroll-mt-20 border-b border-border pb-2 text-2xl font-bold text-white;
+  }
+
+  .guide-content h3 {
+    @apply mt-8 scroll-mt-20 text-lg font-semibold text-white;
+  }
+
+  .guide-content h4 {
+    @apply mt-6 scroll-mt-20 font-semibold text-slate-200;
+  }
+
+  .guide-content a {
+    @apply text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent;
+  }
+
+  .guide-content strong {
+    @apply font-semibold text-white;
+  }
+
+  .guide-content ul {
+    @apply list-disc space-y-1.5 pl-6;
+  }
+
+  .guide-content ol {
+    @apply list-decimal space-y-1.5 pl-6;
+  }
+
+  .guide-content li > ul,
+  .guide-content li > ol {
+    @apply mt-1.5;
+  }
+
+  .guide-content code {
+    @apply rounded bg-surface px-1.5 py-0.5 text-[0.9em] text-slate-100;
+  }
+
+  .guide-content pre {
+    @apply overflow-x-auto rounded-lg border border-border bg-visor-glass p-4 text-sm leading-normal;
+  }
+
+  .guide-content pre code {
+    @apply bg-transparent p-0 text-slate-200;
+  }
+
+  .guide-content img {
+    @apply rounded-lg border border-border;
+  }
+
+  .guide-content blockquote {
+    @apply border-l-2 border-border pl-4 text-slate-400;
+  }
+
+  .guide-content hr {
+    @apply my-8 border-border;
+  }
+
+  .guide-content .table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .guide-content table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .guide-content th {
+    @apply border-b border-border px-3 py-2 text-left font-semibold text-white;
+  }
+
+  .guide-content td {
+    @apply border-b border-border/60 px-3 py-2 align-top;
+  }
+
+  .guide-content .callout {
+    @apply rounded-lg border px-4 py-3;
+  }
+
+  .guide-content .callout > * + * {
+    @apply mt-2;
+  }
+
+  .guide-content .callout-title {
+    @apply text-sm font-semibold;
+  }
+
+  .guide-content .callout-note {
+    @apply border-accent/40 bg-accent-muted/60;
+  }
+
+  .guide-content .callout-note .callout-title {
+    @apply text-accent;
+  }
+
+  .guide-content .callout-tip {
+    @apply border-border bg-surface;
+  }
+
+  .guide-content .callout-tip .callout-title {
+    @apply text-slate-200;
+  }
+
+  /* Gold: needs attention, like the rest of the site */
+  .guide-content .callout-warning {
+    @apply border-gold-400/50 bg-gold-950;
+  }
+
+  .guide-content .callout-warning .callout-title {
+    @apply text-gold-300;
+  }
+}

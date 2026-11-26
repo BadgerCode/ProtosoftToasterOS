@@ -31,7 +31,7 @@ There's no test framework or linter. Prettier handles formatting only (`.prettie
 ```
 src/
   main.ts, App.vue          App shell (nav + <main>). App.vue warns before leaving with undownloaded changes
-  router/index.ts           /  and  /configure/{panels,expressions,features}
+  router/index.ts           /, /configure/{panels,expressions,features}, /guides and /guides/<section>/<guide>
   assets/
     main.css                Theme tokens + small component classes (.btn, .form-input, .kbd, .display-title)
     Protogen_Faces.h        COPY of ../ToasterOS/Protogen_Faces.h, plus OWO, Binary and UWU, parsed at build time for the preset expressions
@@ -52,6 +52,13 @@ src/
       read-config.ts        Config.h -> state. A list of readers per setting, newest format first
       read-faces.ts         Protogen_Faces.h -> expressions. Adds back missing required expressions
       import-files.ts       Detects each file's type, applies it in place, builds the import summary
+  guides/
+    <section>/*.md          The guides, a folder per section (toaster-os/, later building/ ...).
+                            A --- header with title, description, order and optional group, then Markdown
+    images/                 Pictures for the guides, linked as images/name.png
+    sections.ts             GUIDE_SECTIONS: each section's title, description, coming-soon topics and unnumbered groups
+    guides.ts               Loads the guides (import.meta.glob) and their pictures
+    markdown.ts             Small Markdown renderer (no package needed). See its header for what it supports
   faces/
     faces.ts                Parses the presets from assets/Protogen_Faces.h. mirror(), expressionToPanels()
     parse-faces.ts          Regex parser for `struct FaceExpression Face_X = {...}` blocks and their animations
@@ -63,6 +70,8 @@ src/
     form/                   SettingsCard, FormField, ToggleSwitch
     DownloadConfigButton.vue  One button per file (kind="config" | "expressions")
   views/
+    GuidesView.vue          The guides by section and group, with each section's "coming soon" topics
+    GuideView.vue           One guide, with "On this page" and previous/next links
     HomeView.vue            Hero visor (blinks; click to boop, using the boop expressions like the firmware)
     ConfigureView.vue       Heading, both download buttons, tabs, sticky "changed" reminder
     configure/              PanelLayoutView, ExpressionsView, FeaturesView
@@ -103,6 +112,25 @@ src/
 **Default panel layout differs on purpose.** The app starts with the first preset in `FACE_LAYOUT_PRESETS` (14 panels, one connection). `../ToasterOS/Config.h` keeps the two-connection layout, which is the `14-two` preset. Don't change either to match the other.
 
 To check a generator, render the defaults and diff the output against the firmware file. Expect the panel layout to differ unless you pick the `14-two` preset first. `vite`'s `createServer` + `ssrLoadModule` can load the TS modules from a Node script.
+
+## Guides
+
+The Guides section (`/guides`) is Markdown in `src/guides/<section>/`. Sections are listed in `GUIDE_SECTIONS` in `sections.ts`, with a title, a description and the topics still to come (shown as "coming soon"). `toaster-os/` covers this software; `building/` (head, body and armour) has no guides yet. The owner's plan for both is `../guides-overview.md`.
+
+To add a guide, add a `.md` file to its section's folder. Its path is its address: `toaster-os/side-lights.md` is `/guides/toaster-os/side-lights`. Each file starts with a header:
+
+```
+---
+title: Side lights
+description: One sentence, shown on the guides list.
+order: 3
+group: Enabling features
+---
+```
+
+`order` sets its place in the section. `group` is optional: guides with the same group are listed under that heading, where the first of them comes in the order. Each list of guides (a group, or a run of guides without one) is numbered from 1, unless the group is in its section's `unnumberedGroups`. Previous/Next links stay within the section.
+
+`markdown.ts` renders a small subset of Markdown, listed at the top of that file, including callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`). HTML in a guide is shown as text. Links to other pages start with `/` (e.g. `/guides/toaster-os/setting-up#check-the-panels`); heading ids are the heading text in lowercase with dashes. Pictures are shared by all sections, in `src/guides/images/`, linked as `images/name.png`; keep them small, as they're bundled with the site. Add new guides to `public/sitemap.xml`. Styles are `.guide-content` in `main.css`. `> [!NOTE]` callouts starting with **To do:** mark parts the owner still needs to write.
 
 ## State and downloads
 

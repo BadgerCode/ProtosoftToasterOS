@@ -6,6 +6,7 @@ import { hasUndownloadedChanges } from '@/state/config-download'
 const links = [
   { to: '/', label: 'Home', exact: true, showChanges: false },
   { to: '/configure', label: 'Configure', exact: false, showChanges: true },
+  { to: '/guides', label: 'Guides', exact: false, showChanges: false },
 ]
 </script>
 
