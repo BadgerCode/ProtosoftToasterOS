@@ -59,6 +59,7 @@ src/
     sections.ts             GUIDE_SECTIONS: each section's title, description, coming-soon topics and unnumbered groups
     guides.ts               Loads the guides (import.meta.glob) and their pictures
     markdown.ts             Small Markdown renderer (no package needed). See its header for what it supports
+    embeds.ts               Parts of the site a guide can show with a `::name args` line, e.g. ::panel-layout 14-one
   faces/
     faces.ts                Parses the presets from assets/Protogen_Faces.h. mirror(), expressionToPanels()
     parse-faces.ts          Regex parser for `struct FaceExpression Face_X = {...}` blocks and their animations
@@ -66,6 +67,7 @@ src/
     required-expressions.ts Expressions the firmware references by name (see below)
   components/
     VisorDisplay.vue        SVG visor that draws panels as LED dots. Used on Home (hero), the panel map and the preview
+    PanelLayoutMap.vue      The panel layout map for some connections: C1 #3 labels and wiring. Panels page and guides
     expressions/            ExpressionCanvas (paint LEDs), ExpressionThumbnail, expression-layout.ts
     form/                   SettingsCard, FormField, ToggleSwitch
     DownloadConfigButton.vue  One button per file (kind="config" | "expressions")
@@ -130,7 +132,7 @@ group: Enabling features
 
 `order` sets its place in the section. `group` is optional: guides with the same group are listed under that heading, where the first of them comes in the order. Each list of guides (a group, or a run of guides without one) is numbered from 1, unless the group is in its section's `unnumberedGroups`. Previous/Next links stay within the section.
 
-`markdown.ts` renders a small subset of Markdown, listed at the top of that file, including callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`). HTML in a guide is shown as text. Links to other pages start with `/` (e.g. `/guides/toaster-os/setting-up#check-the-panels`); heading ids are the heading text in lowercase with dashes. Pictures are shared by all sections, in `src/guides/images/`, linked as `images/name.png`; keep them small, as they're bundled with the site. Add new guides to `public/sitemap.xml`. Styles are `.guide-content` in `main.css`. `> [!NOTE]` callouts starting with **To do:** mark parts the owner still needs to write.
+`markdown.ts` renders a small subset of Markdown, listed at the top of that file, including callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`). HTML in a guide is shown as text. Links to other pages start with `/` (e.g. `/guides/toaster-os/setting-up#check-the-panels`); heading ids are the heading text in lowercase with dashes. Pictures are shared by all sections, in `src/guides/images/`, linked as `images/name.png`; keep them small, as they're bundled with the site. Add new guides to `public/sitemap.xml`. A line like `::panel-layout 14-one` shows a live part of the site (here the panel layout map for a preset) in place of a picture; `embeds.ts` lists what's available, and `GuideView.vue` mounts them. Styles are `.guide-content` in `main.css`. `> [!NOTE]` callouts starting with **To do:** mark parts the owner still needs to write.
 
 ## State and downloads
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, render, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { findGuide, renderGuide, sectionGuides } from '@/guides/guides'
+import { guideEmbed } from '@/guides/embeds'
 import { GUIDE_SECTIONS } from '@/guides/sections'
 
 const props = defineProps<{ slug: string }>()
@@ -21,6 +22,32 @@ const siblings = computed(() => (guide.value ? sectionGuides(guide.value.section
 const index = computed(() => siblings.value.findIndex((g) => g.slug === props.slug))
 const previous = computed(() => siblings.value[index.value - 1])
 const next = computed(() => siblings.value[index.value + 1])
+
+// Parts of the site placed in the guide with `::name args` lines (see embeds.ts), mounted into
+// the placeholders the Markdown renderer leaves
+const article = ref<HTMLElement>()
+const appContext = getCurrentInstance()!.appContext
+let mountedEmbeds: HTMLElement[] = []
+
+function unmountEmbeds() {
+  for (const el of mountedEmbeds) render(null, el)
+  mountedEmbeds = []
+}
+
+function mountEmbeds() {
+  unmountEmbeds()
+  for (const el of article.value?.querySelectorAll<HTMLElement>('.guide-embed') ?? []) {
+    const vnode = guideEmbed(el.dataset.embed ?? '', el.dataset.args ?? '')
+    vnode.appContext = appContext
+    render(vnode, el)
+    mountedEmbeds.push(el)
+  }
+}
+
+// Once the guide is on the page, and again after moving to another guide
+onMounted(mountEmbeds)
+watch(rendered, mountEmbeds, { flush: 'post' })
+onBeforeUnmount(unmountEmbeds)
 
 // The link button after each heading copies a link to that section
 const copyMessage = ref<string | null>(null)
@@ -75,7 +102,12 @@ function onContentClick(event: MouseEvent) {
 
     <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_14rem]">
       <!-- The guides are written by the site's owner, and the renderer escapes any HTML in them -->
-      <article class="guide-content min-w-0" @click="onContentClick" v-html="rendered.html" />
+      <article
+        ref="article"
+        class="guide-content min-w-0"
+        @click="onContentClick"
+        v-html="rendered.html"
+      />
 
       <nav v-if="contents.length > 1" class="hidden lg:block" aria-label="On this page">
         <!-- Scrolls on its own if a long guide's contents don't fit the window -->

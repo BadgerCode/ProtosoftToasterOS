@@ -37,7 +37,7 @@ Or use less panels (e.g. only 3 panels for the mouth).
 When using 16 panels or less, you can drive the whole face off one connection.\
 Power and data are passed from one panel, to the next.
 
-![The panel layout with one chain](images/panels_diagram_onecon.png)
+::panel-layout 14-one
 
 You will need to provide power to the chain of panels (5V power and ground).\
 And you will need to plug 3 wires into your microcontroller- 

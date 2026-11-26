@@ -5,6 +5,9 @@
 // > quotes, > [!NOTE] / [!TIP] / [!WARNING] callouts, | tables |, --- rules, and line breaks:
 // end a line with \ to carry on straight underneath, without starting a new paragraph.
 // HTML in the Markdown is shown as text, not run.
+//
+// A line like `::panel-layout 14-one` places a live part of the site, such as the panel layout
+// map, in the guide. These are listed in embeds.ts.
 
 export interface GuideHeading {
   id: string
@@ -72,6 +75,8 @@ const HEADING = /^(#{1,4})\s+(.+?)\s*#*\s*$/
 const RULE = /^(-{3,}|\*{3,})\s*$/
 const LIST_ITEM = /^(\s*)([-*]|\d+\.)\s+(.*)$/
 const TABLE_DIVIDER = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/
+/** `::name args` on its own line: a part of the site, see embeds.ts */
+const EMBED = /^::([a-z][\w-]*)(?:\s+(.*?))?\s*$/
 const CALLOUT = /^\[!(NOTE|TIP|WARNING)\]\s*$/i
 
 const CALLOUT_TITLES: Record<string, string> = { note: 'Note', tip: 'Tip', warning: 'Warning' }
@@ -84,6 +89,7 @@ function startsBlock(lines: string[], i: number) {
     RULE.test(line) ||
     LIST_ITEM.test(line) ||
     line.startsWith('>') ||
+    EMBED.test(line) ||
     (line.includes('|') && TABLE_DIVIDER.test(lines[i + 1] ?? ''))
   )
 }
@@ -240,6 +246,16 @@ export function renderMarkdown(
           start = next
         }
         out.push(html)
+        continue
+      }
+
+      // ::name args, filled in by the guide page with a part of the site
+      const embed = line.match(EMBED)
+      if (embed) {
+        out.push(
+          `<div class="guide-embed" data-embed="${escapeHtml(embed[1]!)}" data-args="${escapeHtml(embed[2] ?? '')}"></div>`,
+        )
+        i++
         continue
       }
 
