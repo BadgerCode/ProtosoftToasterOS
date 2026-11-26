@@ -2,6 +2,7 @@
 title: Setting up
 description: Wire up the LED panels, then configure Toaster OS and put it on your microcontroller.
 order: 1
+group: Setup
 ---
 
 This guide gets a face working: the microcontroller, the LED panels, and the software. Extras like the side lights, boop sensor and remote each have their own guide under **Enabling features**.
@@ -133,6 +134,11 @@ If the face looks scrambled, some panels are probably in the wrong order or upsi
 2. Each panel now shows its position in its chain (0, 1, 2 and so on), with a dot in its top outer corner.
 3. Check every number reads the right way up, with the dot at the top. If a panel's dot is at the bottom, change **Upside down** for it on the Panels page. If the numbers are in the wrong places, fix the panel order.
 4. Set **Debug mode** back to **Off** when you're done.
+
+
+TODO: Link to the debugging guide currently on the wiki
+
+
 
 ## Troubleshooting
 

@@ -2,6 +2,7 @@
 title: Managing expressions
 description: Draw, animate and organise your protogen's expressions in Toaster Oven.
 order: 2
+group: Setup
 ---
 
 Your protogen's expressions are made on the **Expressions** page of [Toaster Oven](/configure/expressions), and saved in `Protogen_Faces.h`.
