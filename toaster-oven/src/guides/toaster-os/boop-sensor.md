@@ -13,8 +13,10 @@ A sensor behind the nose detects boops. The face reacts with different expressio
 
 The boop sensor is an **IR obstacle sensor** (3 pins, 5V): a small module that detects when something is close in front of it.
 
-> [!NOTE]
-> **To do:** add a link to the sensor you used, and where it sits behind the visor.
+I used [these IR obstacle avoidance sensors](https://www.amazon.co.uk/dp/B07PY3CVSV). Their long shape helps them fit in the nose of the protogen.
+
+- Make sure to get one that works with 5V.
+- Buy a few. One of mine died while I was fitting it.
 
 | Sensor pin | Connect to                              |
 | ---------- | --------------------------------------- |
@@ -22,10 +24,38 @@ The boop sensor is an **IR obstacle sensor** (3 pins, 5V): a small module that d
 | GND        | Ground, shared with the microcontroller |
 | OUT        | Any free analog pin, for example A0     |
 
-These sensors usually have their own light, which turns on when something is close. It's a quick way to check the sensor is working before blaming the code.
+These sensors usually have their own light, which turns on when something is close. It's a quick way to check the sensor is working before blaming the code.\
+
+You may want to cover the indicator light with some blu tack or tape to darken it; it's quite bright inside the head.
 
 > [!WARNING]
 > The sensor only works properly with the head running from its battery. When the microcontroller is only powered by your computer's USB port, the sensor often doesn't detect anything.
+
+### Fitting it in the nose
+
+I drilled two holes in the nose, so the sensor's emitter and receiver bulbs fit through.
+
+![An IR obstacle sensor held next to the nose, where another sensor's two bulbs poke through holes drilled between the LED panels](images/boop_sensor.jpg)
+
+The sensor can work through the visor, but it needs a small gap between the sensor and the visor. The small dial on the sensor sets how far away it detects things, if it needs adjusting.
+
+### Sunlight
+
+> [!WARNING]
+> The sensor doesn't work well in sunlight. It helps to be able to turn it off during the day with the [remote control](/guides/toaster-os/remote-control), using the **D then B** combo by default.
+
+If you don't have a remote, you can re-use the remote control system with a simple push button, hidden somewhere on the head:
+
+1. Wire the button so it connects a free pin to 5V while it's pressed. Add a resistor (around 10kΩ) from that pin to ground, so it reads as off when the button isn't pressed.
+2. On Toaster Oven's [Features page](/configure/features), turn on **Remote control**, set **Button A pin** to the button's pin, and set the **A then A** combo to **Turn the boop sensor on or off**.
+3. Connect the pins for buttons B, C and D to ground, so they don't pick up stray presses.
+4. Press the button twice to turn the boop sensor on or off.
+
+### Other sensors
+
+Alternatively, you could use the [Adafruit APDS9960](https://learn.adafruit.com/adafruit-apds9960-breakout) sensor, which may be less affected by sunlight than IR obstacle sensors. It also has a bunch of extra features, like gesture and colour sensing.
+
+Toaster OS reads the boop sensor from an analog pin, and the APDS9960 connects over I2C instead, so it needs some changes to the code. See [Adding custom features](/guides/toaster-os/adding-custom-features).
 
 ## The config
 

@@ -21,8 +21,14 @@ Each strip has three wires:
 
 Both strips show the same thing, so they need the same number of LEDs.
 
-> [!NOTE]
-> **To do:** add a link to the strips you used.
+I used [this WS2812 RGB LED strip](https://www.amazon.co.uk/dp/B01CDTED80), which has 60 LEDs, and cut it into pieces of 15 LEDs, one for each side. You can cut these strips between any two LEDs, across the copper pads.
+
+The strip comes with wires on one end, but you'll need to solder three wires onto the other pieces: ground, data and 5V.
+
+![Black, blue and red wires soldered onto the GND, DIN and +5V pads at the end of a cut piece of LED strip](images/led_strip_wires.jpg)
+
+> [!TIP]
+> Solder the wires to the end with the **DIN** (data in) pad. The arrows printed on the strip point away from it, the way the data flows.
 
 ## The config
 
