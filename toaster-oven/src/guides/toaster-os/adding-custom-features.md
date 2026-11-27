@@ -322,7 +322,10 @@ These only change while the boop sensor is turned on, in Toaster Oven or with th
 
 ## 5. Turning it on and off with the remote
 
-A remote control combo can turn your feature on and off. `RemoteControlState->JustPressedCombo` is the combo pressed this loop, like `"DC"`, or empty if no combo was finished this loop.
+A remote control combo can turn your feature on and off.
+
+You can find which button combo has been pressed by checking:\
+`RemoteControlState->JustPressedCombo`
 
 Add two settings to the top of your file, and an `Enabled` switch to your class. Check for the combo in `Update()`, and do nothing while it's turned off:
 
