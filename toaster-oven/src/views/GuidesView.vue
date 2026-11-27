@@ -29,7 +29,7 @@ const sections = GUIDE_SECTIONS.map((section) => ({
           :key="part.group ?? part.guides[0]!.slug"
           class="mt-5"
         >
-          <h3 v-if="part.group" class="mb-3 text-sm font-semibold text-slate-300">
+          <h3 v-if="part.group" class="mb-3 text-lg font-semibold text-slate-300">
             {{ part.group }}
           </h3>
           <ol class="grid max-w-3xl gap-4">

@@ -96,8 +96,8 @@ onBeforeUnmount(() => {
         <h1 class="display-title text-5xl sm:text-6xl">Protosoft Toaster OS</h1>
 
         <div class="mt-6 max-w-prose space-y-3 text-lg leading-relaxed text-slate-300">
-          <p>Beeeeeep! :3</p>
-          <p>Toaster Oven helps you to create your protogen!</p>
+          <p>Beeeeeep!</p>
+          <p>It's time to make some protogens :3</p>
         </div>
 
         <div class="mt-8 flex flex-wrap gap-3">
