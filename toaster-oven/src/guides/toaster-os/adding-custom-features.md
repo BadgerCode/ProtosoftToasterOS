@@ -322,42 +322,7 @@ These only change while the boop sensor is turned on, in Toaster Oven or with th
 
 ## 5. Turning it on and off with the remote
 
-A remote control combo can turn your feature on and off. This needs one more small change to Toaster OS, so it tells your feature which combo was pressed.
-
-### Change the remote control
-
-Open `RemoteControl.h` and make these three changes:
-
-1. Add this line just after `public:`, below `OutputLEDData`:
-
-```cpp
-public:
-  // The combo pressed this loop, like "DC", for custom features. Empty if no combo was finished this loop
-  char JustPressedCombo[3] = "";  // Add this
-```
-
-2. Clear it at the start of `Update()`:
-
-```cpp
-  // Update state
-  void Update() {
-    JustPressedCombo[0] = 0;  // Add this
-
-    int buttonsPressed = 0;
-```
-
-3. Fill it in, in `UpdateMenuState()`, once both buttons have been pressed:
-
-```cpp
-    // Wait for 2 button presses
-    if (NumPressedButtons < 2) return;
-
-    // Record the combo, for custom features. Add these 2 lines
-    JustPressedCombo[0] = ButtonToLetter(PressedButtons[0]);
-    JustPressedCombo[1] = ButtonToLetter(PressedButtons[1]);
-```
-
-### Use it in your feature
+A remote control combo can turn your feature on and off. `RemoteControlState->JustPressedCombo` is the combo pressed this loop, like `"DC"`, or empty if no combo was finished this loop.
 
 Add two settings to the top of your file, and an `Enabled` switch to your class. Check for the combo in `Update()`, and do nothing while it's turned off:
 
@@ -442,6 +407,6 @@ The Nano Every has just 6 KB of memory, and every expression, frame, list and va
 
 ### Updating Toaster OS
 
-Before updating, keep a copy of your feature's file, and note the changes you made to `ToasterOS.ino` and `RemoteControl.h`. Then make them again in the new version.
+Before updating, keep a copy of your feature's file, and note the changes you made to `ToasterOS.ino`. Then make them again in the new version.
 
 If you use [Git](https://git-scm.com), commit your changes first, and Git will usually bring them across for you.
