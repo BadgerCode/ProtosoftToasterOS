@@ -1,7 +1,7 @@
 ---
 title: Boop sensor
 description: Detect nose boops with an IR sensor, and react with different expressions.
-order: 4
+order: 5
 group: Enabling features
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: Remote control
 description: Change expressions and settings with a 4-button remote.
-order: 5
+order: 6
 group: Enabling features
 ---
 

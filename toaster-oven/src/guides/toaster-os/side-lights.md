@@ -1,7 +1,7 @@
 ---
 title: Side lights
 description: Add RGB LED strips to the sides of the head, fading between two colours.
-order: 3
+order: 4
 group: Enabling features
 ---
 

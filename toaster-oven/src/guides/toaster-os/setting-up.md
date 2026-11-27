@@ -62,13 +62,15 @@ See [Toaster Oven](/configure) configure page.
 
 Everything runs on 5V.
 
-The easiest option is to use standard USB battery pack
-- Use an exposed USB cable, so that you can access the voltage (red) and ground (black) wires
+- The easiest option is to use standard USB battery pack
+    - Use an exposed USB cable, so that you can access the voltage (red) and ground (black) wires
     - You can either buy one or cut the end off a USB cable
+    - Power delivery (PD) is not required but will work
+    - A 5000 mAh powerbank lasts me a few hours at max brightness (daytime) and all night at low brightness
 - Use a splitter on the voltage and ground to allow multiple components to connect to it
     - E.g. a WAGO splitter or a JST Y splitter
 
-TODO: Add a picture
+![A USB cable from a power bank with its end cut off. The red 5V wire and black ground wire each go into a splitter, which sends a 5V and ground pair to the Arduino, LED panels, side LED strips and fan.](images/power-splitting.svg)
 
 > [!WARNING]
 > Every part must be connected to the same ground or you will get weird behaviour
@@ -126,24 +128,9 @@ To change them later, use **Import** to load the files you downloaded, make your
 
 When it's done, the face should light up.
 
-### Check the panels
 
-If the face looks scrambled, some panels are probably in the wrong order or upside down. Toaster OS has a debug mode to help:
+### Next steps
 
-1. In Toaster Oven, go to **Features → General** and set **Debug mode** to **Render numbers on all panels**. Download `Config.h` and upload again.
-2. Each panel now shows its position in its chain (0, 1, 2 and so on), with a dot in its top outer corner.
-3. Check every number reads the right way up, with the dot at the top. If a panel's dot is at the bottom, change **Upside down** for it on the Panels page. If the numbers are in the wrong places, fix the panel order.
-4. Set **Debug mode** back to **Off** when you're done.
+If the head isn't working properly, see [Debugging](/guides/toaster-os/debugging).
 
-
-TODO: Link to the debugging guide currently on the wiki
-
-
-
-## Troubleshooting
-
-- **The code won't compile after downloading new files.** Check `Config.h` and `Protogen_Faces.h` came from the same version of Toaster Oven, and that your copy of Toaster OS is up to date.
-- **"Low memory available" when compiling.** The Nano Every has 6 KB of memory. If you've added lots of expressions or animation frames, remove some you don't use.
-- **A panel stops updating or shows junk.** This is usually a loose wire. **Rapid panel auto-recovery** (Features → General) fixes stuck panels automatically, at a small cost to speed.
-
-Next: [Managing expressions](/guides/toaster-os/managing-expressions).
+Otherwise, it's time to [manage the facial expresions](/guides/toaster-os/managing-expressions) your protogen has :3.

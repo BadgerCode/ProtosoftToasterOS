@@ -1,7 +1,7 @@
 ---
 title: Managing expressions
 description: Draw, animate and organise your protogen's expressions in Toaster Oven.
-order: 2
+order: 3
 group: Setup
 ---
 
