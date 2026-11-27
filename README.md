@@ -1,6 +1,6 @@
 # Protosoft Toaster OS
 
-Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices.
+Software to control protogen heads, using 8x8 MAX7219 LED matrices and an Arduino Nano Every or ESP32.
 
 ![Protogen preview](/Docs/Images/protogen_head.jpg)
 
@@ -17,31 +17,42 @@ Software to control Arduino-based protogen heads, using 8x8 MAX7219 LED matrices
 
 <br><br>
 
-# Setup
-_A better guide is coming soon!_
+# Guides
+Step-by-step guides are on the [Toaster Oven website](https://toaster.badgercode.co.uk/guides).
 
-## Dependencies
+**Setup**
 
-- [FastLED](https://fastled.io/) (not included; installed via Arduino IDE)
+1. [Setting up](https://toaster.badgercode.co.uk/guides/toaster-os/setting-up): wire up the LED panels, then configure Toaster OS and put it on your microcontroller
+2. [Debugging](https://toaster.badgercode.co.uk/guides/toaster-os/debugging): fix scrambled, upside-down or glitching panels, and other common problems
+3. [Managing expressions](https://toaster.badgercode.co.uk/guides/toaster-os/managing-expressions): draw, animate and organise your protogen's expressions
+
+**Enabling features**
+
+- [Side lights](https://toaster.badgercode.co.uk/guides/toaster-os/side-lights): RGB LED strips on the sides of the head
+- [Boop sensor](https://toaster.badgercode.co.uk/guides/toaster-os/boop-sensor): detect nose boops, and react with different expressions
+- [Remote control](https://toaster.badgercode.co.uk/guides/toaster-os/remote-control): change expressions and settings with a 4-button remote
+- [Adding custom features](https://toaster.badgercode.co.uk/guides/toaster-os/adding-custom-features): write your own feature and hook it into Toaster OS
 
 <br>
 
 ## Configuring
 
-Consider using the [Toaster Oven](https://toaster.badgercode.co.uk/) to easily configure your protogen!
+Use [Toaster Oven](https://toaster.badgercode.co.uk/configure) to configure your protogen in your browser: the panel layout, expressions and features. It makes the `Config.h` and `Protogen_Faces.h` files for you.
 
-_If not, for examples and more info, see the [Configuration wiki page](https://github.com/BadgerCode/ProtosoftToasterOS/wiki/Configuration)._
+## Dependencies
+
+- [FastLED](https://fastled.io/) (not included; installed via Arduino IDE)
 
 
 <br><br><br>
 
 # Electronics
-Here are the electronics used. Better guides are coming soon.
+Here are the electronics I used. See [Setting up](https://toaster.badgercode.co.uk/guides/toaster-os/setting-up#the-electronics) and the feature guides for how to wire them up.
 
 - For both sides of the face
-   - Mouth: 4 x MAX7219 8x8 LED martices
-   - Eyes: 2 x MAX7219 8x8 LED martices
-   - Nose: 1 x MAX7219 8x8 LED martices
+   - Mouth: 4 x MAX7219 8x8 LED matrices
+   - Eyes: 2 x MAX7219 8x8 LED matrices
+   - Nose: 1 x MAX7219 8x8 LED matrices
 - For both sides of the head
    - A strip of 15 RGB LEDs (5V, 3-pin)
 - Boop sensor
