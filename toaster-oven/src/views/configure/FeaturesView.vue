@@ -123,6 +123,7 @@ const remoteButtons = [
     <!-- Boop sensor -->
     <SettingsCard
       title="Boop sensor"
+      guide="/guides/toaster-os/boop-sensor"
       description="IR obstacle sensor in the nose."
       collapsible
       :start-collapsed="!config.enableBoopSensor"
@@ -213,6 +214,7 @@ const remoteButtons = [
     <!-- Side LEDs -->
     <SettingsCard
       title="Side LED strips"
+      guide="/guides/toaster-os/side-lights"
       description="RGB LED strips in each side panel/headphone."
       collapsible
       :start-collapsed="!config.enableSideLEDs"
@@ -273,6 +275,7 @@ const remoteButtons = [
     <!-- Remote control -->
     <SettingsCard
       title="Remote control"
+      guide="/guides/toaster-os/remote-control"
       description="4-button remote receiver."
       collapsible
       :start-collapsed="!config.enableRemoteControl"

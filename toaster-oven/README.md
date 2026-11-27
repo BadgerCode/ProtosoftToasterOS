@@ -52,7 +52,7 @@ In either the project root or the toaster-oven directory, create `.vscode/launch
   "version": "0.2.0",
   "configurations": [
     {
-      "cwd": "${workspaceFolder}/toaster-oven",
+      "cwd": "${workspaceFolder}/toaster-oven", // This will need to change if you're running it from the sub-folder
       "name": "Launch via NPM",
       "request": "launch",
       "runtimeArgs": ["start"],

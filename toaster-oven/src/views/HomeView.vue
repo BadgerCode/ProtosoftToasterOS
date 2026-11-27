@@ -96,16 +96,16 @@ onBeforeUnmount(() => {
         <h1 class="display-title text-5xl sm:text-6xl">Protosoft Toaster OS</h1>
 
         <div class="mt-6 max-w-prose space-y-3 text-lg leading-relaxed text-slate-300">
-          <p>
-            Beeeeeep!<br>
-            Use the Toaster Oven to prepare your protogen :3
-          </p>
-          <p>Manage configuration and expressions for your MAX7219 Protogen fursuit head!</p>
+          <p>Beeeeeep!</p>
+          <p>It's time to make some protogens :3</p>
         </div>
 
         <div class="mt-8 flex flex-wrap gap-3">
           <RouterLink to="/configure" class="btn btn-primary px-5 py-2.5 text-base">
             Configure your protogen
+          </RouterLink>
+          <RouterLink to="/guides" class="btn btn-secondary px-5 py-2.5 text-base">
+            Help guides
           </RouterLink>
           <a
             :href="repoUrl"
@@ -138,8 +138,24 @@ onBeforeUnmount(() => {
       </figure>
     </div>
 
+    <!-- About -->
+    <div class="mt-20 max-w-prose space-y-3 text-slate-300">
+      <h2 class="text-2xl font-bold text-white">What is Toaster OS?</h2>
+      <p>
+        Toaster OS is software for protogens using MAX7219 8x8 LED panels, on an Arduino Nano Every
+        or ESP32 microcontroller. It draws the face, switches between expressions, and runs extras
+        like side lights, a boop sensor and a remote control.
+      </p>
+      <p>
+        Toaster Oven, this website, lets you lay out your panels, draw your expressions and choose
+        your features. Then you download the files and upload them to your microcontroller. The
+        <RouterLink to="/guides" class="text-accent hover:underline">guides</RouterLink> take you
+        through it, from wiring to your first upload.
+      </p>
+    </div>
+
     <!-- Features -->
-    <div class="mt-20">
+    <div class="mt-12">
       <h2 class="text-2xl font-bold text-white">Features</h2>
       <p class="mt-1 text-slate-400">
         Features are configurable and can be disabled if you lack the hardware.

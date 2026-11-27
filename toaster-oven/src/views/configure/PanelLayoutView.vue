@@ -5,13 +5,13 @@ import {
   EMPTY_PANEL,
   MAX_PANELS_PER_CONNECTION,
   PANEL_TYPES,
-  PanelType,
   panelTypeName,
   type FaceLEDConnection,
   type PanelTypeInfo,
 } from '@/state/config-types'
 import { expressionToPanels } from '@/faces/faces'
-import VisorDisplay, { type PanelMarker } from '@/components/VisorDisplay.vue'
+import VisorDisplay from '@/components/VisorDisplay.vue'
+import PanelLayoutMap from '@/components/PanelLayoutMap.vue'
 import SettingsCard from '@/components/form/SettingsCard.vue'
 import FormField from '@/components/form/FormField.vue'
 import PinConflictWarning from '@/components/PinConflictWarning.vue'
@@ -43,68 +43,6 @@ const duplicatePanels = computed(() =>
 
 // Visor map: lights each assigned panel with its part of the default expression
 const defaultFace = computed(() => expressionToPanels(getDefaultExpression()))
-
-const mapPanelIds = computed(() => {
-  const usesSideNose =
-    usageCounts.value.has(PanelType.LEFT_NOSE) || usageCounts.value.has(PanelType.RIGHT_NOSE)
-  const showSingleNose = usageCounts.value.has(PanelType.SINGLE_NOSE) || !usesSideNose
-  return PANEL_TYPES.map((p) => p.id).filter((id) => id !== PanelType.SINGLE_NOSE || showSingleNose)
-})
-
-const mapBitmaps = computed(() =>
-  Object.fromEntries(
-    Object.entries(defaultFace.value).filter(([id]) => usageCounts.value.has(Number(id))),
-  ),
-)
-
-const mapMarkers = computed(() => {
-  const positions = new Map<number, { connection: number; position: number }[]>()
-  face.connections.forEach((connection, ci) =>
-    connection.panels.forEach((panel, pi) => {
-      if (panel.panelType === EMPTY_PANEL) return
-      positions.set(panel.panelType, [
-        ...(positions.get(panel.panelType) ?? []),
-        { connection: ci + 1, position: pi + 1 },
-      ])
-    }),
-  )
-
-  const describe = (p: { connection: number; position: number }) =>
-    `C${p.connection} #${p.position}`
-
-  const markers: Record<number, PanelMarker> = {}
-  for (const type of PANEL_TYPES) {
-    const uses = positions.get(type.id) ?? []
-    const name = panelTypeName(type.id)
-    if (uses.length === 0) {
-      markers[type.id] = { state: 'unused', title: `${name}: not in use` }
-    } else if (uses.length === 1) {
-      markers[type.id] = {
-        state: 'used',
-        label: describe(uses[0]!),
-        title: `${name}: connection ${uses[0]!.connection}, panel ${uses[0]!.position}`,
-      }
-    } else {
-      markers[type.id] = {
-        state: 'attention',
-        label: `Used ${uses.length}×`,
-        title: `${name}: used more than once (${uses.map(describe).join(', ')})`,
-      }
-    }
-  }
-  return markers
-})
-
-// Wiring on the map: each connection's panels in order, starting from the Arduino
-const mapChains = computed(() =>
-  face.connections
-    .map((connection, ci) => ({
-      label: `Connection ${ci + 1}`,
-      title: `Connection ${ci + 1} from the Arduino: DIN pin ${connection.pinDataIn}, CS pin ${connection.pinCS}, CLK pin ${connection.pinCLK}`,
-      panelIds: connection.panels.map((p) => p.panelType).filter((t) => t !== EMPTY_PANEL),
-    }))
-    .filter((chain) => chain.panelIds.length > 0),
-)
 
 // Presets
 const presets = computed(() =>
@@ -201,12 +139,7 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
       description="Every face panel and whether it's been assigned to a connection. Unused panels are simply not rendered."
     >
       <div class="mx-auto max-w-3xl">
-        <VisorDisplay
-          :bitmaps="mapBitmaps"
-          :panel-ids="mapPanelIds"
-          :markers="mapMarkers"
-          :chains="mapChains"
-        />
+        <PanelLayoutMap :connections="face.connections" />
       </div>
 
       <p class="mt-4 text-sm text-slate-300">
@@ -286,7 +219,8 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
           </span>
         </div>
         <p class="mb-3 text-xs text-slate-500">
-          List panels in the order they're wired, starting with the one connected to the Arduino.
+          List panels in the order they're wired, starting with the one connected to the
+          microcontroller.
         </p>
 
         <ol

@@ -22,6 +22,9 @@ private:
   CRGB OutputLEDData[OutputNumLEDs];
 
 public:
+  // The combo pressed this loop, like "DC", for custom features. Empty if no combo was finished this loop
+  char JustPressedCombo[3] = "";
+
   RemoteControl(ExpressionManager* expressionState, FaceRender* faceRenderer, BoopStateHandler* boopState) {
     ExpressionState = expressionState;
     FaceRenderer = faceRenderer;
@@ -53,6 +56,8 @@ public:
 
   // Update state
   void Update() {
+    JustPressedCombo[0] = 0;
+
     int buttonsPressed = 0;
     if (digitalRead(ProtoConfig.PinRemoteButtonA)) buttonsPressed += BUTTON_A;
     if (digitalRead(ProtoConfig.PinRemoteButtonB)) buttonsPressed += BUTTON_B;
@@ -220,6 +225,10 @@ private:
 
     // Wait for 2 button presses
     if (NumPressedButtons < 2) return;
+
+    // Record the combo, for custom features
+    JustPressedCombo[0] = ButtonToLetter(PressedButtons[0]);
+    JustPressedCombo[1] = ButtonToLetter(PressedButtons[1]);
 
     // Run the action for this combo, if there is one (RemoteControlActions in Protogen_Faces.h)
     const RemoteControlActionConfig* action = FindAction(PressedButtons[0], PressedButtons[1]);
