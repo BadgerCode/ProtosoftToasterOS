@@ -58,7 +58,7 @@ src/
     images/                 Pictures for the guides, linked as images/name.png
     sections.ts             GUIDE_SECTIONS: each section's title, description, coming-soon topics and unnumbered groups
     guides.ts               Loads the guides (import.meta.glob) and their pictures
-    markdown.ts             Small Markdown renderer (no package needed). See its header for what it supports
+    markdown.ts             Small Markdown renderer. Code blocks are highlighted with highlight.js (only the languages it registers). See its header for what it supports
     embeds.ts               Parts of the site a guide can show with a `::name args` line, e.g. ::panel-layout 14-one
   faces/
     faces.ts                Parses the presets from assets/Protogen_Faces.h. mirror(), expressionToPanels()

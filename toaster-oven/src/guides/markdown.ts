@@ -1,4 +1,5 @@
-// A small Markdown renderer for the guides, so the site doesn't need another package.
+// A small Markdown renderer for the guides, so the site doesn't need a Markdown package.
+// Code blocks are highlighted with highlight.js, for the languages registered below.
 //
 // Supports: # to #### headings, paragraphs, **bold**, *italic*, `code`, [links](url),
 // ![images](images/file.png), - and 1. lists (indent by 2+ spaces to nest), ``` code blocks,
@@ -8,6 +9,15 @@
 //
 // A line like `::panel-layout 14-one` places a live part of the site, such as the panel layout
 // map, in the guide. These are listed in embeds.ts.
+
+import hljs from 'highlight.js/lib/core'
+import bash from 'highlight.js/lib/languages/bash'
+import cpp from 'highlight.js/lib/languages/cpp'
+
+// Only the languages the guides use, to keep the site small. Register more here if needed
+hljs.registerLanguage('cpp', cpp)
+hljs.registerLanguage('bash', bash)
+hljs.registerAliases(['sh', 'shell'], { languageName: 'bash' })
 
 export interface GuideHeading {
   id: string
@@ -30,6 +40,16 @@ export function slugify(text: string) {
     .replace(/[`*_[\]()!]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** A code block's <code>, highlighted if its language is registered above */
+function codeBlock(code: string, language: string) {
+  if (language && hljs.getLanguage(language)) {
+    const highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value
+    return `<code class="hljs language-${language}">${highlighted}</code>`
+  }
+  const languageClass = language ? ` class="language-${language}"` : ''
+  return `<code${languageClass}>${escapeHtml(code)}</code>`
 }
 
 type ResolveImage = (src: string) => string
@@ -157,8 +177,7 @@ export function renderMarkdown(
         i++
         while (i < lines.length && !/^```\s*$/.test(lines[i]!)) code.push(lines[i++]!)
         i++
-        const language = fence[1] ? ` class="language-${fence[1]}"` : ''
-        out.push(`<pre><code${language}>${escapeHtml(code.join('\n'))}</code></pre>`)
+        out.push(`<pre>${codeBlock(code.join('\n'), fence[1]!)}</pre>`)
         continue
       }
 

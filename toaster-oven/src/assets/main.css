@@ -194,6 +194,40 @@
     @apply bg-transparent p-0 text-slate-200;
   }
 
+  /* Code highlighting (highlight.js classes), in the site's colours. Gold is kept for warnings */
+  .guide-content .hljs-comment {
+    @apply text-slate-400;
+  }
+
+  .guide-content .hljs-keyword,
+  .guide-content .hljs-meta {
+    @apply text-accent-hover;
+  }
+
+  .guide-content .hljs-type,
+  .guide-content .hljs-built_in,
+  .guide-content .hljs-title.class_ {
+    color: #9fd4ff;
+  }
+
+  .guide-content .hljs-title.function_ {
+    @apply text-white;
+  }
+
+  .guide-content .hljs-string,
+  .guide-content .hljs-meta .hljs-string {
+    color: #eaa8d9;
+  }
+
+  .guide-content .hljs-number,
+  .guide-content .hljs-literal {
+    color: #c6b4ff;
+  }
+
+  .guide-content .hljs-variable {
+    @apply text-slate-100;
+  }
+
   /* A part of the site placed in a guide, e.g. the panel layout map */
   .guide-content .guide-embed {
     @apply my-6;
