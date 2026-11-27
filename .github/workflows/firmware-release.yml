@@ -1,0 +1,42 @@
+# Attaches the firmware (the ToasterOS folder) to each GitHub release, as ToasterOS.zip
+# To release: on GitHub, go to Releases -> Draft a new release, create a tag like v1.0.0, and publish it
+# The latest release's zip is always at
+# https://github.com/BadgerCode/ProtosoftToasterOS/releases/latest/download/ToasterOS.zip
+
+name: Firmware release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set the version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          # The tag goes into a C++ string, so only allow simple characters
+          if [[ ! "$TAG" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "The tag '$TAG' can only use letters, numbers, dots, dashes and underscores"
+            exit 1
+          fi
+
+          sed -i "s/^#define TOASTER_OS_VERSION \".*\"/#define TOASTER_OS_VERSION \"$TAG\"/" ToasterOS/Version.h
+          grep -q "TOASTER_OS_VERSION \"$TAG\"" ToasterOS/Version.h || { echo "Couldn't set the version in ToasterOS/Version.h"; exit 1; }
+          cat ToasterOS/Version.h
+
+      - name: Zip the firmware
+        run: zip -r ToasterOS.zip ToasterOS LICENSE
+
+      - name: Attach the zip to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" ToasterOS.zip --clobber

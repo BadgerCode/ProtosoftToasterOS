@@ -410,6 +410,6 @@ The Nano Every has just 6 KB of memory, and every expression, frame, list and va
 
 ### Updating Toaster OS
 
-Before updating, keep a copy of your feature's file, and note the changes you made to `ToasterOS.ino`. Then make them again in the new version.
+Update as in [Setting up](/guides/toaster-os/setting-up#updating-toaster-os). Copy your feature's file into the new `ToasterOS` folder, and make your changes to `ToasterOS.ino` again.
 
 If you use [Git](https://git-scm.com), commit your changes first, and Git will usually bring them across for you.

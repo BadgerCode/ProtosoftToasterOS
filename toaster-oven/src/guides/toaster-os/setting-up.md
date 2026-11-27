@@ -102,9 +102,9 @@ If you'd rather use VS Code, SparkFun's guide to [Arduino programming with the A
 
 ### Download Toaster OS
 
-Download the code from [GitHub](https://github.com/BadgerCode/ProtosoftToasterOS): click **Code → Download ZIP** and unzip it, or clone it with Git.
+Download the latest version, [ToasterOS.zip](https://github.com/BadgerCode/ProtosoftToasterOS/releases/latest/download/ToasterOS.zip), and unzip it. Open `ToasterOS/ToasterOS.ino` in the Arduino IDE.
 
-The firmware is in the `ToasterOS` folder. Open `ToasterOS/ToasterOS.ino` in the Arduino IDE.
+Older versions are on the [releases page](https://github.com/BadgerCode/ProtosoftToasterOS/releases). The whole project, including Toaster Oven, is on [GitHub](https://github.com/BadgerCode/ProtosoftToasterOS).
 
 ### Configure
 
@@ -139,6 +139,16 @@ To change them later, use **Import** to load the files you downloaded, make your
 4. Click **Upload**.
 
 When it's done, the face should light up.
+
+### Updating Toaster OS
+
+`ToasterOS/Version.h` shows which version you have. To update to the latest version:
+
+1. Download the latest [ToasterOS.zip](https://github.com/BadgerCode/ProtosoftToasterOS/releases/latest/download/ToasterOS.zip), and unzip it somewhere new.
+2. In [Toaster Oven](/configure), use **Import** to load the `Config.h` and `Protogen_Faces.h` from your old `ToasterOS` folder. Check everything, then download both again. This brings them up to date with the new version.
+3. Put them in the new `ToasterOS` folder, replacing the ones that came with it, and upload.
+
+What's changed in each version is on the [releases page](https://github.com/BadgerCode/ProtosoftToasterOS/releases).
 
 
 ### Next steps

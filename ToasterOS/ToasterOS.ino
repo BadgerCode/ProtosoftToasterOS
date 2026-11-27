@@ -1,5 +1,6 @@
 // Imports
 #include <FastLED.h>
+#include "Version.h"
 #include "MAX7219Control.h"
 #include "Utils.h"
 #include "ConfigTypes.h"
@@ -39,6 +40,9 @@ void setup() {
   if (ProtoConfig.DebugMode) {
     // Debug output on serial port; Used for Serial.println("blah blah");
     Serial.begin(9600);
+
+    Serial.print("Toaster OS ");
+    Serial.println(TOASTER_OS_VERSION);
   }
 
   randomSeed(analogRead(3));
