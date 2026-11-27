@@ -16,16 +16,16 @@ The boop sensor is an **IR obstacle sensor** (3 pins, 5V): a small module that d
 > [!NOTE]
 > **To do:** add a link to the sensor you used, and where it sits behind the visor.
 
-| Sensor pin | Connect to                      |
-| ---------- | ------------------------------- |
-| VCC        | 5V                              |
-| GND        | Ground, shared with the Arduino |
-| OUT        | Analog pin A0                   |
+| Sensor pin | Connect to                              |
+| ---------- | --------------------------------------- |
+| VCC        | 5V                                      |
+| GND        | Ground, shared with the microcontroller |
+| OUT        | Any free analog pin, for example A0     |
 
 These sensors usually have their own light, which turns on when something is close. It's a quick way to check the sensor is working before blaming the code.
 
 > [!WARNING]
-> The sensor only works properly with the head running from its battery. When the Arduino is only powered by your computer's USB port, the sensor often doesn't detect anything.
+> The sensor only works properly with the head running from its battery. When the microcontroller is only powered by your computer's USB port, the sensor often doesn't detect anything.
 
 ## The config
 

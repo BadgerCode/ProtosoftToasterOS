@@ -88,7 +88,7 @@ const mapChains = computed(() =>
   props.connections
     .map((connection, ci) => ({
       label: `Connection ${ci + 1}`,
-      title: `Connection ${ci + 1} from the Arduino: DIN pin ${connection.pinDataIn}, CS pin ${connection.pinCS}, CLK pin ${connection.pinCLK}`,
+      title: `Connection ${ci + 1} from the microcontroller: DIN pin ${connection.pinDataIn}, CS pin ${connection.pinCS}, CLK pin ${connection.pinCLK}`,
       panelIds: connection.panels.map((p) => p.panelType).filter((t) => t !== EMPTY_PANEL),
     }))
     .filter((chain) => chain.panelIds.length > 0),

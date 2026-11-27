@@ -219,7 +219,8 @@ function movePanel(connection: FaceLEDConnection, index: number, offset: number)
           </span>
         </div>
         <p class="mb-3 text-xs text-slate-500">
-          List panels in the order they're wired, starting with the one connected to the Arduino.
+          List panels in the order they're wired, starting with the one connected to the
+          microcontroller.
         </p>
 
         <ol

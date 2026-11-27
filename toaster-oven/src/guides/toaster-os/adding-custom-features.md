@@ -143,7 +143,7 @@ The current expression is drawn every loop too, so draw yours in `loop()` straig
 
 ## Memory
 
-The Nano Every has just 6 KB of memory, and every expression, frame and list uses some. When you compile, check the line that says **Global variables use … bytes of dynamic memory**. If it goes much above 75%, the Arduino can start behaving strangely.
+The Nano Every has just 6 KB of memory, and every expression, frame and list uses some. When you compile, check the line that says **Global variables use … bytes of dynamic memory**. If it goes much above 75%, the Nano Every can start behaving strangely.
 
 ## Debugging
 

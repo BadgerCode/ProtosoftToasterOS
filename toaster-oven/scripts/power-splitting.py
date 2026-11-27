@@ -74,7 +74,7 @@ text(split_x + 35, 578, 'connectors or JST Y cables', 13, MUTED, 400, 'middle')
 
 # --- Parts ------------------------------------------------------------------
 parts = [
-    ('Arduino', '5V and GND pins'),
+    ('Microcontroller', '5V and GND pins'),
     ('LED panels', 'VCC and GND of the first panel'),
     ('Side LED strips', '5V and GND of the strips'),
     ('Fan', 'Red and black wires'),

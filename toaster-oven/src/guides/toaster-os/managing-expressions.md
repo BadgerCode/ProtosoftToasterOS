@@ -56,9 +56,9 @@ Expressions are also used by the [boop sensor](/guides/toaster-os/boop-sensor) a
 
 ## Saving your expressions
 
-Toaster Oven doesn't save anything in your browser yet, so download `Protogen_Faces.h` before you leave the page. Put it in the `ToasterOS` folder and upload to the Arduino.
+Toaster Oven doesn't save anything in your browser yet, so download `Protogen_Faces.h` before you leave the page. Put it in the `ToasterOS` folder and upload to the microcontroller.
 
 To carry on later, use **Import** to load the file you downloaded.
 
 > [!TIP]
-> Every expression and frame uses some of the Arduino's 6 KB of memory. If the Arduino IDE warns about low memory, remove expressions you don't use.
+> Every expression and frame uses some of the microcontroller's memory, and the Nano Every only has 6 KB. If the Arduino IDE warns about low memory, remove expressions you don't use.

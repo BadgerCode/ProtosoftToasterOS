@@ -70,7 +70,7 @@ Everything runs on 5V.
 - Use a splitter on the voltage and ground to allow multiple components to connect to it
     - E.g. a WAGO splitter or a JST Y splitter
 
-![A USB cable from a power bank with its end cut off. The red 5V wire and black ground wire each go into a splitter, which sends a 5V and ground pair to the Arduino, LED panels, side LED strips and fan.](images/power-splitting.svg)
+![A USB cable from a power bank with its end cut off. The red 5V wire and black ground wire each go into a splitter, which sends a 5V and ground pair to the microcontroller, LED panels, side LED strips and fan.](images/power-splitting.svg)
 
 > [!WARNING]
 > Every part must be connected to the same ground or you will get weird behaviour
@@ -83,7 +83,15 @@ Everything runs on 5V.
 ### Arduino IDE
 
 1. Install [Arduino IDE 2](https://docs.arduino.cc/software/ide-v2).
-2. Open **Tools → Board → Boards Manager**, search for **Arduino megaAVR Boards** and install it. This adds support for the Nano Every.
+2. Set up the drivers for your board
+    1. For the Nano Every
+        1. Open **Tools → Board → Boards Manager**
+        2. Search for **Arduino megaAVR Boards** and install it. This adds support for the Nano Every
+    2. For the ESP32
+        1. Open **File → Preferences**
+        2. Paste `https://espressif.github.io/arduino-esp32/package_esp32_index.json` into **Additional boards manager URLs** and press OK
+        3. Open **Tools → Board → Boards Manager**
+        4. Search for **esp32 by Espressif Systems** and install it
 3. Open **Tools → Manage Libraries**, search for **FastLED** and install it. Toaster OS uses it for the side lights and the remote's lights.
 
 New to Arduino? The [Arduino getting started guide](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino#a-typical-workflow) explains the basics.
@@ -121,9 +129,13 @@ To change them later, use **Import** to load the files you downloaded, make your
 
 ### Upload
 
-1. Connect the Arduino to your computer with the USB cable.
-2. Choose **Tools → Board → Arduino megaAVR Boards → Arduino Nano Every**.
-3. Choose the Arduino's port under **Tools → Port**.
+1. Connect the microcontroller to your computer with the USB cable.
+2. Choose the right microcontroller
+    1. Make sure to follow the **Arduino IDE** setup guide above
+    2. Choose the right board
+        1. Nano: Choose **Tools → Board → Arduino megaAVR Boards → Arduino Nano Every**.
+        2. ESP32: Choose **Tools → Board → esp32 → ESP32 Dev Module**
+3. Choose the microcontroller's port under **Tools → Port**.
 4. Click **Upload**.
 
 When it's done, the face should light up.

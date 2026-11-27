@@ -13,11 +13,11 @@ You need two **addressable RGB LED strips** (5V, 3 wires), one for each side. To
 
 Each strip has three wires:
 
-| Wire   | Connect to                                 |
-| ------ | ------------------------------------------ |
-| 5V     | 5V from the power supply                   |
-| Ground | Ground, shared with the Arduino            |
-| Data   | Pin 9 (left strip) or pin 10 (right strip) |
+| Wire   | Connect to                                                                          |
+| ------ | ----------------------------------------------------------------------------------- |
+| 5V     | 5V from the power supply                                                            |
+| Ground | Ground, shared with the microcontroller                                             |
+| Data   | Any free pin, one for each strip (for example, 9 for the left and 10 for the right) |
 
 Both strips show the same thing, so they need the same number of LEDs.
 
